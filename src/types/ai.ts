@@ -1,0 +1,63 @@
+import type { Experience, Profile } from "./database";
+
+/**
+ * Structured output the AI layer must produce. We never rely on free-form
+ * text for anything the UI renders as fact — the model returns typed JSON
+ * that is validated with zod before use (see ai/schema.ts).
+ */
+export interface StructuredRecommendation {
+  experienceId: string;
+  matchScore: number; // 0-100
+  reasoning: string;
+  estimatedCost: number | null;
+  estimatedDurationMinutes: number | null;
+  recommendedTime: string | null;
+  confidence: number; // 0-1
+}
+
+export interface RecommendationContext {
+  profile: Profile;
+  location: { city: string; latitude: number; longitude: number } | null;
+  now: string; // ISO timestamp
+  weather: WeatherSnapshot | null;
+  budgetOverride: string | null;
+  travelStatus: { isTraveling: boolean; destinationCity: string | null };
+  recentEvents: string[]; // short human-readable recent behavior summaries
+  excludeExperienceIds: string[];
+}
+
+export interface WeatherSnapshot {
+  condition: "clear" | "clouds" | "rain" | "snow" | "storm" | "unknown";
+  temperatureF: number;
+  isGoodForOutdoor: boolean;
+  source: "live" | "mock";
+}
+
+export interface SurpriseMeResult {
+  experience: Experience;
+  recommendation: StructuredRecommendation;
+  headline: string;
+}
+
+export interface WeekendPlanRequest {
+  budgetLevel: string;
+  days: ("saturday" | "sunday" | "friday_evening")[];
+  socialMode: "solo" | "group";
+  energyLevel: "low" | "medium" | "high";
+  interests: string[];
+}
+
+export interface WeekendPlanItem {
+  day: string;
+  startTime: string;
+  title: string;
+  experienceId: string | null;
+  estimatedCost: number | null;
+  notes: string;
+}
+
+export interface WeekendPlan {
+  items: WeekendPlanItem[];
+  totalEstimatedCost: number;
+  summary: string;
+}

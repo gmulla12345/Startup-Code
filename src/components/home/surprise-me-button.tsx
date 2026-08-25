@@ -1,0 +1,148 @@
+"use client";
+
+import { useState } from "react";
+import { Sparkles, X } from "lucide-react";
+import { toast } from "sonner";
+import Image from "next/image";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { formatPrice, formatDuration } from "@/lib/utils/format";
+import type { SurpriseMeResult } from "@/types/ai";
+
+export function SurpriseMeButton() {
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<SurpriseMeResult | null>(null);
+  const [excludeIds, setExcludeIds] = useState<string[]>([]);
+
+  async function fetchSurprise(exclude: string[] = []) {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/ai/surprise-me?exclude=${exclude.join(",")}`);
+      const json = await res.json();
+
+      if (!res.ok) {
+        toast.error(json.error ?? "Couldn't find a recommendation right now.");
+        setOpen(false);
+        return;
+      }
+
+      if (!json.result) {
+        toast.info(json.message ?? "No matches yet — try widening your interests.");
+        setOpen(false);
+        return;
+      }
+
+      setResult(json.result);
+      setOpen(true);
+    } catch {
+      toast.error("Something went wrong. Try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleNotForMe() {
+    if (!result) return;
+    const nextExclude = [...excludeIds, result.experience.id];
+    setExcludeIds(nextExclude);
+
+    setLoading(true);
+    const res = await fetch("/api/ai/surprise-me", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ experienceId: result.experience.id, feedback: "not_for_me", excludeIds }),
+    });
+    const json = await res.json();
+    setLoading(false);
+
+    if (json.result) setResult(json.result);
+    else {
+      toast.info("That's all we've got for now — check back later.");
+      setOpen(false);
+    }
+  }
+
+  async function handleLetsGo() {
+    if (!result) return;
+    await fetch("/api/ai/surprise-me", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ experienceId: result.experience.id, feedback: "lets_go", excludeIds }),
+    });
+    setOpen(false);
+  }
+
+  return (
+    <>
+      <button
+        onClick={() => fetchSurprise(excludeIds)}
+        disabled={loading}
+        className="w-full rounded-[var(--radius-lg)] p-5 flex items-center gap-4 text-left bg-[linear-gradient(135deg,var(--ember),var(--ember-strong))] text-white shadow-[var(--shadow-raised)] hover:brightness-105 transition-all disabled:opacity-70"
+      >
+        <div className="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+          <Sparkles className="h-6 w-6" />
+        </div>
+        <div className="flex-1">
+          <div className="font-display text-lg font-semibold">{loading ? "Finding something..." : "Surprise Me"}</div>
+          <div className="text-sm text-white/80">One perfect recommendation, right now.</div>
+        </div>
+      </button>
+
+      {open && result && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-0 sm:p-4">
+          <div className="w-full sm:max-w-md bg-surface rounded-t-[var(--radius-xl)] sm:rounded-[var(--radius-xl)] overflow-hidden max-h-[90vh] overflow-y-auto">
+            <div className="relative aspect-[4/3] bg-surface-sunken">
+              {result.experience.images[0] && (
+                <Image src={result.experience.images[0]} alt={result.experience.title} fill className="object-cover" />
+              )}
+              <button
+                onClick={() => setOpen(false)}
+                className="absolute top-3 right-3 h-9 w-9 rounded-full bg-black/50 flex items-center justify-center"
+              >
+                <X className="h-4 w-4 text-white" />
+              </button>
+              <div className="absolute bottom-3 left-3">
+                <Badge variant="ember" className="bg-white/95 font-semibold">
+                  {Math.round(result.recommendation.matchScore)}% match
+                </Badge>
+              </div>
+            </div>
+
+            <div className="p-6">
+              <p className="text-sm font-medium text-ember mb-1">{result.headline}</p>
+              <h3 className="font-display text-2xl font-semibold text-foreground mb-2">{result.experience.title}</h3>
+              <p className="text-sm text-foreground-muted mb-3">{result.experience.shortDescription}</p>
+
+              <div className="flex items-center gap-3 text-sm text-foreground-muted mb-4">
+                <span>{result.experience.city}</span>
+                <span>·</span>
+                <span>{formatPrice(result.experience.priceEstimate, result.experience.priceLevel)}</span>
+                {result.experience.durationMinutes && (
+                  <>
+                    <span>·</span>
+                    <span>{formatDuration(result.experience.durationMinutes)}</span>
+                  </>
+                )}
+              </div>
+
+              <p className="text-sm italic text-foreground-muted border-l-2 border-ember pl-3 mb-6">
+                &ldquo;{result.recommendation.reasoning}&rdquo;
+              </p>
+
+              <div className="flex flex-col gap-2">
+                <Button asChild size="lg" onClick={handleLetsGo}>
+                  <Link href={`/experience/${result.experience.slug}`}>Let&apos;s Go</Link>
+                </Button>
+                <Button variant="outline" size="lg" onClick={handleNotForMe} disabled={loading}>
+                  {loading ? "Finding another..." : "Not For Me"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
