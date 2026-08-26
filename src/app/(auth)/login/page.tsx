@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { GoogleIcon } from "@/components/shared/google-icon";
 import { createClient } from "@/lib/supabase/client";
+import { brand } from "@/lib/config/brand";
 
 function LoginForm() {
   const router = useRouter();
@@ -56,7 +57,7 @@ function LoginForm() {
       subtitle="Log in to pick up where you left off."
       footer={
         <p className="text-sm text-foreground-muted">
-          New to REAL?{" "}
+          New to {brand.name}?{" "}
           <Link href="/signup" className="text-ember font-medium hover:underline">
             Create an account
           </Link>

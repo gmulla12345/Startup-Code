@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { GoogleIcon } from "@/components/shared/google-icon";
 import { createClient } from "@/lib/supabase/client";
+import { brand } from "@/lib/config/brand";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -112,7 +113,7 @@ export default function SignupPage() {
           {loading ? "Creating account..." : "Start Discovering"}
         </Button>
         <p className="text-xs text-foreground-subtle text-center pt-1">
-          By continuing you agree to REAL&apos;s Terms of Service and Privacy Policy.
+          By continuing you agree to {brand.name}&apos;s Terms of Service and Privacy Policy.
         </p>
       </form>
     </AuthShell>

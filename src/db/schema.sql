@@ -1,5 +1,5 @@
 -- =========================================================================
--- REAL — core database schema (Supabase / Postgres)
+-- Zolo — core database schema (Supabase / Postgres)
 -- Run this in the Supabase SQL editor, or via `supabase db push`.
 -- Idempotent: safe to re-run.
 -- =========================================================================
@@ -111,7 +111,7 @@ create table if not exists public.reviews (
   id uuid primary key default gen_random_uuid(),
   experience_id uuid not null references public.experiences(id) on delete cascade,
   user_id uuid references auth.users(id) on delete set null,
-  author_name text not null default 'REAL user',
+  author_name text not null default 'Zolo user',
   rating int not null check (rating between 1 and 5),
   comment text not null default '',
   created_at timestamptz not null default now()
@@ -368,7 +368,7 @@ begin
   values (new.id, 'free', 'none');
 
   insert into public.social_profiles (user_id, handle, display_name)
-  values (new.id, 'user_' || substr(new.id::text, 1, 8), coalesce(new.raw_user_meta_data->>'first_name', 'REAL user'));
+  values (new.id, 'user_' || substr(new.id::text, 1, 8), coalesce(new.raw_user_meta_data->>'first_name', 'Zolo user'));
 
   return new;
 end;

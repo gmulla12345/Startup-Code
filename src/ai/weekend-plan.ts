@@ -1,5 +1,6 @@
 import { callStructuredTool, isAIConfigured } from "./client";
 import { weekendPlanSchema } from "./schema";
+import { brand } from "@/lib/config/brand";
 import type { Experience, Profile } from "@/types/database";
 import type { WeekendPlan, WeekendPlanRequest } from "@/types/ai";
 
@@ -26,8 +27,8 @@ const WEEKEND_PLAN_TOOL_SCHEMA = {
   required: ["items", "summary"],
 } as const;
 
-const SYSTEM_PROMPT = `You are REAL's AI Weekend Planner. You build a realistic, well-paced itinerary from a
-list of REAL candidate experiences plus generic filler items (coffee, lunch, downtime) that don't map
+const SYSTEM_PROMPT = `You are ${brand.name}'s AI Weekend Planner. You build a realistic, well-paced itinerary from a
+list of real candidate experiences plus generic filler items (coffee, lunch, downtime) that don't map
 to a specific listing.
 
 Rules:

@@ -41,7 +41,7 @@ export function Hero() {
             { src: "photo-1502933691298-84fc14542831", label: "Kayaking" },
             { src: "photo-1554797589-7241bb691973", label: "Izakaya crawl" },
             { src: "photo-1441974231531-c6227db76b6e", label: "Waterfall hike" },
-            { src: "photo-1545239351-1141bd82e8a6", label: "Digital art" },
+            { src: "photo-1785637981940-0ec1cfefed10", label: "Digital art" },
           ].map((img, i) => (
             <div
               key={img.src}

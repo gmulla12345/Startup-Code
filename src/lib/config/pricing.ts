@@ -1,3 +1,5 @@
+import { brand } from "./brand";
+
 /**
  * Pricing is centralized here and never hard-coded elsewhere. The Stripe
  * price ID is what actually drives checkout; the numbers below are for
@@ -23,7 +25,7 @@ export const pricing = {
     name: "Premium",
     priceMonthly: Number(process.env.NEXT_PUBLIC_PREMIUM_PRICE ?? 19.99),
     priceId: process.env.NEXT_PUBLIC_STRIPE_PREMIUM_PRICE_ID ?? "",
-    description: "Unlock the full REAL experience.",
+    description: `Unlock the full ${brand.name} experience.`,
     features: [
       "Unlimited personalized discovery",
       "Advanced AI recommendations",

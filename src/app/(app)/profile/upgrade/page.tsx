@@ -4,6 +4,7 @@ import { ArrowLeft, Check } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getSubscription, isPremium } from "@/lib/repositories/subscriptions";
 import { pricing } from "@/lib/config/pricing";
+import { brand } from "@/lib/config/brand";
 import { UpgradeButton } from "@/components/profile/upgrade-button";
 
 export default async function UpgradePage() {
@@ -23,7 +24,7 @@ export default async function UpgradePage() {
       </Link>
 
       <div className="rounded-[var(--radius-xl)] border-2 border-ember bg-surface p-8">
-        <h1 className="font-display text-3xl font-semibold text-foreground mb-1">REAL Premium</h1>
+        <h1 className="font-display text-3xl font-semibold text-foreground mb-1">{brand.name} Premium</h1>
         <div className="mb-6">
           <span className="font-display text-4xl font-semibold text-foreground">${pricing.premium.priceMonthly}</span>
           <span className="text-foreground-muted"> /month</span>

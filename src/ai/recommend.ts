@@ -1,5 +1,6 @@
 import { callStructuredTool, isAIConfigured } from "./client";
 import { recommendationBatchSchema } from "./schema";
+import { brand } from "@/lib/config/brand";
 import type { RecommendationContext, StructuredRecommendation } from "@/types/ai";
 import type { ScoredExperience } from "@/services/recommendation/scoring";
 
@@ -23,7 +24,7 @@ const RECOMMEND_TOOL_SCHEMA = {
   required: ["recommendations"],
 } as const;
 
-const SYSTEM_PROMPT = `You are the recommendation reasoning layer for REAL, a personalized real-world discovery app.
+const SYSTEM_PROMPT = `You are the recommendation reasoning layer for ${brand.name}, a personalized real-world discovery app.
 You will be given a user's profile and a shortlist of candidate experiences that have ALREADY been
 filtered and scored by a deterministic system — your job is only to write a short, warm, specific
 reason each one was picked, and to lightly refine the match score (0-100) and a confidence (0-1).

@@ -11,19 +11,19 @@ const FAQS = [
     a: "We combine structured filtering (your location, budget, and preferences), a deterministic scoring model, and AI reasoning to explain why each pick fits you — not just a raw popularity list.",
   },
   {
-    q: "Is booking handled through REAL?",
+    q: `Is booking handled through ${brand.name}?`,
     a: "For experiences with a booking partner, we link you directly to their site. We never fabricate availability or pricing — if we don't have live data, we say so.",
   },
   {
     q: "What happens if I don't like a recommendation?",
-    a: "Dismiss it or tap Not For Me on a Surprise Me pick — REAL learns from that feedback immediately and adjusts what it shows you next.",
+    a: `Dismiss it or tap Not For Me on a Surprise Me pick — ${brand.name} learns from that feedback immediately and adjusts what it shows you next.`,
   },
   {
     q: "Can I cancel Premium anytime?",
     a: "Yes — manage or cancel your subscription anytime from your Profile. You'll keep Premium access through the end of your billing period.",
   },
   {
-    q: "Which cities does REAL cover?",
+    q: `Which cities does ${brand.name} cover?`,
     a: "We're launching with a curated catalog in a handful of cities and expanding quickly. Travel Mode works for any destination you search.",
   },
 ];

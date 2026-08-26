@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { pricing } from "@/lib/config/pricing";
+import { brand } from "@/lib/config/brand";
 import type { Subscription } from "@/types/database";
 
 export function SubscriptionCard({ subscription }: { subscription: Subscription | null }) {
@@ -47,7 +48,7 @@ export function SubscriptionCard({ subscription }: { subscription: Subscription 
       <div className="flex items-center gap-2 mb-1">
         <Sparkles className={isPremium ? "h-5 w-5 text-ember" : "h-5 w-5 text-foreground-subtle"} />
         <h3 className="font-display text-lg font-semibold text-foreground">
-          {isPremium ? "REAL Premium" : "Free Plan"}
+          {isPremium ? `${brand.name} Premium` : "Free Plan"}
         </h3>
       </div>
       <p className="text-sm text-foreground-muted mb-4">

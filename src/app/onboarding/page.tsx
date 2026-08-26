@@ -14,6 +14,7 @@ import { StepGoals } from "@/components/onboarding/step-goals";
 import { StepReady } from "@/components/onboarding/step-ready";
 import { emptyPersonality, defaultPreferences } from "@/lib/repositories/profile";
 import { analyticsEvents } from "@/services/analytics/track";
+import { brand } from "@/lib/config/brand";
 import type { InterestTag, LifestyleGoal, PersonalitySliders, UserPreferences } from "@/types/database";
 
 const STEPS = ["basics", "interests", "personality", "preferences", "goals"] as const;
@@ -117,7 +118,7 @@ export default function OnboardingPage() {
             {step === "interests" && "What do you love?"}
             {step === "personality" && "How would you describe yourself?"}
             {step === "preferences" && "Your ideal experience"}
-            {step === "goals" && "What are you hoping to get out of REAL?"}
+            {step === "goals" && `What are you hoping to get out of ${brand.name}?`}
           </h1>
           <p className="text-foreground-muted mb-8">
             {step === "basics" && "This helps us tailor everything that follows."}

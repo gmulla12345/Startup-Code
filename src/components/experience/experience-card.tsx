@@ -3,14 +3,12 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, MapPin, Share2, Star } from "lucide-react";
+import { Heart, MapPin, Star, Gem } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils/cn";
 import { formatPrice, formatDuration, formatCategoryLabel } from "@/lib/utils/format";
 import type { Experience } from "@/types/database";
 import { track } from "@/services/analytics/track";
-import { shareEntity } from "@/lib/utils/share";
-import { toast } from "sonner";
 
 interface ExperienceCardProps {
   experience: Experience;
@@ -44,24 +42,12 @@ export function ExperienceCard({
     onToggleSave?.(experience.id, next);
   }
 
-  function handleShare(e: React.MouseEvent) {
-    e.preventDefault();
-    e.stopPropagation();
-    shareEntity({
-      title: experience.title,
-      text: experience.shortDescription,
-      url: `${window.location.origin}/experience/${experience.slug}`,
-    });
-    track("shared_experience", experience.id);
-    toast.success("Link copied — share it anywhere.");
-  }
-
   return (
     <Link
       href={`/experience/${experience.slug}`}
       onClick={() => track("viewed_experience", experience.id, { source: "card" })}
       className={cn(
-        "group block rounded-[var(--radius-lg)] overflow-hidden border border-border bg-surface shadow-[var(--shadow-card)] transition-transform hover:-translate-y-0.5 hover:shadow-[var(--shadow-raised)]",
+        "group block rounded-[var(--radius-lg)] overflow-hidden border border-border bg-surface transition-shadow hover:shadow-[var(--shadow-raised)]",
         className
       )}
     >
@@ -77,45 +63,37 @@ export function ExperienceCard({
           />
         )}
 
-        <div className="absolute top-3 left-3 flex gap-2">
-          {matchScore != null && (
-            <Badge variant="ember" className="backdrop-blur-sm bg-[var(--ember-soft)]/95 font-semibold">
+        {matchScore != null && (
+          <div className="absolute top-3 left-3">
+            <Badge variant="ember" className="bg-white/95 font-semibold shadow-sm">
               {Math.round(matchScore)}% match
             </Badge>
-          )}
-          {experience.isHiddenGem && <Badge variant="gold">Hidden gem</Badge>}
-        </div>
+          </div>
+        )}
 
-        <div className="absolute top-3 right-3 flex gap-2">
-          <button
-            onClick={handleSave}
-            aria-label={isSaved ? "Unsave" : "Save"}
-            className="h-9 w-9 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-sm hover:bg-white transition-colors"
-          >
-            <Heart className={cn("h-4 w-4", isSaved ? "fill-ember text-ember" : "text-foreground")} />
-          </button>
-          <button
-            onClick={handleShare}
-            aria-label="Share"
-            className="h-9 w-9 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-sm hover:bg-white transition-colors"
-          >
-            <Share2 className="h-4 w-4 text-foreground" />
-          </button>
-        </div>
-
-        <div className="absolute bottom-3 left-3">
-          <Badge variant="default" className="bg-black/60 text-white backdrop-blur-sm">
-            {formatCategoryLabel(experience.category)}
-          </Badge>
-        </div>
+        <button
+          onClick={handleSave}
+          aria-label={isSaved ? "Unsave" : "Save"}
+          className="absolute top-3 right-3 h-8 w-8 rounded-full bg-white/90 flex items-center justify-center transition-colors hover:bg-white"
+        >
+          <Heart className={cn("h-4 w-4", isSaved ? "fill-ember text-ember" : "text-foreground")} />
+        </button>
       </div>
 
-      <div className="p-4 space-y-2">
-        <div className="flex items-start justify-between gap-2">
-          <h3 className="font-display text-lg font-semibold leading-tight text-foreground line-clamp-2">
-            {experience.title}
-          </h3>
+      <div className="p-4 space-y-1.5">
+        <div className="flex items-center gap-2 text-xs font-medium text-foreground-subtle uppercase tracking-wide">
+          {experience.isHiddenGem ? (
+            <span className="inline-flex items-center gap-1 text-[color:var(--gold)]">
+              <Gem className="h-3 w-3" /> Hidden gem
+            </span>
+          ) : (
+            <span>{formatCategoryLabel(experience.category)}</span>
+          )}
         </div>
+
+        <h3 className="font-display text-lg font-semibold leading-tight text-foreground line-clamp-2">
+          {experience.title}
+        </h3>
 
         <div className="flex items-center gap-3 text-sm text-foreground-muted">
           <span className="inline-flex items-center gap-1">
@@ -131,14 +109,10 @@ export function ExperienceCard({
           {experience.durationMinutes && <span>{formatDuration(experience.durationMinutes)}</span>}
         </div>
 
-        <div className="flex items-center justify-between pt-1">
-          <span className="font-semibold text-foreground">{formatPrice(experience.priceEstimate, experience.priceLevel)}</span>
-        </div>
+        <p className="font-semibold text-foreground pt-0.5">{formatPrice(experience.priceEstimate, experience.priceLevel)}</p>
 
         {reasoning && (
-          <p className="text-xs text-foreground-muted italic border-t border-border pt-2 line-clamp-2">
-            &ldquo;{reasoning}&rdquo;
-          </p>
+          <p className="text-xs text-foreground-muted line-clamp-2 pt-1">{reasoning}</p>
         )}
       </div>
     </Link>

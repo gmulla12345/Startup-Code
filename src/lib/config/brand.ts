@@ -3,19 +3,19 @@
  * here — nothing else in the codebase should hard-code the brand name.
  */
 export const brand = {
-  name: "REAL",
-  fullName: "REAL — Experience More of Life",
+  name: "Zolo",
+  fullName: "Zolo — Experience More of Life",
   tagline: "Experience more of life.",
   subTagline:
     "Discover places, experiences, adventures, and moments you'll actually love — personalized to you.",
-  domain: process.env.NEXT_PUBLIC_APP_URL ?? "https://real.app",
+  domain: process.env.NEXT_PUBLIC_APP_URL ?? "https://zolo.app",
   description:
-    "REAL is a personalized discovery engine that learns who you are and recommends real-world experiences, adventures, and hidden gems you'll actually love.",
+    "Zolo is a personalized discovery engine that learns who you are and recommends real-world experiences, adventures, and hidden gems you'll actually love.",
   social: {
-    twitter: "@realapp",
-    instagram: "@real",
+    twitter: "@zoloapp",
+    instagram: "@zolo",
   },
-  supportEmail: "hello@real.app",
+  supportEmail: "hello@zolo.app",
 } as const;
 
 export const nav = {

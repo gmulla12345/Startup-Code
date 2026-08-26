@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Logo } from "@/components/shared/logo";
+import { brand } from "@/lib/config/brand";
 
 export function AuthShell({
   title,
@@ -24,7 +25,7 @@ export function AuthShell({
             Real recommendations for real experiences — hikes, hidden bars, weekend trips, and everything in between.
           </p>
         </div>
-        <p className="text-xs text-foreground-subtle">© {new Date().getFullYear()} REAL. All rights reserved.</p>
+        <p className="text-xs text-foreground-subtle">© {new Date().getFullYear()} {brand.name}. All rights reserved.</p>
       </div>
 
       <div className="flex flex-col justify-center px-6 py-12 sm:px-12 lg:px-20">

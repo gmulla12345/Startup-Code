@@ -2,6 +2,7 @@
 
 import { ChipSelect } from "./chip-select";
 import { LIFESTYLE_GOALS } from "@/lib/config/taxonomy";
+import { brand } from "@/lib/config/brand";
 import type { LifestyleGoal } from "@/types/database";
 
 export function StepGoals({
@@ -17,7 +18,7 @@ export function StepGoals({
 
   return (
     <div>
-      <p className="text-sm text-foreground-muted mb-4">What are you hoping REAL helps you do more of?</p>
+      <p className="text-sm text-foreground-muted mb-4">What are you hoping {brand.name} helps you do more of?</p>
       <ChipSelect options={LIFESTYLE_GOALS} selected={selected} onToggle={toggle} columns={1} />
     </div>
   );

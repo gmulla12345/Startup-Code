@@ -3,6 +3,7 @@ import Image from "next/image";
 import { Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { pricing } from "@/lib/config/pricing";
+import { brand } from "@/lib/config/brand";
 
 export function PremiumLock({ title, image }: { title: string; image?: string }) {
   return (
@@ -15,7 +16,7 @@ export function PremiumLock({ title, image }: { title: string; image?: string })
           </div>
           <h3 className="font-display text-xl font-semibold text-white mb-2">This is a Premium experience</h3>
           <p className="text-white/80 text-sm mb-5 max-w-sm">
-            Upgrade to REAL Premium (${pricing.premium.priceMonthly}/mo) to unlock exclusive experiences like this one.
+            Upgrade to {brand.name} Premium (${pricing.premium.priceMonthly}/mo) to unlock exclusive experiences like this one.
           </p>
           <Button asChild size="lg" className="bg-white text-foreground hover:bg-white/90">
             <Link href="/profile/upgrade">Upgrade to Premium</Link>

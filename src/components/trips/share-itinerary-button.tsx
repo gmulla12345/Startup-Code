@@ -4,6 +4,7 @@ import { Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { shareEntity } from "@/lib/utils/share";
+import { brand } from "@/lib/config/brand";
 
 export function ShareItineraryButton({ itineraryId, shareSlug }: { itineraryId: string; shareSlug: string | null }) {
   async function handleShare() {
@@ -12,7 +13,7 @@ export function ShareItineraryButton({ itineraryId, shareSlug }: { itineraryId: 
     const slug = json.shareSlug ?? shareSlug ?? itineraryId;
 
     const url = `${window.location.origin}/share/itinerary/${slug}`;
-    const result = await shareEntity({ title: "My REAL itinerary", url });
+    const result = await shareEntity({ title: `My ${brand.name} itinerary`, url });
     if (result === "copied") toast.success("Share link copied.");
     if (result === "failed") toast.error("Couldn't copy the link.");
   }

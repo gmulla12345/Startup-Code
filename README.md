@@ -1,6 +1,6 @@
-# REAL — Experience More of Life
+# Zolo — Experience More of Life
 
-REAL is an AI-powered discovery platform that answers one question: **"What should I do next?"** It learns who you are — your interests, personality, budget, and behavior — and recommends real-world experiences, adventures, and hidden gems instead of an endless list of search results.
+Zolo is an AI-powered discovery platform that answers one question: **"What should I do next?"** It learns who you are — your interests, personality, budget, and behavior — and recommends real-world experiences, adventures, and hidden gems instead of an endless list of search results.
 
 This repository is a production-oriented foundation for that product: a Next.js 16 App Router application with Supabase (auth + Postgres + RLS), a Claude-powered hybrid recommendation engine, and Stripe subscriptions — built to run with **zero external services configured** (using realistic mock data) and to become a real, deployed product as credentials are added.
 
