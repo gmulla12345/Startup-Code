@@ -8,7 +8,7 @@ export const brand = {
   tagline: "Experience more of life.",
   subTagline:
     "Discover places, experiences, adventures, and moments you'll actually love — personalized to you.",
-  domain: process.env.NEXT_PUBLIC_APP_URL ?? "https://zolo.app",
+  domain: process.env.NEXT_PUBLIC_APP_URL || "https://discoverzolo.com",
   description:
     "Zolo is a personalized discovery engine that learns who you are and recommends real-world experiences, adventures, and hidden gems you'll actually love.",
   social: {
