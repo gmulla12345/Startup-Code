@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { brand } from "@/lib/config/brand";
@@ -24,7 +25,7 @@ const FAQS = [
   },
   {
     q: `Which cities does ${brand.name} cover?`,
-    a: "We're launching with a curated catalog in a handful of cities and expanding quickly. Travel Mode works for any destination you search.",
+    a: "Anywhere — we blend a curated catalog with live places data so discovery works worldwide, not just in a handful of launch cities. Travel Mode works for any destination you search.",
   },
 ];
 
@@ -51,6 +52,12 @@ export function FAQ() {
           </div>
         ))}
       </div>
+
+      <p className="mt-8 text-center text-sm text-foreground-muted">
+        <Link href="/faq" className="text-ember hover:underline">
+          See the full FAQ
+        </Link>
+      </p>
     </section>
   );
 }
