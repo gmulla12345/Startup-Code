@@ -8,7 +8,7 @@
 >
 > Full setup/architecture docs: [README.md](README.md). Full DB schema: [src/db/schema.sql](src/db/schema.sql).
 
-**Last updated:** 2026-08-25
+**Last updated:** 2026-08-27
 
 ## What this is
 
@@ -24,15 +24,14 @@ Premium subscription. Built for the user as a from-scratch, production-oriented 
   saved, profile, admin dashboard, full JSON API). ~150 source files.
 - **GitHub**: pushed to `https://github.com/gmulla12345/Startup-Code`, branch `main` (default).
   Working tree is clean as of the last commit in `git log`.
-- **Vercel**: user has imported the repo. First deploy failed — Turbopack's production build
-  crashed silently on Vercel's Linux build image (zero output, not even Next's banner line).
-  Fixed by changing `package.json`'s `build` script to `next build --webpack` (commit
-  `02003d9`). **Not yet confirmed whether the redeploy after that fix succeeded** — check
-  Vercel dashboard first if continuing deploy work.
-- **Environment variables**: real credentials exist in the user's local `.env.local` (gitignored,
-  never pushed — see below for what's populated). **Vercel almost certainly does NOT have these
-  yet** — that's the next concrete blocker for a working production deployment. Nothing has
-  confirmed they were added to Vercel's project settings.
+- **Vercel**: **live in production at `https://discoverzolo.com`**, confirmed working (signup/
+  login tested end-to-end). Deploy uses `next build --webpack` (Turbopack crashes on Vercel's
+  Linux build image). Vercel CLI is linked locally (`vercel` command available, logged in as
+  `gmulla12345`) — `vercel env add/ls`, `vercel deploy --prod` etc. all work from this machine
+  without needing the dashboard.
+- **Environment variables**: real credentials are set in both `.env.local` (local dev) and
+  Vercel's Production+Preview env vars (confirmed correct via `vercel env ls production` after
+  discovering many had been bulk-imported as placeholder/example values, not real ones).
 
 ## What's configured locally (`.env.local`) vs. still needed
 
@@ -86,10 +85,11 @@ Still empty / not done:
 ## Known non-issues (already investigated, don't re-litigate)
 
 - Demo catalog (Baltimore/DC/NYC/Tokyo, ~24 hand-written experiences in `src/db/seed-data.ts`)
-  is intentionally fictional/placeholder content for a working demo. **User was told explicitly**:
-  before real users see this, either label it as editorial/demo picks or replace with verified
-  real listings — presenting fictional businesses as real was flagged as the one thing to fix
-  before wider launch. Not yet resolved either way.
+  is intentionally fictional/placeholder content for a working demo. **Resolved 2026-08-27**:
+  `sourceProvider: "mock"` listings now show an "Editorial pick" badge + disclosure on the detail
+  page ([src/app/(app)/experience/[id]/page.tsx](src/app/(app)/experience/[id]/page.tsx)), so
+  they're not mistaken for verified real-time listings. Google Places-sourced experiences are
+  unaffected (they're real).
 - All demo catalog images were individually audited and fixed for a real mismatch bug (13 of them
   were generic/wrong stock photos, e.g. a tropical beach photo on a "Chesapeake Bay Lighthouse"
   listing). All now visually verified to match their listing. Google Places-sourced experiences
@@ -103,16 +103,30 @@ Still empty / not done:
 
 ## Exact next steps (priority order)
 
-1. Confirm the Vercel redeploy after the webpack fix actually succeeded.
-2. Add all populated `.env.local` values to Vercel project settings (Supabase, Stripe, Maps,
-   admin email — skip `DATABASE_URL`, that's local-only for migrations).
-3. Get a production `STRIPE_WEBHOOK_SECRET` (Stripe Dashboard → webhook endpoint pointed at the
-   real Vercel domain) so subscription status actually updates after checkout.
-4. Decide what to do about the demo catalog before real users arrive (see above).
-5. Everything else from the "launch checklist" the user asked for earlier: custom SMTP, Google
-   OAuth, `ANTHROPIC_API_KEY`, legal review of `/privacy` and `/terms`, error monitoring.
+**Done since the last update:** deployed to production at `discoverzolo.com` (fixed a Vercel
+Framework Preset misconfig that caused platform-level 404s despite successful builds — see
+Vercel project Settings → Build and Development Settings, must be "Next.js" not "Other"); all
+Vercel env vars corrected via `vercel env add` (many held placeholder/example values, not real
+ones — always verify with `vercel env ls production` / check actual values before assuming
+they're right); Supabase Auth URL Configuration (Site URL + Redirect URLs) pointed at the real
+domain; added a dedicated `/faq` page; demo catalog now labeled (see above).
+
+1. **Stripe live mode** — blocked on the user activating their Stripe account (business/bank/
+   identity — cannot be done by an agent). Once they share a live secret key: create the $19.99/mo
+   product+price in live mode, create a webhook endpoint at `https://discoverzolo.com/api/stripe/webhook`,
+   push the 4 live env vars via `vercel env add`, test one real checkout.
+2. Google OAuth — needs the user to create a Google Cloud OAuth client themselves.
+3. Custom SMTP for Supabase Auth — needs the user to sign up with a provider (Resend/Postmark/etc).
+4. `ANTHROPIC_API_KEY` — needs the user's own Anthropic console key.
+5. Error monitoring (Sentry or similar) — needs an account created by the user.
+6. Legal review of `/privacy` and `/terms` by an actual lawyer.
+7. Stray cleanup: an accidentally-created duplicate Vercel project named `real-app` (from a
+   `vercel link` mistake) still needs manual deletion — Vercel dashboard → that project →
+   Settings → Delete Project. Deleting it via CLI is blocked by this environment's permission
+   classifier as a destructive action.
 
 ## Verified clean as of last update
 
-`npm run typecheck`, `npm run lint`, `npm run test` (34/34 passing), and `npm run build`
-(webpack) all pass with zero errors. Git working tree clean, all work pushed to `main`.
+`npm run typecheck` passes with zero errors as of the 2026-08-27 catalog-labeling commit. Git
+working tree clean, all work pushed to `main`. Production deploy confirmed live and working at
+`https://discoverzolo.com` (signup/login verified working after the env var fix).
