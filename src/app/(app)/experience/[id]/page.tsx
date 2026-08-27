@@ -103,7 +103,14 @@ export default async function ExperienceDetailPage({ params }: PageProps<"/exper
         <Badge variant="default">{formatCategoryLabel(experience.category)}</Badge>
         {experience.isHiddenGem && <Badge variant="gold">Hidden gem</Badge>}
         {experience.isPremium && <Badge variant="ember">Premium</Badge>}
+        {experience.sourceProvider === "mock" && <Badge variant="outline">Editorial pick</Badge>}
       </div>
+      {experience.sourceProvider === "mock" && (
+        <p className="text-xs text-foreground-subtle mt-2">
+          Curated by our team as an example of the kind of experience {`we'd`} recommend — always confirm details
+          directly with the venue before you go.
+        </p>
+      )}
 
       <h1 className="font-display text-3xl sm:text-4xl font-semibold text-foreground mt-3">{experience.title}</h1>
 
