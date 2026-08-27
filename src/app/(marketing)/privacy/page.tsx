@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "Privacy Policy" };
 
 export default function PrivacyPolicyPage() {
   return (
-    <LegalPage title="Privacy Policy" updated="August 22, 2026">
+    <LegalPage title="Privacy Policy" updated="August 27, 2026">
       <p>
         This Privacy Policy explains how {brand.name} (&ldquo;{brand.name}&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;)
         collects, uses, and protects your information when you use our website and app (the &ldquo;Service&rdquo;).
@@ -63,6 +63,9 @@ export default function PrivacyPolicyPage() {
           <li><strong>Anthropic</strong>, which processes profile and context data to generate AI recommendation reasoning. Anthropic does not receive your name, email, or payment details.</li>
           <li><strong>Stripe</strong>, which processes subscription payments on our behalf.</li>
           <li><strong>Google</strong>, for location geocoding and map display, and for real-world place data and photos where the Service provides live discovery results.</li>
+          <li><strong>Resend</strong>, which sends transactional emails on our behalf (account confirmation, password reset, and similar account-related messages).</li>
+          <li><strong>Sentry</strong>, which helps us detect and diagnose technical errors. Error reports may include IP address and request context, but never your password or payment details.</li>
+          <li><strong>Vercel</strong>, our hosting provider, which processes standard web traffic and log data to serve the Service.</li>
           <li>Other users, only for information you explicitly choose to make public (e.g., a shared itinerary link, or a public social profile if you enable one).</li>
           <li>Law enforcement or regulators, only where required by law.</li>
         </ul>
