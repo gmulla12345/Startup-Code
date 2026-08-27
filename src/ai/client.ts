@@ -6,7 +6,7 @@ import Anthropic from "@anthropic-ai/sdk";
  * model provider swappable and makes the "is AI configured" check
  * consistent everywhere.
  */
-const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-sonnet-4-5-20250929";
+const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-sonnet-5";
 
 let client: Anthropic | null = null;
 
