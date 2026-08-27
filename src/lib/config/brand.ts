@@ -15,7 +15,7 @@ export const brand = {
     twitter: "@zoloapp",
     instagram: "@zolo",
   },
-  supportEmail: "hello@zolo.app",
+  supportEmail: "hello@discoverzolo.com",
 } as const;
 
 export const nav = {
