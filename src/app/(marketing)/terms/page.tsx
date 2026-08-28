@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Terms of Service" };
 
 export default function TermsOfServicePage() {
   return (
-    <LegalPage title="Terms of Service" updated="August 22, 2026">
+    <LegalPage title="Terms of Service" updated="August 27, 2026">
       <p>
         These Terms of Service (&ldquo;Terms&rdquo;) govern your use of {brand.name}&apos;s website and app (the
         &ldquo;Service&rdquo;). By creating an account or using the Service, you agree to these Terms.
@@ -39,6 +39,11 @@ export default function TermsOfServicePage() {
             party; {brand.name} is not a party to that transaction and is not responsible for it.</li>
           <li>We do not fabricate business information. Where live data isn&apos;t available, the Service will say
             so rather than guess.</li>
+          <li>The Service uses Google Maps Platform APIs for maps, location search, and place data. By using the
+            Service, you are also bound by Google&apos;s Terms of Service, available at{" "}
+            <a href="https://cloud.google.com/maps-platform/terms" target="_blank" rel="noopener noreferrer">
+              cloud.google.com/maps-platform/terms
+            </a>.</li>
         </ul>
       </section>
 
