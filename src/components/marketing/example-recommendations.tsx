@@ -24,8 +24,8 @@ export function ExampleRecommendations({ experiences }: { experiences: Experienc
               reasoning={
                 [
                   "You're into outdoor adventure and photography. This combines both.",
-                  "You said you love trying new food — this crawl hits six spots.",
-                  "Matches your adventurous streak and love of nature.",
+                  "You said you're into nightlife and music — this hidden gem is exactly your scene.",
+                  "Matches your interest in wellness — a full reset day built around it.",
                 ][i]
               }
             />

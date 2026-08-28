@@ -10,7 +10,7 @@ import { getExperienceProvider } from "@/services/providers";
 
 export default async function LandingPage() {
   const provider = await getExperienceProvider();
-  const featured = await provider.list({ featuredOnly: true, limit: 3 });
+  const featured = await provider.list({ city: "New York", limit: 3 });
 
   return (
     <>
