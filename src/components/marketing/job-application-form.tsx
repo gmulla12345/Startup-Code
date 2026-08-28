@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/input";
 
 export function JobApplicationForm({ role }: { role: string }) {
-  const [form, setForm] = useState({ fullName: "", email: "", linkedinUrl: "", portfolioUrl: "", coverLetter: "" });
+  const [form, setForm] = useState({ fullName: "", email: "", linkedinUrl: "", coverLetter: "" });
+  const [resume, setResume] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -15,18 +16,15 @@ export function JobApplicationForm({ role }: { role: string }) {
     e.preventDefault();
     setSubmitting(true);
     try {
-      const res = await fetch("/api/careers/apply", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          role,
-          fullName: form.fullName,
-          email: form.email,
-          linkedinUrl: form.linkedinUrl || null,
-          portfolioUrl: form.portfolioUrl || null,
-          coverLetter: form.coverLetter,
-        }),
-      });
+      const body = new FormData();
+      body.set("role", role);
+      body.set("fullName", form.fullName);
+      body.set("email", form.email);
+      body.set("linkedinUrl", form.linkedinUrl);
+      body.set("coverLetter", form.coverLetter);
+      if (resume) body.set("resume", resume);
+
+      const res = await fetch("/api/careers/apply", { method: "POST", body });
       if (!res.ok) {
         const json = await res.json();
         throw new Error(json.error ?? "Failed to submit application.");
@@ -68,17 +66,22 @@ export function JobApplicationForm({ role }: { role: string }) {
           onChange={(e) => setForm({ ...form, email: e.target.value })}
         />
       </div>
-      <div className="grid sm:grid-cols-2 gap-4">
-        <Input
-          placeholder="LinkedIn URL (optional)"
-          value={form.linkedinUrl}
-          onChange={(e) => setForm({ ...form, linkedinUrl: e.target.value })}
+      <Input
+        placeholder="LinkedIn URL (optional)"
+        value={form.linkedinUrl}
+        onChange={(e) => setForm({ ...form, linkedinUrl: e.target.value })}
+      />
+      <div>
+        <label className="block text-sm font-medium text-foreground mb-1.5">
+          Resume / portfolio (optional)
+        </label>
+        <input
+          type="file"
+          accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          onChange={(e) => setResume(e.target.files?.[0] ?? null)}
+          className="block w-full text-sm text-foreground-muted file:mr-4 file:rounded-full file:border-0 file:bg-[var(--ember-soft)] file:px-4 file:py-2 file:text-sm file:font-medium file:text-[color:var(--ember-strong)] hover:file:opacity-90"
         />
-        <Input
-          placeholder="Portfolio / work samples URL (optional)"
-          value={form.portfolioUrl}
-          onChange={(e) => setForm({ ...form, portfolioUrl: e.target.value })}
-        />
+        <p className="text-xs text-foreground-subtle mt-1">PDF, DOC, or DOCX, up to 5MB.</p>
       </div>
       <Textarea
         placeholder="Tell us why you're a fit for this role (min 20 characters)"

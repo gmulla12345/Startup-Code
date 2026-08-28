@@ -323,12 +323,30 @@ create table if not exists public.job_applications (
   email text not null,
   linkedin_url text,
   portfolio_url text,
+  resume_url text,
   cover_letter text not null,
   status text not null default 'new' check (status in ('new','reviewing','contacted','rejected','hired')),
   created_at timestamptz not null default now()
 );
 
+do $$
+begin
+  if not exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'job_applications' and column_name = 'resume_url'
+  ) then
+    alter table public.job_applications add column resume_url text;
+  end if;
+end $$;
+
 create index if not exists idx_job_applications_role on public.job_applications(role);
+
+-- Storage bucket for uploaded resumes/portfolios. Public so the stored URL
+-- works directly (like the existing avatars/experience-photos pattern) —
+-- files are only reachable via their random UUID-prefixed path, never listed.
+insert into storage.buckets (id, name, public)
+values ('resumes', 'resumes', true)
+on conflict (id) do nothing;
 
 -- =========================================================================
 -- updated_at triggers
