@@ -1,5 +1,11 @@
 import { z } from "zod";
 
+export const contactMessageSchema = z.object({
+  name: z.string().min(1).max(100),
+  email: z.string().email(),
+  message: z.string().min(10).max(4000),
+});
+
 export const jobApplicationSchema = z.object({
   role: z.string().min(1).max(100),
   fullName: z.string().min(1).max(100),

@@ -15,7 +15,7 @@ const COLUMNS = [
     links: [
       { label: "About", href: "/about" },
       { label: "Careers", href: "/careers" },
-      { label: "Contact", href: `mailto:${brand.supportEmail}` },
+      { label: "Contact", href: "/contact" },
     ],
   },
   {
