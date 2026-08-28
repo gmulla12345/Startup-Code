@@ -37,7 +37,7 @@ const TESTIMONIALS: Testimonial[] = [
 const STATS = [
   { value: "20+", label: "curated categories" },
   { value: "Hybrid AI", label: "scoring + reasoning engine" },
-  { value: "3 cities", label: "and growing at launch" },
+  { value: "Worldwide", label: "discovery, anywhere you are" },
 ];
 
 export function SocialProof() {
