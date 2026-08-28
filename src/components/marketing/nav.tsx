@@ -7,9 +7,9 @@ import { Logo } from "@/components/shared/logo";
 import { Button } from "@/components/ui/button";
 
 const LINKS = [
-  { href: "#how-it-works", label: "How it works" },
-  { href: "#pricing", label: "Pricing" },
-  { href: "#faq", label: "FAQ" },
+  { href: "/#how-it-works", label: "How it works" },
+  { href: "/#pricing", label: "Pricing" },
+  { href: "/faq", label: "FAQ" },
 ];
 
 export function MarketingNav() {
@@ -21,11 +21,17 @@ export function MarketingNav() {
         <Logo />
 
         <nav className="hidden md:flex items-center gap-8">
-          {LINKS.map((link) => (
-            <a key={link.href} href={link.href} className="text-sm font-medium text-foreground-muted hover:text-foreground">
-              {link.label}
-            </a>
-          ))}
+          {LINKS.map((link) =>
+            link.href.startsWith("/#") ? (
+              <a key={link.href} href={link.href} className="text-sm font-medium text-foreground-muted hover:text-foreground">
+                {link.label}
+              </a>
+            ) : (
+              <Link key={link.href} href={link.href} className="text-sm font-medium text-foreground-muted hover:text-foreground">
+                {link.label}
+              </Link>
+            )
+          )}
         </nav>
 
         <div className="hidden md:flex items-center gap-2">
@@ -44,11 +50,17 @@ export function MarketingNav() {
 
       {open && (
         <div className="md:hidden border-t border-border px-4 py-4 space-y-4 bg-surface">
-          {LINKS.map((link) => (
-            <a key={link.href} href={link.href} onClick={() => setOpen(false)} className="block text-sm font-medium text-foreground">
-              {link.label}
-            </a>
-          ))}
+          {LINKS.map((link) =>
+            link.href.startsWith("/#") ? (
+              <a key={link.href} href={link.href} onClick={() => setOpen(false)} className="block text-sm font-medium text-foreground">
+                {link.label}
+              </a>
+            ) : (
+              <Link key={link.href} href={link.href} onClick={() => setOpen(false)} className="block text-sm font-medium text-foreground">
+                {link.label}
+              </Link>
+            )
+          )}
           <div className="flex flex-col gap-2 pt-2">
             <Button asChild variant="outline">
               <Link href="/login">Log in</Link>
