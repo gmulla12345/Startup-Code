@@ -114,7 +114,13 @@ domain; added a dedicated `/faq` page; demo catalog now labeled (see above).
 1. **Stripe live mode** — blocked on the user activating their Stripe account (business/bank/
    identity — cannot be done by an agent). Once they share a live secret key: create the $19.99/mo
    product+price in live mode, create a webhook endpoint at `https://discoverzolo.com/api/stripe/webhook`,
-   push the 4 live env vars via `vercel env add`, test one real checkout.
+   push the 4 live env vars via `vercel env add`, test one real checkout. **Also add a free trial**
+   at this point — user confirmed there will be one (2026-08-30), ask how many days (7 or 14 are
+   typical) and add `trial_period_days` to the Checkout Session in
+   [src/lib/stripe/checkout.ts](src/lib/stripe/checkout.ts) (currently has no trial logic at all —
+   confirmed by grep, so don't assume it's already there). The Terms of Service being generated via
+   Termly already answers "yes" to offering a free trial, so the code needs to actually match that
+   before launch.
 2. Google OAuth — needs the user to create a Google Cloud OAuth client themselves.
 3. Custom SMTP for Supabase Auth — needs the user to sign up with a provider (Resend/Postmark/etc).
 4. `ANTHROPIC_API_KEY` — needs the user's own Anthropic console key.
