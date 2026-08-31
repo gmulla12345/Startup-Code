@@ -38,7 +38,7 @@ export function Hero() {
 
         <div className="mt-16 grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[
-            { src: "photo-1502933691298-84fc14542831", label: "Kayaking" },
+            { src: "photo-1450500392544-c2cb0fd6e3b8", label: "Kayaking" },
             { src: "photo-1554797589-7241bb691973", label: "Izakaya crawl" },
             { src: "photo-1441974231531-c6227db76b6e", label: "Waterfall hike" },
             { src: "photo-1785637981940-0ec1cfefed10", label: "Digital art" },

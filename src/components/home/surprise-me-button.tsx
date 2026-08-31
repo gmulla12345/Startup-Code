@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Sparkles, X } from "lucide-react";
 import { toast } from "sonner";
 import Image from "next/image";
@@ -11,11 +11,54 @@ import { Spinner } from "@/components/ui/spinner";
 import { formatPrice, formatDuration } from "@/lib/utils/format";
 import type { SurpriseMeResult } from "@/types/ai";
 
+// Persists the most recent Surprise Me result so it can be reopened later —
+// closing the card or leaving the page shouldn't lose it. Storing only the
+// latest one is deliberate: this isn't a history, just "show me what I
+// already got" instead of forcing a new AI call to see it again.
+const STORAGE_KEY = "zolo:lastSurprise";
+
+function loadStoredResult(): SurpriseMeResult | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as SurpriseMeResult) : null;
+  } catch {
+    return null;
+  }
+}
+
+function storeResult(result: SurpriseMeResult | null) {
+  try {
+    if (result) localStorage.setItem(STORAGE_KEY, JSON.stringify(result));
+    else localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // localStorage unavailable (private browsing, etc.) — safe to no-op.
+  }
+}
+
 export function SurpriseMeButton() {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<SurpriseMeResult | null>(null);
+  const [savedResult, setSavedResult] = useState<SurpriseMeResult | null>(null);
   const [excludeIds, setExcludeIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reads localStorage, which isn't available during SSR
+    setSavedResult(loadStoredResult());
+  }, []);
+
+  function showResult(next: SurpriseMeResult) {
+    setResult(next);
+    setSavedResult(next);
+    storeResult(next);
+    setOpen(true);
+  }
+
+  function viewLastSurprise() {
+    if (!savedResult) return;
+    setResult(savedResult);
+    setOpen(true);
+  }
 
   async function fetchSurprise(exclude: string[] = []) {
     setLoading(true);
@@ -35,8 +78,7 @@ export function SurpriseMeButton() {
         return;
       }
 
-      setResult(json.result);
-      setOpen(true);
+      showResult(json.result);
     } catch {
       toast.error("Something went wrong. Try again.");
     } finally {
@@ -58,7 +100,7 @@ export function SurpriseMeButton() {
     const json = await res.json();
     setLoading(false);
 
-    if (json.result) setResult(json.result);
+    if (json.result) showResult(json.result);
     else {
       toast.info("That's all we've got for now — check back later.");
       setOpen(false);
@@ -90,6 +132,15 @@ export function SurpriseMeButton() {
           <div className="text-sm text-white/80">One perfect recommendation, right now.</div>
         </div>
       </button>
+
+      {savedResult && (
+        <button
+          onClick={viewLastSurprise}
+          className="mt-2 text-sm text-ember font-medium hover:underline"
+        >
+          View my Surprise: {savedResult.experience.title}
+        </button>
+      )}
 
       {open && result && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-0 sm:p-4">

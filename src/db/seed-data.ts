@@ -1,11 +1,20 @@
 import type { Experience, ExperienceCategory } from "@/types/database";
 
 /**
- * Realistic demo catalog used two ways:
+ * Fictional demo catalog — invented tours/venues with stock photography, for
+ * local development only. Used two ways:
  *  1. By the in-memory MockExperienceProvider so the app is fully usable
  *     with zero external services configured.
- *  2. By scripts/seed-supabase.ts to populate a real Supabase database for
- *     a convincing demo/staging environment.
+ *  2. By scripts/seed-supabase.ts, for local/staging databases only.
+ *
+ * Never re-run scripts/seed-supabase.ts against production. This content
+ * used to be live in production (fictional listings, some paired with real
+ * businesses' names/addresses via externalBookingUrl) until it was found to
+ * be actively misleading and removed 2026-08-31 — see CLAUDE.md. Real
+ * listings in production come only from GooglePlacesExperienceProvider
+ * (real places, real photos, real addresses). SupabaseExperienceProvider
+ * also now hard-excludes source_provider = 'mock' rows from every query as
+ * a second guardrail, so even an accidental re-seed can't resurface this.
  */
 
 export const CATEGORIES: { id: ExperienceCategory; label: string; icon: string; sortOrder: number }[] = [
@@ -57,7 +66,7 @@ export const EXPERIENCES: SeedExperience[] = [
     isHiddenGem: false,
     isFeatured: true,
     isPremium: false,
-    externalBookingUrl: "https://www.baltimorewatertaxi.com",
+    externalBookingUrl: null,
     sourceProvider: "mock",
     sourceId: null,
     requirements: ["Must be able to swim", "Minimum age 12"],
@@ -189,7 +198,7 @@ export const EXPERIENCES: SeedExperience[] = [
     isHiddenGem: false,
     isFeatured: true,
     isPremium: true,
-    externalBookingUrl: "https://www.viator.com",
+    externalBookingUrl: null,
     sourceProvider: "mock",
     sourceId: null,
     requirements: [],
@@ -288,7 +297,7 @@ export const EXPERIENCES: SeedExperience[] = [
     isHiddenGem: false,
     isFeatured: false,
     isPremium: false,
-    externalBookingUrl: "https://www.movementgyms.com",
+    externalBookingUrl: null,
     sourceProvider: "mock",
     sourceId: null,
     requirements: ["Closed-toe shoes recommended"],
@@ -321,7 +330,7 @@ export const EXPERIENCES: SeedExperience[] = [
     isHiddenGem: false,
     isFeatured: true,
     isPremium: true,
-    externalBookingUrl: "https://www.cruisebaltimore.com",
+    externalBookingUrl: null,
     sourceProvider: "mock",
     sourceId: null,
     requirements: [],
@@ -387,7 +396,7 @@ export const EXPERIENCES: SeedExperience[] = [
     isHiddenGem: false,
     isFeatured: true,
     isPremium: false,
-    externalBookingUrl: "https://www.bikeandroll.com",
+    externalBookingUrl: null,
     sourceProvider: "mock",
     sourceId: null,
     requirements: ["Basic biking ability"],
@@ -519,7 +528,7 @@ export const EXPERIENCES: SeedExperience[] = [
     isHiddenGem: true,
     isFeatured: true,
     isPremium: true,
-    externalBookingUrl: "https://www.viator.com",
+    externalBookingUrl: null,
     sourceProvider: "mock",
     sourceId: null,
     requirements: ["21+"],
@@ -552,7 +561,7 @@ export const EXPERIENCES: SeedExperience[] = [
     isHiddenGem: false,
     isFeatured: true,
     isPremium: false,
-    externalBookingUrl: "https://www.teamlab.art",
+    externalBookingUrl: null,
     sourceProvider: "mock",
     sourceId: null,
     requirements: [],
@@ -651,7 +660,7 @@ export const EXPERIENCES: SeedExperience[] = [
     isHiddenGem: false,
     isFeatured: false,
     isPremium: false,
-    externalBookingUrl: "https://www.escaperoom.com",
+    externalBookingUrl: null,
     sourceProvider: "mock",
     sourceId: null,
     requirements: ["2-8 people per group"],

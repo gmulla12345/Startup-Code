@@ -45,12 +45,20 @@ function rowToExperience(row: Record<string, unknown>): Experience {
  * Reads the experience catalog from Supabase Postgres. Falls through to
  * client-side filtering for a couple of fields (radius, tag overlap) that
  * are awkward to express portably in PostgREST filters at this scale.
+ *
+ * `source_provider = 'mock'` rows are fictional demo/seed content (invented
+ * tours, stock photos) and are excluded from every query below, always —
+ * not just because the seed rows were deleted from production. This is a
+ * deliberate guardrail so re-running scripts/seed-supabase.ts, or an admin
+ * accidentally re-importing seed data, can never put fabricated listings
+ * back in front of real users. That content is only meant to power
+ * MockExperienceProvider for zero-credential local dev.
  */
 export class SupabaseExperienceProvider implements ExperienceProvider {
   constructor(private client: SupabaseClient) {}
 
   async list(query: ExperienceQuery): Promise<Experience[]> {
-    let q = this.client.from("experiences").select("*");
+    let q = this.client.from("experiences").select("*").neq("source_provider", "mock");
 
     if (query.city) q = q.ilike("city", `%${query.city}%`);
     if (query.category) q = q.eq("category", query.category);
@@ -87,13 +95,23 @@ export class SupabaseExperienceProvider implements ExperienceProvider {
   }
 
   async getById(id: string): Promise<Experience | null> {
-    const { data, error } = await this.client.from("experiences").select("*").eq("id", id).maybeSingle();
+    const { data, error } = await this.client
+      .from("experiences")
+      .select("*")
+      .eq("id", id)
+      .neq("source_provider", "mock")
+      .maybeSingle();
     if (error || !data) return null;
     return rowToExperience(data);
   }
 
   async getBySlug(slug: string): Promise<Experience | null> {
-    const { data, error } = await this.client.from("experiences").select("*").eq("slug", slug).maybeSingle();
+    const { data, error } = await this.client
+      .from("experiences")
+      .select("*")
+      .eq("slug", slug)
+      .neq("source_provider", "mock")
+      .maybeSingle();
     if (error || !data) return null;
     return rowToExperience(data);
   }
@@ -106,6 +124,7 @@ export class SupabaseExperienceProvider implements ExperienceProvider {
       .select("*")
       .eq("category", source.category)
       .neq("id", experienceId)
+      .neq("source_provider", "mock")
       .limit(limit);
     if (error) return [];
     return (data ?? []).map(rowToExperience);

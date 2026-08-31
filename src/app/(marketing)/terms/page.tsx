@@ -82,8 +82,9 @@ export default function TermsOfServicePage() {
             rather than guess.
           </li>
           <li>
-            The Service uses Google Maps Platform APIs for maps, location search, and place data. By using the
-            Service, you are also bound by Google&apos;s Terms of Service, available at{" "}
+            The Service uses Google Maps Platform APIs (Places and Geocoding) for location search and real,
+            live place data — including photos, ratings, and addresses sourced directly from Google. By using
+            the Service, you are also bound by Google&apos;s Terms of Service, available at{" "}
             <a href="https://cloud.google.com/maps-platform/terms" target="_blank" rel="noopener noreferrer">
               cloud.google.com/maps-platform/terms
             </a>

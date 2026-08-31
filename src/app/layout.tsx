@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Fraunces, Inter } from "next/font/google";
 import { Toaster } from "sonner";
 import { brand } from "@/lib/config/brand";
+import { GoogleAttribution } from "@/components/shared/google-attribution";
 import "./globals.css";
 
 const inter = Inter({
@@ -53,6 +54,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="en" className={`${inter.variable} ${fraunces.variable} h-full antialiased`} suppressHydrationWarning>
       <body className="min-h-full flex flex-col bg-background text-foreground">
         {children}
+        <GoogleAttribution />
         <Toaster position="top-center" richColors closeButton />
       </body>
     </html>

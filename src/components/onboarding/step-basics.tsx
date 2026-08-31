@@ -114,6 +114,7 @@ export function StepBasics({ data, onChange }: { data: BasicsData; onChange: (da
                 {r.formattedAddress}
               </button>
             ))}
+            <div className="px-4 py-1.5 text-[10px] text-foreground-subtle border-t border-border">Powered by Google</div>
           </div>
         )}
       </div>

@@ -2,6 +2,11 @@ import { createClient } from "@/lib/supabase/server";
 import { getProfileByUserId } from "@/lib/repositories/profile";
 import { DiscoverGrid } from "@/components/discover/discover-grid";
 
+// Falls back to New York when the visitor is logged out or hasn't set a
+// location yet, so Discover has real (Google Places-sourced) results to
+// show instead of coming back empty.
+const DEFAULT_LOCATION = { latitude: 40.7128, longitude: -74.006 };
+
 export default async function DiscoverPage({ searchParams }: PageProps<"/discover">) {
   const params = await searchParams;
   const supabase = await createClient();
@@ -18,8 +23,8 @@ export default async function DiscoverPage({ searchParams }: PageProps<"/discove
       <DiscoverGrid
         isAuthenticated={Boolean(user)}
         initialHiddenGemsOnly={params.hiddenGemsOnly === "true"}
-        latitude={profile?.latitude ?? null}
-        longitude={profile?.longitude ?? null}
+        latitude={profile?.latitude ?? DEFAULT_LOCATION.latitude}
+        longitude={profile?.longitude ?? DEFAULT_LOCATION.longitude}
       />
     </div>
   );

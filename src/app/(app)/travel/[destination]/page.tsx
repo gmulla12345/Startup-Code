@@ -22,7 +22,13 @@ export default async function TravelDestinationPage({ params }: PageProps<"/trav
   if (!dest) notFound();
 
   const provider = await getExperienceProvider();
-  const experiences = await provider.list({ city: dest.city, limit: 40 });
+  const experiences = await provider.list({
+    city: dest.city,
+    latitude: dest.latitude,
+    longitude: dest.longitude,
+    radiusMiles: 25,
+    limit: 40,
+  });
 
   const toItems = (list: typeof experiences) => list.map((experience) => ({ experience }));
   const hiddenGems = experiences.filter((e) => e.isHiddenGem);
