@@ -8,6 +8,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
 import { StepInterests } from "@/components/onboarding/step-interests";
 import { StepPersonality } from "@/components/onboarding/step-personality";
 import { StepPreferences } from "@/components/onboarding/step-preferences";
@@ -63,7 +64,16 @@ export default function EditProfilePage() {
     }
   }
 
-  if (loading) return <div className="max-w-2xl mx-auto px-4 py-12 text-foreground-muted">Loading...</div>;
+  if (loading) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 space-y-4">
+        <Skeleton className="h-5 w-32" />
+        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
@@ -106,7 +116,7 @@ export default function EditProfilePage() {
       </div>
 
       <div className="flex justify-end mt-8 pt-6 border-t border-border">
-        <Button size="lg" onClick={handleSave} disabled={saving}>
+        <Button size="lg" onClick={handleSave} loading={saving}>
           {saving ? "Saving..." : "Save changes"}
         </Button>
       </div>

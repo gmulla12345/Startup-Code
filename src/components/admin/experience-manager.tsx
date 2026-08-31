@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/input";
 import { PillGroup } from "@/components/onboarding/pill-group";
+import { Skeleton } from "@/components/ui/skeleton";
 import { CATEGORIES } from "@/db/seed-data";
 
 interface AdminExperience {
@@ -194,7 +195,7 @@ export function ExperienceManager() {
           </div>
 
           <div className="flex gap-2">
-            <Button onClick={handleCreate} disabled={saving}>
+            <Button onClick={handleCreate} loading={saving}>
               {saving ? "Creating..." : "Create experience"}
             </Button>
             <Button variant="ghost" onClick={() => setShowForm(false)}>
@@ -218,8 +219,12 @@ export function ExperienceManager() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={5} className="p-6 text-center text-foreground-muted">
-                  Loading...
+                <td colSpan={5} className="p-3">
+                  <div className="space-y-2">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Skeleton key={i} className="h-10 w-full" />
+                    ))}
+                  </div>
                 </td>
               </tr>
             ) : (

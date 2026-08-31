@@ -21,7 +21,7 @@ export function UpgradeButton() {
   }
 
   return (
-    <Button size="lg" className="w-full" onClick={handleClick} disabled={loading}>
+    <Button size="lg" className="w-full" onClick={handleClick} loading={loading}>
       {loading ? "Redirecting..." : "Upgrade to Premium"}
     </Button>
   );

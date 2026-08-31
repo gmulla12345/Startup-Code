@@ -80,7 +80,7 @@ function ResetPasswordForm() {
             required
             disabled={!sessionReady}
           />
-          <Button type="submit" size="lg" className="w-full" disabled={loading || !sessionReady}>
+          <Button type="submit" size="lg" className="w-full" loading={loading} disabled={!sessionReady}>
             {loading ? "Updating..." : "Update password"}
           </Button>
         </form>
@@ -108,7 +108,7 @@ function ResetPasswordForm() {
       ) : (
         <form onSubmit={handleRequestReset} className="space-y-3">
           <Input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          <Button type="submit" size="lg" className="w-full" disabled={loading}>
+          <Button type="submit" size="lg" className="w-full" loading={loading}>
             {loading ? "Sending..." : "Send reset link"}
           </Button>
         </form>

@@ -70,9 +70,9 @@ function LoginForm() {
         size="lg"
         className="w-full mb-4"
         onClick={handleGoogle}
-        disabled={googleLoading}
+        loading={googleLoading}
       >
-        <GoogleIcon className="h-4 w-4" />
+        {!googleLoading && <GoogleIcon className="h-4 w-4" />}
         {googleLoading ? "Connecting..." : "Continue with Google"}
       </Button>
 
@@ -96,7 +96,7 @@ function LoginForm() {
             Forgot password?
           </Link>
         </div>
-        <Button type="submit" size="lg" className="w-full" disabled={loading}>
+        <Button type="submit" size="lg" className="w-full" loading={loading}>
           {loading ? "Logging in..." : "Log in"}
         </Button>
       </form>

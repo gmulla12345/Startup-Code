@@ -86,9 +86,9 @@ export default function SignupPage() {
         size="lg"
         className="w-full mb-4"
         onClick={handleGoogle}
-        disabled={googleLoading}
+        loading={googleLoading}
       >
-        <GoogleIcon className="h-4 w-4" />
+        {!googleLoading && <GoogleIcon className="h-4 w-4" />}
         {googleLoading ? "Connecting..." : "Continue with Google"}
       </Button>
 
@@ -109,7 +109,7 @@ export default function SignupPage() {
           required
           minLength={8}
         />
-        <Button type="submit" size="lg" className="w-full" disabled={loading}>
+        <Button type="submit" size="lg" className="w-full" loading={loading}>
           {loading ? "Creating account..." : "Start Discovering"}
         </Button>
         <p className="text-xs text-foreground-subtle text-center pt-1">

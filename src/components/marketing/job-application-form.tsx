@@ -91,7 +91,7 @@ export function JobApplicationForm({ role }: { role: string }) {
         value={form.coverLetter}
         onChange={(e) => setForm({ ...form, coverLetter: e.target.value })}
       />
-      <Button type="submit" size="lg" disabled={submitting} className="w-full sm:w-auto">
+      <Button type="submit" size="lg" loading={submitting} className="w-full sm:w-auto">
         {submitting ? "Submitting..." : "Submit Application"}
       </Button>
     </form>

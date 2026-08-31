@@ -33,8 +33,8 @@ export function CreateTripButton({ destinationCity, destinationCountry }: { dest
   }
 
   return (
-    <Button onClick={handleClick} disabled={loading} className="shrink-0">
-      <Plus className="h-4 w-4" /> {loading ? "Adding..." : `Plan a trip to ${destinationCity}`}
+    <Button onClick={handleClick} loading={loading} className="shrink-0">
+      {!loading && <Plus className="h-4 w-4" />} {loading ? "Adding..." : `Plan a trip to ${destinationCity}`}
     </Button>
   );
 }

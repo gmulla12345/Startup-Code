@@ -59,11 +59,11 @@ export function SubscriptionCard({ subscription }: { subscription: Subscription 
           : `Upgrade for unlimited Surprise Me, AI trip planning, and exclusive experiences — $${pricing.premium.priceMonthly}/mo.`}
       </p>
       {isPremium ? (
-        <Button variant="outline" onClick={handleManage} disabled={loading}>
+        <Button variant="outline" onClick={handleManage} loading={loading}>
           {loading ? "Loading..." : "Manage subscription"}
         </Button>
       ) : (
-        <Button onClick={handleUpgrade} disabled={loading}>
+        <Button onClick={handleUpgrade} loading={loading}>
           {loading ? "Loading..." : "Upgrade to Premium"}
         </Button>
       )}

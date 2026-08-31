@@ -152,7 +152,7 @@ export function WeekendPlanner({ isPremium }: { isPremium: boolean }) {
             />
           </div>
 
-          <Button size="lg" className="w-full" onClick={generate} disabled={loading || request.days.length === 0}>
+          <Button size="lg" className="w-full" onClick={generate} loading={loading} disabled={request.days.length === 0}>
             {loading ? "Building your weekend..." : "Generate Plan"}
           </Button>
         </div>
@@ -180,7 +180,7 @@ export function WeekendPlanner({ isPremium }: { isPremium: boolean }) {
             <Button variant="outline" onClick={() => setPlan(null)} className="flex-1">
               Start over
             </Button>
-            <Button onClick={savePlan} disabled={saving} className="flex-1">
+            <Button onClick={savePlan} loading={saving} className="flex-1">
               {saving ? "Saving..." : "Save Plan"}
             </Button>
           </div>

@@ -7,6 +7,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Spinner } from "@/components/ui/spinner";
 import { formatPrice, formatDuration } from "@/lib/utils/format";
 import type { SurpriseMeResult } from "@/types/ai";
 
@@ -82,7 +83,7 @@ export function SurpriseMeButton() {
         className="w-full rounded-[var(--radius-lg)] p-5 flex items-center gap-4 text-left bg-[linear-gradient(135deg,var(--ember),var(--ember-strong))] text-white shadow-[var(--shadow-raised)] hover:brightness-105 transition-all disabled:opacity-70"
       >
         <div className="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-          <Sparkles className="h-6 w-6" />
+          {loading ? <Spinner className="h-6 w-6" /> : <Sparkles className="h-6 w-6" />}
         </div>
         <div className="flex-1">
           <div className="font-display text-lg font-semibold">{loading ? "Finding something..." : "Surprise Me"}</div>
@@ -135,7 +136,7 @@ export function SurpriseMeButton() {
                 <Button asChild size="lg" onClick={handleLetsGo}>
                   <Link href={`/experience/${result.experience.slug}`}>Let&apos;s Go</Link>
                 </Button>
-                <Button variant="outline" size="lg" onClick={handleNotForMe} disabled={loading}>
+                <Button variant="outline" size="lg" onClick={handleNotForMe} loading={loading}>
                   {loading ? "Finding another..." : "Not For Me"}
                 </Button>
               </div>
