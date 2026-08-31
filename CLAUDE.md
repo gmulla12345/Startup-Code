@@ -120,7 +120,11 @@ domain; added a dedicated `/faq` page; demo catalog now labeled (see above).
    [src/lib/stripe/checkout.ts](src/lib/stripe/checkout.ts) (currently has no trial logic at all —
    confirmed by grep, so don't assume it's already there). The Terms of Service being generated via
    Termly already answers "yes" to offering a free trial, so the code needs to actually match that
-   before launch.
+   before launch. **Also enable PayPal** eventually (user confirmed 2026-08-30) — requires turning
+   it on in the Stripe Dashboard → Settings → Payment Methods; the checkout code has no
+   `payment_method_types` restriction so once PayPal is enabled account-side it should just work
+   with no code changes needed. Not done yet — the current Terms of Service intentionally only
+   lists Visa/Mastercard/Amex/Discover, since PayPal isn't actually live.
 2. Google OAuth — needs the user to create a Google Cloud OAuth client themselves.
 3. Custom SMTP for Supabase Auth — needs the user to sign up with a provider (Resend/Postmark/etc).
 4. `ANTHROPIC_API_KEY` — needs the user's own Anthropic console key.
