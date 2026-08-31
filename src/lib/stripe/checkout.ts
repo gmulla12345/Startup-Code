@@ -47,7 +47,7 @@ export async function createCheckoutSession(params: {
       line_items: [{ price: pricing.premium.priceId, quantity: 1 }],
       success_url: params.successUrl,
       cancel_url: params.cancelUrl,
-      subscription_data: { metadata: { userId: params.userId } },
+      subscription_data: { trial_period_days: 7, metadata: { userId: params.userId } },
       metadata: { userId: params.userId },
       allow_promotion_codes: true,
       // Stripe Tax: calculates and collects the right tax for the
