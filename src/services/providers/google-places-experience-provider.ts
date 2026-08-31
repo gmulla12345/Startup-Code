@@ -25,6 +25,17 @@ const CATEGORY_TO_PLACE_TYPE: Record<ExperienceCategory, string> = {
   social: "bar",
 };
 
+// When no specific category is requested (the common case for the home feed
+// and Surprise Me), searching only "tourist_attraction" biases heavily
+// toward the handful of most-famous landmarks in an area — Google's Nearby
+// Search ranks by prominence, so that one bucket surfaces the same obvious
+// places every time. Fanning out across several types in parallel gives a
+// genuinely diverse, much larger real candidate pool (still 100% real
+// places) for the scorer to actually discriminate between, including room
+// for the isHiddenGem heuristic (low review count + high rating) to surface
+// something other than the most obvious tourist spot.
+const DIVERSITY_TYPES = ["tourist_attraction", "restaurant", "cafe", "museum", "park", "bar", "spa"];
+
 const PLACE_TYPE_TO_CATEGORY: Record<string, ExperienceCategory> = {
   restaurant: "food_drink",
   cafe: "food_drink",
@@ -155,13 +166,11 @@ export class GooglePlacesExperienceProvider implements ExperienceProvider {
     };
   }
 
-  async list(query: ExperienceQuery): Promise<Experience[]> {
-    if (query.latitude == null || query.longitude == null) return [];
-
+  private async fetchNearby(type: string, query: ExperienceQuery): Promise<GooglePlace[]> {
     const url = new URL("https://maps.googleapis.com/maps/api/place/nearbysearch/json");
     url.searchParams.set("location", `${query.latitude},${query.longitude}`);
     url.searchParams.set("radius", String(Math.min((query.radiusMiles ?? 15) * 1609, 50000)));
-    url.searchParams.set("type", query.category ? CATEGORY_TO_PLACE_TYPE[query.category] : "tourist_attraction");
+    url.searchParams.set("type", type);
     if (query.search) url.searchParams.set("keyword", query.search);
     url.searchParams.set("key", this.apiKey);
 
@@ -170,23 +179,46 @@ export class GooglePlacesExperienceProvider implements ExperienceProvider {
       if (!res.ok) return [];
       const data = (await res.json()) as { status: string; results: GooglePlace[] };
       if (data.status !== "OK" && data.status !== "ZERO_RESULTS") {
-        console.error("[google places] list failed:", data.status);
+        console.error("[google places] list failed:", type, data.status);
         return [];
       }
-      let results = (data.results ?? [])
-        .filter((p) => p.geometry?.location)
-        .map((p) => this.toExperience(p, query.city));
-
-      if (query.hiddenGemsOnly) results = results.filter((e) => e.isHiddenGem);
-      if (query.priceLevel && query.priceLevel.length > 0) {
-        results = results.filter((e) => query.priceLevel!.includes(e.priceLevel));
-      }
-
-      return results.slice(0, query.limit ?? 20);
+      return data.results ?? [];
     } catch (err) {
-      console.error("[google places] list threw:", err);
+      console.error("[google places] list threw:", type, err);
       return [];
     }
+  }
+
+  async list(query: ExperienceQuery): Promise<Experience[]> {
+    if (query.latitude == null || query.longitude == null) return [];
+
+    const types = query.category ? [CATEGORY_TO_PLACE_TYPE[query.category]] : DIVERSITY_TYPES;
+    const resultsByType = await Promise.all(types.map((type) => this.fetchNearby(type, query)));
+
+    const seenPlaceIds = new Set<string>();
+    const merged: GooglePlace[] = [];
+    for (const places of resultsByType) {
+      for (const place of places) {
+        if (!place.place_id || seenPlaceIds.has(place.place_id)) continue;
+        seenPlaceIds.add(place.place_id);
+        merged.push(place);
+      }
+    }
+
+    let results = merged
+      .filter((p) => p.geometry?.location)
+      .map((p) => this.toExperience(p, query.city));
+
+    if (query.excludeIds && query.excludeIds.length > 0) {
+      const excludeSet = new Set(query.excludeIds);
+      results = results.filter((e) => !excludeSet.has(e.id));
+    }
+    if (query.hiddenGemsOnly) results = results.filter((e) => e.isHiddenGem);
+    if (query.priceLevel && query.priceLevel.length > 0) {
+      results = results.filter((e) => query.priceLevel!.includes(e.priceLevel));
+    }
+
+    return results.slice(0, query.limit ?? 20);
   }
 
   private async fetchDetails(placeId: string): Promise<Experience | null> {

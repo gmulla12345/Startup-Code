@@ -1,25 +1,30 @@
 import type { Experience } from "@/types/database";
 import type { ExperienceProvider, ExperienceQuery } from "./types";
-import { MockExperienceProvider } from "./mock-experience-provider";
 
 /**
- * Wraps a primary provider (typically Supabase-backed) and falls back to
- * the in-memory mock catalog if it throws — e.g. Supabase credentials are
- * set but schema.sql hasn't been run yet, or the network call fails. This
- * is what makes "the app should still run without configured services" true
- * even when configuration is present but incomplete.
+ * Wraps a primary provider (typically Supabase-backed) and degrades to
+ * empty results if it throws, instead of crashing the page.
+ *
+ * This used to fall back to the in-memory fictional mock catalog on any
+ * error. That was a real bug, not just a defensive nicety: a Postgres type
+ * error (non-uuid Google Places ids leaking into a uuid `.not("id","in",...)`
+ * filter — fixed in supabase-experience-provider.ts) was silently degrading
+ * production to fabricated listings on every request that included a
+ * Google-sourced excludeId, which by 2026-08-31 is nearly every request. See
+ * CLAUDE.md, "Production catalog is Google Places-only" — fictional content
+ * must never reach real users, including on an error path. Returning empty
+ * (worse UX during a real outage, but never dishonest) is the only fallback
+ * that can't reintroduce that bug.
  */
 export class ResilientExperienceProvider implements ExperienceProvider {
-  private fallback = new MockExperienceProvider();
-
   constructor(private primary: ExperienceProvider) {}
 
   async list(query: ExperienceQuery): Promise<Experience[]> {
     try {
       return await this.primary.list(query);
     } catch (err) {
-      console.error("[providers] primary experience provider failed, using mock fallback:", err);
-      return this.fallback.list(query);
+      console.error("[providers] primary experience provider failed:", err);
+      return [];
     }
   }
 
@@ -27,8 +32,8 @@ export class ResilientExperienceProvider implements ExperienceProvider {
     try {
       return await this.primary.getById(id);
     } catch (err) {
-      console.error("[providers] primary experience provider failed, using mock fallback:", err);
-      return this.fallback.getById(id);
+      console.error("[providers] primary experience provider failed:", err);
+      return null;
     }
   }
 
@@ -36,8 +41,8 @@ export class ResilientExperienceProvider implements ExperienceProvider {
     try {
       return await this.primary.getBySlug(slug);
     } catch (err) {
-      console.error("[providers] primary experience provider failed, using mock fallback:", err);
-      return this.fallback.getBySlug(slug);
+      console.error("[providers] primary experience provider failed:", err);
+      return null;
     }
   }
 
@@ -45,8 +50,8 @@ export class ResilientExperienceProvider implements ExperienceProvider {
     try {
       return await this.primary.getRelated(experienceId, limit);
     } catch (err) {
-      console.error("[providers] primary experience provider failed, using mock fallback:", err);
-      return this.fallback.getRelated(experienceId, limit);
+      console.error("[providers] primary experience provider failed:", err);
+      return [];
     }
   }
 }

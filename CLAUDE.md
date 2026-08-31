@@ -163,6 +163,45 @@ listings an admin adds via `/admin/experiences`) alongside Google results; it's 
 now. If the user wants curated content back, it needs to be real and individually verified — not
 reused fiction.
 
+**IMPORTANT follow-up bug found and fixed same day (2026-08-31), read this before touching
+`ResilientExperienceProvider` or the excludeIds path again**: `ResilientExperienceProvider`
+silently fell back to the raw, unfiltered `MockExperienceProvider` (the fictional catalog) on
+*any* error from the primary Supabase call — and there was a real, common error that triggered
+it: `SupabaseExperienceProvider.list()`'s excludeIds filter did `.not("id","in",(...))` against
+the `experiences.id` uuid column using the *unfiltered* excludeIds list, which — once production
+went Google-only — almost always contains Google-prefixed ids like `g-ChIJ...` (not valid uuids).
+Postgres threw a type error on basically every "Not For Me" / Surprise Me exclude request, and
+the resilience wrapper quietly served fictional listings instead of surfacing the error. This is
+exactly the bug the user hit when Surprise Me kept repeating the same obvious landmark and once
+literally returned "Golden Hour Picnic & Photography Walk" — a fictional listing that no longer
+exists in the database. Fixed two ways: (1)
+[supabase-experience-provider.ts](src/services/providers/supabase-experience-provider.ts) now
+filters `excludeIds` to only valid-uuid-shaped strings before building the Postgres filter, and
+(2) [resilient-experience-provider.ts](src/services/providers/resilient-experience-provider.ts)
+no longer has a mock-data fallback at all — it returns empty/null on error instead, which is
+worse UX during a genuine outage but can never again silently reintroduce fictional content. If
+you add a new filter to `SupabaseExperienceProvider.list()`, sanity-check it against ids that
+don't look like uuids (Google-prefixed) before assuming the query is safe.
+
+Also fixed same day: `GooglePlacesExperienceProvider.list()` used to completely ignore
+`query.excludeIds` (a second, independent reason Surprise Me repeated itself), and defaulted to
+searching only Google's `tourist_attraction` place type whenever no category was specified —
+which is the common case for the home feed/Surprise Me — so results were dominated by the most
+prominent local landmarks with little variety. Both fixed in the same file: excludeIds is now
+applied, and an unfiltered query fans out across `DIVERSITY_TYPES` (tourist_attraction,
+restaurant, cafe, museum, park, bar, spa) in parallel and merges/dedupes the results, giving the
+scorer a much larger and more varied real candidate pool. Verified live: consecutive "Not For Me"
+clicks returned Times Square → Radio City Music Hall → Rockefeller Center, no repeats, no
+fictional content.
+
+**Also same day**: removed emoji from interest/goal chips app-wide
+([src/lib/config/taxonomy.ts](src/lib/config/taxonomy.ts),
+[src/components/onboarding/chip-select.tsx](src/components/onboarding/chip-select.tsx)) per user
+feedback that the Weekend Planner page "looked less premium" — `ChipSelect` now renders flowing
+pills matching `PillGroup`'s exact style/active-color (forest, not ember) instead of a boxy
+ember-colored grid with emoji, for one consistent visual language across onboarding and the
+Weekend Planner (both reuse the same component).
+
 ## Exact next steps (priority order)
 
 **Done since the last update:** deployed to production at `discoverzolo.com` (fixed a Vercel

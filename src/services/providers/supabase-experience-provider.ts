@@ -67,7 +67,17 @@ export class SupabaseExperienceProvider implements ExperienceProvider {
     if (query.hiddenGemsOnly) q = q.eq("is_hidden_gem", true);
     if (query.featuredOnly) q = q.eq("is_featured", true);
     if (query.search) q = q.ilike("title", `%${query.search}%`);
-    if (query.excludeIds && query.excludeIds.length > 0) q = q.not("id", "in", `(${query.excludeIds.join(",")})`);
+    // excludeIds can contain Google Places-sourced ids (prefixed "g-", not a
+    // uuid) mixed in with real ones — this table's id column is uuid, so
+    // passing a non-uuid string into `.not("id", "in", ...)` throws a
+    // Postgres type error. That error used to get silently swallowed by
+    // ResilientExperienceProvider and served fictional mock data instead
+    // (a real regression — see CLAUDE.md, "Production catalog is Google
+    // Places-only"), so only ever pass ids this table could actually contain.
+    const uuidExcludeIds = query.excludeIds?.filter((id) =>
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+    );
+    if (uuidExcludeIds && uuidExcludeIds.length > 0) q = q.not("id", "in", `(${uuidExcludeIds.join(",")})`);
 
     const { data, error } = await q.limit(500);
     if (error) throw new Error(`SupabaseExperienceProvider.list: ${error.message}`);
