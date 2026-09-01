@@ -41,7 +41,15 @@ Rules:
 // an AI-written blurb — keeps latency and token cost bounded even when a
 // much larger batch is requested (e.g. Premium's larger Discover feed),
 // since a single AI call writing dozens of individual blurbs would be slow.
-const AI_REASONING_BATCH_SIZE = 20;
+// This is a non-streamed call (see callStructuredTool) — the model must
+// finish generating the *entire* batch before anything comes back, so batch
+// size directly sets how long Home/Discover's personalized rail waits before
+// client.ts's request timeout kicks in and falls back. Measured directly
+// against the API outside the app: a 10-candidate batch took ~10.3s
+// end-to-end (right at the old timeout, which is why it was failing on
+// nearly every request); 6 keeps generation comfortably inside the timeout
+// with room to spare.
+const AI_REASONING_BATCH_SIZE = 6;
 
 /**
  * Adds AI-generated natural-language reasoning on top of the deterministic
@@ -99,6 +107,17 @@ a specific, personal reason for each.`;
     toolName: "submit_recommendations",
     toolDescription: "Submit refined, reasoned recommendations for the candidate experiences.",
     inputSchema: RECOMMEND_TOOL_SCHEMA,
+    // Comfortable headroom for AI_REASONING_BATCH_SIZE candidates x id +
+    // reasoning + scores — the previous 2048 default was tight enough to
+    // truncate the tool call's JSON mid-array, which is why "recommendation
+    // output failed validation" was showing up so often in practice,
+    // silently discarding real AI reasoning in favor of the deterministic
+    // fallback.
+    maxTokens: 1400,
+    // Measured directly against the API: a 10-candidate batch took ~10.3s,
+    // so this 6-candidate batch has real headroom under 12s. Home/Discover
+    // are Suspense-streamed, so this only delays one rail, not the page.
+    timeoutMs: 12_000,
   });
 
   if (!result) return fallback;

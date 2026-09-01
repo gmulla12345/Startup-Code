@@ -75,6 +75,10 @@ Build the itinerary now.`;
     toolDescription: "Submit the generated weekend itinerary.",
     inputSchema: WEEKEND_PLAN_TOOL_SCHEMA,
     maxTokens: 3000,
+    // A full weekend itinerary is a much bigger generation than the
+    // recommendation-reasoning call — give it real room rather than the
+    // short timeout tuned for that call's tiny batches.
+    timeoutMs: 25_000,
   });
 
   if (!result) return fallback;

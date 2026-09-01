@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -5,6 +6,7 @@ import { createClient, getCurrentUser } from "@/lib/supabase/server";
 import { getProfileByUserId } from "@/lib/repositories/profile";
 import { getExperienceProvider } from "@/services/providers";
 import { DiscoveryMap } from "@/components/map/discovery-map";
+import { Skeleton } from "@/components/ui/skeleton";
 import { formatPrice } from "@/lib/utils/format";
 
 const DEFAULT_CENTER = { latitude: 39.2904, longitude: -76.6122 }; // Baltimore fallback
@@ -22,6 +24,14 @@ export default async function MapPage() {
       ? { latitude: profile.latitude, longitude: profile.longitude }
       : DEFAULT_CENTER;
 
+  return (
+    <Suspense fallback={<MapContentSkeleton />}>
+      <MapContent center={center} />
+    </Suspense>
+  );
+}
+
+async function MapContent({ center }: { center: { latitude: number; longitude: number } }) {
   const provider = await getExperienceProvider();
   const experiences = await provider.list({
     latitude: center.latitude,
@@ -54,6 +64,29 @@ export default async function MapPage() {
 
       <div className="flex-1">
         <DiscoveryMap experiences={experiences} center={center} />
+      </div>
+    </div>
+  );
+}
+
+function MapContentSkeleton() {
+  return (
+    <div className="flex flex-col md:flex-row md:gap-4 md:p-4">
+      <div className="hidden md:block md:w-80 shrink-0 space-y-3 pr-1">
+        <Skeleton className="h-6 w-24 mx-1" />
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="flex gap-3 p-2">
+            <Skeleton className="h-16 w-16 shrink-0 rounded-[var(--radius-sm)]" />
+            <div className="flex-1 space-y-1.5 pt-1">
+              <Skeleton className="h-3.5 w-32" />
+              <Skeleton className="h-3 w-20" />
+              <Skeleton className="h-3 w-16" />
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="flex-1">
+        <Skeleton className="h-[60vh] md:h-[calc(100vh-2rem)] w-full rounded-none md:rounded-[var(--radius-lg)]" />
       </div>
     </div>
   );

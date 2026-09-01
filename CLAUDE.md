@@ -314,6 +314,73 @@ What shipped:
   unreliable/stale during this verification (a recurring browser-tool artifact this session, not an
   app bug) — verified via direct DOM inspection and DB queries instead when screenshots looked stuck.
 
+## Site-wide slowness root-caused and fixed (2026-08-31)
+
+The "slow switching pages" complaint from item #4 below was real and had two independent causes,
+both now fixed. **Read this before touching Home, Map, `/travel/[destination]`, or anything in
+`src/ai/`.**
+
+**Cause 1 — no streaming, so a slow data source blocked the whole page.** `home/page.tsx`,
+`map/page.tsx`, and `travel/[destination]/page.tsx` were plain `async` Server Components with no
+`<Suspense>` boundary: the entire page — header, nav, everything — waited on the slowest fetch
+before any HTML rendered, even though `loading.tsx` already existed per-route (so the skeleton
+showed immediately, but stayed up for however long the slowest fetch took). Fixed by splitting
+each into a fast shell (auth + profile, renders immediately) plus an inner async component wrapped
+in `<Suspense fallback={...}>` for the slow part (recommendations on Home, `provider.list()` on Map
+and the destination rails on Travel) — the shell now paints instantly and the slow part streams in
+behind a rail/skeleton fallback instead of blocking. Also parallelized `buildContext()` in
+`src/services/recommendation/engine.ts` (`getRecentEvents`/`getSavedTagCounts`/`getWeather` were
+sequential `await`s, now `Promise.all`). Also added `experimental.staleTimes.dynamic = 30` to
+`next.config.ts` — Next's default for dynamic route segments is 0s (always refetch from the
+server), so revisiting a tab within 30s previously re-ran the *entire* server round trip every
+time; this makes bouncing between Home/Discover/Map/Trips/Saved/Profile within 30s instant
+(client-side cache reuse, zero server round trip).
+
+**Cause 2 (the bigger one) — the AI recommendation-reasoning call had no real timeout and was
+failing almost every time, silently, after a very long wait.** `getAnthropicClient()`
+(`src/ai/client.ts`) never set a `timeout`, so it used the SDK default of **10 minutes**, and "timed
+out" requests are retried by default — a slow response could hold a page open far longer than
+anyone would wait for, and did: direct log evidence from this session showed `/home` taking **14s,
+17s, 25s, 27s, and 33s** in different real requests, before any of today's fixes. Root-caused by
+timing the *exact* tool-use call directly against the Anthropic API outside the app (bypassing all
+app code): a 10-candidate forced-tool-call batch (the size `AI_REASONING_BATCH_SIZE` was set to)
+took **10.3 seconds** end-to-end on `claude-sonnet-5` — this is a **non-streamed** call
+(`anthropic.messages.create` without `stream: true`), so the model must finish generating the
+*entire* batch before anything comes back; there was no bug in the sense of a hang, it was just
+genuinely that slow for that batch size, every single time. Confirmed on production too, live: a
+fresh login to `discoverzolo.com` took ~9-10s to show `/home`'s content, and what did show was the
+generic deterministic fallback reasoning ("Fits your usual budget. Close to you") rather than real
+AI-written blurbs — meaning the AI call has likely been failing/falling-back on close to every
+request in production, not intermittently. There was also a second, compounding bug: the
+recommendation call never passed `maxTokens` to `callStructuredTool`, so it used the 2048-token
+default, which was tight enough to truncate the tool call's JSON mid-array on larger batches —
+this is why "`[ai] recommendation output failed validation: expected array, received undefined`"
+was showing up constantly in the logs, independent of the timeout issue.
+
+Fixed all of it together:
+- `callStructuredTool` (`src/ai/client.ts`) now takes a per-call `timeoutMs`, passed as a
+  per-request override (`anthropic.messages.create(params, { timeout })`) — **do not** set a short
+  timeout at the client level again; the trip planner and weekend planner generate much bigger
+  outputs and need real room (`timeoutMs: 45_000` and `25_000` respectively; the client-level
+  default is just a 30s fallback ceiling for any future caller that forgets to pass one).
+- `src/ai/recommend.ts`: `AI_REASONING_BATCH_SIZE` dropped from 20 → 6 (measured: comfortably
+  inside a 12s timeout, verified live — 4 fresh `/home` loads after the fix landed took 6.8s, 7.6s,
+  8.4s, and 10.3s, all succeeding with real AI reasoning visible in the response), `maxTokens` set
+  explicitly (1400, sized to the smaller batch), `timeoutMs: 12_000`. Candidates beyond the batch
+  size still get the fast deterministic fallback reasoning exactly as before — this only changes
+  how many items get the AI-polished version per call, not whether the rest get reasoning at all.
+- `maxRetries: 0` on the Anthropic client — the SDK retries timeouts by default, which was
+  silently doubling the worst case (a timed-out 8s attempt became a 16s total wait) for zero
+  realistic benefit, since a retry right after a slow attempt isn't meaningfully more likely to
+  come back fast.
+
+**If AI reasoning feels unreliable again**, the first thing to check is whether
+`AI_REASONING_BATCH_SIZE` / `timeoutMs` in `src/ai/recommend.ts` still match reality — re-run the
+direct-API timing test (construct the same tool-use payload and time a raw `fetch` to
+`https://api.anthropic.com/v1/messages`, bypassing all app code) rather than guessing from
+in-app logs, since retries and Suspense streaming can obscure how long the underlying call
+actually took.
+
 ## Exact next steps (priority order)
 
 **Done since the last update:** deployed to production at `discoverzolo.com` (fixed a Vercel
@@ -347,7 +414,12 @@ instead of a hardcoded 24, server-verified); **duplicate per-navigation auth/pro
 fetches fixed** via React `cache()` (see dedicated section above) — the likely main cause of pages
 feeling slow to switch between, though not yet confirmed with real before/after timing numbers;
 **trip plans are now fully editable** — quantitative budget, real images/descriptions per activity,
-click-to-swap or remove any activity (see dedicated section above).
+click-to-swap or remove any activity (see dedicated section above); **site-wide slowness
+root-caused and fixed** — Home/Map/Travel now stream instead of blocking, the AI reasoning call's
+unbounded timeout (was up to 33s observed) is now bounded to ~12s with real headroom under it via a
+smaller batch size, and repeat navigation within 30s is instant via `staleTimes` (see dedicated
+section above — this is what item #4 below used to be; both of its named suspects were correct and
+are now fixed).
 
 1. **Chat-based itinerary editing** — user explicitly asked for this alongside the click-to-swap
    picker; deferred as separate scope with the user's agreement (they chose "both", picker shipped
@@ -366,30 +438,42 @@ click-to-swap or remove any activity (see dedicated section above).
    [src/app/(marketing)/terms/page.tsx](<src/app/(marketing)/terms/page.tsx>) when PayPal goes live.
 3. Legal review of `/privacy` and `/terms` by an actual lawyer — Termly's questionnaire flow is a
    reasonable stand-in for launch, not a substitute for one.
-4. **Confirm the "slow switching pages" complaint is actually resolved** — the layout+page
-   duplicate-fetch fix above is a real bug fix regardless, but it hasn't been confirmed against
-   the user's original complaint with real timing data (Vercel function duration logs, or just
-   asking the user if it feels faster now). If it's still slow, the next suspects in order: (a)
-   the Google Places diversity fanout added the same day (7 parallel type queries per unfiltered
-   catalog request — necessary for recommendation variety, mitigated by the 1hr `next.revalidate`
-   cache but still real latency on a cold cache/new location), (b) the live Claude call on every
-   `/home` and personalized-Discover load (inherent to AI reasoning, already has a loading skeleton
-   so at least it doesn't look frozen).
-5. Multi-day AI Trip Planner generation takes a while (order of 10-20+ seconds for a 3-day trip in
+4. Multi-day AI Trip Planner generation takes a while (order of 10-20+ seconds for a 3-day trip in
    local testing) — has a loading state (`loading` prop on the Generate button) so it doesn't look
-   frozen, but if this feels too slow in practice, consider lowering `AI_REASONING_BATCH_SIZE`-style
-   trimming for `src/ai/trip-plan.ts`, or streaming/progressive UI, rather than reducing what it
-   actually plans.
+   frozen, and now has real headroom (`timeoutMs: 45_000`, see the site-speed section above) so it
+   should no longer fail outright on longer trips. If it still feels too slow in practice, consider
+   trimming candidates sent to the model or a streaming/progressive UI, rather than reducing what
+   it actually plans.
+5. **Separate, unrelated bug spotted while investigating site speed, not yet fixed**: `trackEvent`
+   (`src/lib/repositories/events.ts`) silently fails for every Google Places-sourced experience —
+   `[events] trackEvent failed: invalid input syntax for type uuid: "g-ChIJ..."` shows up in the
+   logs constantly. The `events.experience_id` column is still `uuid`-typed and was never migrated
+   to `text` the way `itinerary_items.experience_id` was (see the catalog section above for that
+   precedent/migration pattern). Since Google Places is now the *only* production catalog, this
+   means "viewed"/"dismissed" tracking — which `buildContext()` in
+   `src/services/recommendation/engine.ts` uses to avoid re-recommending things a user already
+   saw or dismissed — silently doesn't work for almost any real content. Worth fixing with the same
+   migration approach used for `itinerary_items`.
 
 ## Verified clean as of last update
 
-`npm run typecheck` and `npm run lint` pass with zero errors as of the 2026-08-31 itinerary-editing
-update (quantitative budget, images/descriptions, click-to-swap/remove). Git working tree — **check
-with `git status`, don't assume**. Verified live end to end on the local dev server (against the
-real production Supabase + live Google Places, same data production uses): generated a real 2-day
-New York trip, opened an activity's detail modal (real image gallery + description rendered),
-swapped Rockefeller Center for Lincoln Center for the Performing Arts (confirmed persisted in
-`itinerary_items` via direct DB query, UI updated with no reload), removed Times Square entirely
-(confirmed deleted from the DB, UI updated with no reload). Also still holding from earlier the
-same day: fictional-catalog removal, Surprise Me repeat/exclude fix, Discover's 100-result Premium
-limit, the AI Trip Planner's core generation flow.
+`npm run typecheck` and `npm run lint` pass with zero errors as of the 2026-08-31 site-speed fix
+(Suspense streaming on Home/Map/Travel, bounded AI timeout, `staleTimes`). Git working tree —
+**check with `git status`, don't assume**. Verified live end to end using a disposable Supabase
+test account (created via Admin API, deleted after): on local dev, four fresh `/home` loads after
+the fix took 6.8s/7.6s/8.4s/10.3s (down from 14-33s before), all with genuine AI-written reasoning
+visible in the response (not the generic fallback text); Map loaded in 2.5s. Also confirmed live on
+production (`discoverzolo.com`) *before* this fix was deployed that the problem was real there too
+(not just a local dev artifact) — a fresh login took ~9-10s to show `/home`'s content, with the
+generic deterministic fallback reasoning showing instead of AI blurbs, consistent with the AI call
+failing on production too. Redeploy this fix and spot-check `discoverzolo.com/home` again after to
+confirm the same improvement holds in production, not just locally.
+
+Also still holding from earlier the same day: fictional-catalog removal, Surprise Me repeat/exclude
+fix, Discover's 100-result Premium limit, the AI Trip Planner's core generation flow, and the
+itinerary-editing feature (quantitative budget, images/descriptions, click-to-swap/remove) —
+verified live end to end on local dev: generated a real 2-day New York trip, opened an activity's
+detail modal (real image gallery + description rendered), swapped Rockefeller Center for Lincoln
+Center for the Performing Arts (confirmed persisted in `itinerary_items` via direct DB query, UI
+updated with no reload), removed Times Square entirely (confirmed deleted from the DB, UI updated
+with no reload).

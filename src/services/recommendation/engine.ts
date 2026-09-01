@@ -25,15 +25,15 @@ async function buildContext(
   client: SupabaseClient,
   profile: Profile
 ): Promise<{ context: RecommendationContext; seenIds: Set<string>; dismissedIds: Set<string>; savedTagCounts: Record<string, number> }> {
-  const events = await getRecentEvents(client, profile.userId, 100);
+  const [events, savedTagCounts, weather] = await Promise.all([
+    getRecentEvents(client, profile.userId, 100),
+    getSavedTagCounts(client, profile.userId),
+    profile.latitude != null && profile.longitude != null
+      ? getWeather(profile.latitude, profile.longitude)
+      : Promise.resolve(null),
+  ]);
   const seenIds = idSetForEventType(events, "viewed_experience");
   const dismissedIds = idSetForEventType(events, "dismissed_experience");
-  const savedTagCounts = await getSavedTagCounts(client, profile.userId);
-
-  const weather =
-    profile.latitude != null && profile.longitude != null
-      ? await getWeather(profile.latitude, profile.longitude)
-      : null;
 
   const context: RecommendationContext = {
     profile,

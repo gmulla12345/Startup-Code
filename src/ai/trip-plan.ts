@@ -107,6 +107,11 @@ Build the full ${numDays}-day itinerary now, covering every day listed above.`;
     toolDescription: "Submit the generated multi-day trip itinerary.",
     inputSchema: TRIP_PLAN_TOOL_SCHEMA,
     maxTokens: 6000,
+    // A multi-day (up to 14-day) itinerary is the largest generation in the
+    // app — the trip planner modal already has its own loading state for
+    // this, so it's fine to give the model real room instead of the short
+    // timeout tuned for the recommendation-reasoning call's tiny batches.
+    timeoutMs: 45_000,
   });
 
   if (!result) return null;
