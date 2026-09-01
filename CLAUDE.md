@@ -520,12 +520,23 @@ specifically (over PostHog or an in-house build) when asked.
   mistake and clicks "Continue with Google" would be miscounted as a new signup. Rare edge case, not
   worth the complexity of moving this to the server-side OAuth callback route (which can't fire a
   client-side gtag event anyway).
-- **Not yet done — needs the user's own action**: create a free GA4 property at
-  analytics.google.com (a couple minutes) and hand over the Measurement ID (`G-XXXXXXX`). Once
-  received: add `NEXT_PUBLIC_GA_MEASUREMENT_ID` to Vercel Production env vars (`vercel env add`,
-  same pattern used for the Stripe keys earlier in this file) and redeploy — no code changes needed,
-  everything is already wired to read that env var. Until then GA4 stays inert and the hero test has
-  no way to actually be measured.
+- **Live in production as of 2026-09-01** — user created the GA4 property and handed over the
+  Measurement ID (`G-NVLCE3C4QS`), added to Vercel Production via `vercel env add
+  NEXT_PUBLIC_GA_MEASUREMENT_ID production --force --value "G-NVLCE3C4QS"` (same pattern as the
+  Stripe keys), redeployed. Confirmed live: `curl https://discoverzolo.com/` shows the gtag script
+  tag with the correct id, and `window.gtag`/`window.dataLayer` are populated with a correct
+  `config` call when loading the site in a real browser.
+- `sign_up` event verified end to end for the **Google OAuth path**: clicking "Continue with
+  Google" on `/signup` successfully redirected to `accounts.google.com` (confirming `handleGoogle()`
+  executed all the way through, including the `gtagEvent` call that sits right before the redirect)
+  — did not complete an actual Google login (not something to do on the user's behalf without
+  explicit ask). The **email/password path** could not be verified live the same way: Supabase
+  returned "Error sending confirmation email" for the `@example.com` test address used, because
+  `example.com` is an IANA-reserved domain that never accepts real mail (RFC 2606) — not a bug in
+  this app or in the GA4 wiring, just an artifact of testing with a fake address. The `gtagEvent`
+  call for that path sits unconditionally right after the `if (error) return` check in the code, so
+  it's correct by inspection; if this ever needs live verification, use an address that can actually
+  receive mail, not `@example.com`.
 - There's a pre-existing, unrelated, already-dead `analyticsEvents.signupCompleted()` function in
   `src/services/analytics/track.ts` that was never called from anywhere before this change and still
   isn't — left alone, out of scope here. Don't confuse it with the new GA4 `sign_up` event.
@@ -573,15 +584,13 @@ same real-candidate source and mutation functions as the picker (see dedicated s
 **`user_events`/`saved_experiences`/`reviews` uuid-column bug fixed** — the Save button was
 completely non-functional in production (not just for Google-sourced content), view/dismiss
 tracking was silently broken for almost all content, and `reviews` had the same latent bug closed
-out preemptively (see dedicated section above).
+out preemptively (see dedicated section above); **GA4 is live** with the real Measurement ID,
+confirmed serving on production and the `sign_up` conversion event verified for the Google OAuth
+path (see dedicated section above) — the homepage hero test can now actually be measured.
 
-1. **Get a GA4 Measurement ID and hand it over** — needed to actually measure the homepage hero
-   test above. Create a free property at analytics.google.com, then give the `G-XXXXXXX` id; once
-   added to Vercel Production env vars (`NEXT_PUBLIC_GA_MEASUREMENT_ID`) and redeployed, no further
-   code work is needed — see the dedicated GA4 section above.
-2. Legal review of `/privacy` and `/terms` by an actual lawyer — Termly's questionnaire flow is a
+1. Legal review of `/privacy` and `/terms` by an actual lawyer — Termly's questionnaire flow is a
    reasonable stand-in for launch, not a substitute for one.
-3. Multi-day AI Trip Planner generation takes a while (order of 10-20+ seconds for a 3-day trip in
+2. Multi-day AI Trip Planner generation takes a while (order of 10-20+ seconds for a 3-day trip in
    local testing) — has a loading state (`loading` prop on the Generate button) so it doesn't look
    frozen, and now has real headroom (`timeoutMs: 45_000`, see the site-speed section above) so it
    should no longer fail outright on longer trips. If it still feels too slow in practice, consider
