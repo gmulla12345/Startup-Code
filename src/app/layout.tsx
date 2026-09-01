@@ -4,6 +4,7 @@ import { Toaster } from "sonner";
 import { brand } from "@/lib/config/brand";
 import { GoogleAttribution } from "@/components/shared/google-attribution";
 import { GoogleAnalytics } from "@/components/shared/google-analytics";
+import { SiteJsonLd } from "@/components/shared/site-jsonld";
 import "./globals.css";
 
 const inter = Inter({
@@ -57,6 +58,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${inter.variable} ${fraunces.variable} h-full antialiased`} suppressHydrationWarning>
       <body className="min-h-full flex flex-col bg-background text-foreground">
+        <SiteJsonLd />
         {children}
         <GoogleAttribution />
         <Toaster position="top-center" richColors closeButton />
