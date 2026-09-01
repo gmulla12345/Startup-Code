@@ -535,9 +535,9 @@ assume**.
 
 `user_events`/`saved_experiences` uuid-column fix — migration applied to production via
 `npm run migrate` (confirmed successful). Verified via direct REST insert that both columns accept
-a real Google-prefixed id; verified through the actual app (disposable test account, local dev)
-that viewing an experience and clicking Save both work end to end with rows confirmed in the DB,
-and `/saved` renders correctly. Not yet spot-checked on `discoverzolo.com` after deploy.
+a real Google-prefixed id; verified through the actual app on both local dev and production
+(`discoverzolo.com`, post-deploy) that viewing an experience and clicking Save both work end to
+end, with rows confirmed in the DB via direct query each time, and `/saved` renders correctly.
 
 Site-speed fix (Suspense streaming, bounded AI timeout, `staleTimes`) — verified live end to end
 using disposable Supabase test accounts (created via Admin API, deleted after): on local dev, four
