@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { Clock, MapPin, Sparkles, Star, Users } from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getCurrentUser } from "@/lib/supabase/server";
 import { getExperienceProvider } from "@/services/providers";
 import { getReviewsForExperience } from "@/lib/repositories/reviews";
 import { getSubscription, isPremium } from "@/lib/repositories/subscriptions";
@@ -37,9 +37,7 @@ export async function generateMetadata({ params }: PageProps<"/experience/[id]">
 export default async function ExperienceDetailPage({ params }: PageProps<"/experience/[id]">) {
   const { id } = await params;
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
 
   const provider = await getExperienceProvider();
   const experience = (await provider.getBySlug(id)) ?? (await provider.getById(id));

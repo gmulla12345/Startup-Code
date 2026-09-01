@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getCurrentUser } from "@/lib/supabase/server";
 import { getProfileByUserId } from "@/lib/repositories/profile";
 import { getExperienceProvider } from "@/services/providers";
 import { DiscoveryMap } from "@/components/map/discovery-map";
@@ -11,9 +11,7 @@ const DEFAULT_CENTER = { latitude: 39.2904, longitude: -76.6122 }; // Baltimore 
 
 export default async function MapPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) redirect("/login");
 
   const profile = await getProfileByUserId(supabase, user.id);

@@ -73,7 +73,10 @@ export async function getRecommendations(
     radiusMiles: profile.preferences.maxDistanceMiles * 4, // cast a wider net than strict preference
     hiddenGemsOnly: options.surfaceContext === "hidden_gem" || undefined,
     excludeIds: options.additionalExcludeIds,
-    limit: 60,
+    // Candidate pool needs to be at least as large as what was asked for —
+    // Premium's much higher Discover limit was previously invisible because
+    // this stayed fixed at 60 regardless of options.limit.
+    limit: Math.min(Math.max(options.limit ?? 10, 60), 120),
   });
 
   const ranked = rankExperiences(candidates, profile, { seenIds, dismissedIds, savedTagCounts });

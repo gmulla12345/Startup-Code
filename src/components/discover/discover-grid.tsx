@@ -51,7 +51,10 @@ export function DiscoverGrid({
 
     async function load() {
       if (usingPersonalized) {
-        const res = await fetch("/api/ai/recommendations?surface=for_you&limit=24");
+        // Free is server-capped to FREE_TIER_LIMITS.recommendationsPerWeek
+        // regardless of what's requested here — Premium actually gets this
+        // many (up to the real candidate pool for their location/category).
+        const res = await fetch("/api/ai/recommendations?surface=for_you&limit=100");
         const json = await res.json();
         if (!cancelled) {
           setRecommendations(json.recommendations ?? []);

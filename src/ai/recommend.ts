@@ -37,12 +37,21 @@ Rules:
 - Keep each reasoning under 30 words.
 - Return one entry per candidate provided, in the same or better order.`;
 
+// Candidates beyond this get fast, free deterministic reasoning instead of
+// an AI-written blurb — keeps latency and token cost bounded even when a
+// much larger batch is requested (e.g. Premium's larger Discover feed),
+// since a single AI call writing dozens of individual blurbs would be slow.
+const AI_REASONING_BATCH_SIZE = 20;
+
 /**
  * Adds AI-generated natural-language reasoning on top of the deterministic
  * scores. This is the "AI reasoning" step of the hybrid system — it never
  * runs alone; scoring.ts always runs first and this only refines its output.
  * Falls back to the deterministic reasons if AI is unavailable or fails
- * validation.
+ * validation. For batches larger than AI_REASONING_BATCH_SIZE, only the top
+ * slice (already the best matches, since candidates arrive pre-ranked) gets
+ * AI reasoning — everything after that gets the deterministic reasons,
+ * which are still specific and real, just not natural-language.
  */
 export async function generateAIRecommendations(
   candidates: ScoredExperience[],
@@ -51,7 +60,10 @@ export async function generateAIRecommendations(
   const fallback = toFallback(candidates);
   if (!isAIConfigured() || candidates.length === 0) return fallback;
 
-  const candidateSummaries = candidates.slice(0, 12).map((c) => ({
+  const aiCandidates = candidates.slice(0, AI_REASONING_BATCH_SIZE);
+  const remainder = toFallback(candidates.slice(AI_REASONING_BATCH_SIZE));
+
+  const candidateSummaries = aiCandidates.map((c) => ({
     id: c.experience.id,
     title: c.experience.title,
     category: c.experience.category,
@@ -97,13 +109,13 @@ a specific, personal reason for each.`;
     return fallback;
   }
 
-  // Guard against the model inventing an id outside the candidate set.
-  const validIds = new Set(candidates.map((c) => c.experience.id));
+  // Guard against the model inventing an id outside what it was actually sent.
+  const validIds = new Set(aiCandidates.map((c) => c.experience.id));
   const filtered = parsed.data.recommendations.filter((r) => validIds.has(r.experienceId));
   if (filtered.length === 0) return fallback;
 
-  return filtered.map((r) => {
-    const candidate = candidates.find((c) => c.experience.id === r.experienceId)!;
+  const reasoned = filtered.map((r) => {
+    const candidate = aiCandidates.find((c) => c.experience.id === r.experienceId)!;
     return {
       experienceId: r.experienceId,
       matchScore: r.matchScore,
@@ -114,6 +126,8 @@ a specific, personal reason for each.`;
       confidence: r.confidence,
     };
   });
+
+  return [...reasoned, ...remainder];
 }
 
 function toFallback(candidates: ScoredExperience[]): StructuredRecommendation[] {

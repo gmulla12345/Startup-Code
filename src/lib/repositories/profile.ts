@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Profile } from "@/types/database";
 
@@ -26,7 +27,13 @@ function rowToProfile(row: Record<string, unknown>): Profile {
   };
 }
 
-export async function getProfileByUserId(
+/**
+ * Cached per request — the (app) layout and the page it renders both need
+ * the profile, and used to each fetch it independently. Relies on
+ * `client` being a stable reference (see the cached createClient() in
+ * lib/supabase/server.ts) — a fresh client instance would defeat this.
+ */
+export const getProfileByUserId = cache(async function getProfileByUserId(
   client: SupabaseClient,
   userId: string
 ): Promise<Profile | null> {
@@ -37,7 +44,7 @@ export async function getProfileByUserId(
     .maybeSingle();
   if (error || !data) return null;
   return rowToProfile(data);
-}
+});
 
 export interface ProfileUpdateInput {
   firstName?: string;

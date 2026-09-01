@@ -202,6 +202,75 @@ pills matching `PillGroup`'s exact style/active-color (forest, not ember) instea
 ember-colored grid with emoji, for one consistent visual language across onboarding and the
 Weekend Planner (both reuse the same component).
 
+## AI Trip Planner, Discover limits, and a request-level caching fix (2026-08-31)
+
+Three more things fixed same day, after the catalog-accuracy work above:
+
+1. **"Plan a trip to [city]" was completely broken** — it posted to `/api/trips`, which inserted a
+   row into the `trips` table that literally nothing ever read (not even the `/trips` page, which
+   only ever displayed `itineraries`), then redirected to `/trips` with no indication anything
+   happened. That whole `trips` table/route/schema was dead weight from an earlier, never-finished
+   design; deleted [src/app/api/trips/route.ts](src/app/api/trips/route.ts) and
+   `createTripSchema`. **Real premium AI Trip Planner built from scratch**, reusing the
+   `itineraries`/`itinerary_items` tables the Weekend Planner already uses (the schema's `type`
+   check constraint already had `'travel'` sitting there unused):
+   [src/components/trips/trip-planner-modal.tsx](src/components/trips/trip-planner-modal.tsx) asks
+   for real dates + budget/social/energy/interests, `POST /api/ai/trip-plan`
+   ([src/app/api/ai/trip-plan/route.ts](src/app/api/ai/trip-plan/route.ts), premium-gated, no
+   free-tier fallback) generates a day-by-day plan via
+   [src/ai/trip-plan.ts](src/ai/trip-plan.ts) (same validated-structured-output pattern as
+   `src/ai/weekend-plan.ts`, capped at 14 days) using real candidates fetched from the
+   destination's actual coordinates, then saves and redirects straight to `/trips/[id]` — no
+   separate manual "save" step, unlike Weekend Planner. `ItineraryDetail` now shows real calendar
+   dates per day (`Day 1 — Saturday, Sep 12`) when `itinerary.startDate` is set.
+   - **Found and fixed a real, separate bug while building this**: `itinerary_items.experience_id`
+     was a `uuid` foreign key into `public.experiences` — fine when the catalog was curated, but
+     since production is Google Places-only, saving any plan item tied to a real place (a `g-`
+     prefixed id, not a uuid) threw a Postgres type error and the whole save failed. This silently
+     affected Weekend Planner's "Save Plan" too, not just the new Trip Planner. Fixed by loosening
+     the column to plain `text` with no FK (migration block in
+     [src/db/schema.sql](src/db/schema.sql), already applied via `npm run migrate` — the detail
+     page already renders items from their own stored title/notes/cost, never by re-fetching the
+     referenced experience, so this had zero UI impact). **Verified live**: generated a real 3-day
+     NYC trip end-to-end — every named business (Rockefeller Center, Carmine's, Zabar's, The River
+     Café, etc.) resolved to a real Google Places id, only genuinely generic items ("Breakfast near
+     the hotel") had none, exactly per the AI system prompt's rules.
+2. **Discover's Premium limit didn't actually do anything** — the client hardcoded
+   `limit=24` regardless of plan, and even that was capped further because
+   `getRecommendations()` always fetched only 60 raw candidates and
+   `generateAIRecommendations()` only ever sent the top 12 to the AI for reasoning, both
+   hardcoded regardless of the requested limit. Fixed in
+   [src/services/recommendation/engine.ts](src/services/recommendation/engine.ts) (candidate pool
+   now scales with the requested limit, capped at 120) and
+   [src/ai/recommend.ts](src/ai/recommend.ts) (AI reasons the top `AI_REASONING_BATCH_SIZE` = 20
+   as before for latency/cost, but everything beyond that now gets fast deterministic reasoning
+   instead of being dropped entirely — so a big batch doesn't silently shrink). Discover's fetch
+   now requests `limit=100` for the personalized sort
+   ([src/components/discover/discover-grid.tsx](src/components/discover/discover-grid.tsx)); free
+   tier is unaffected (still server-capped to `FREE_TIER_LIMITS.recommendationsPerWeek` = 5,
+   unchanged). Verified live: premium test account got exactly 100 results back. Interest-aligned
+   results were already sorted first before this change — `scoreExperience()` in
+   `src/services/recommendation/scoring.ts` weights interest-tag overlap as the single largest
+   scoring factor — so nothing needed to change there.
+3. **Fixed a real, systemic cause of "the site feels slow switching between pages"**: every single
+   page under `(app)/` (`/home`, `/discover`, `/map`, `/profile`, `/saved`, `/trips`,
+   `/trips/[id]`, `/experience/[id]`, `/travel/[destination]`) was independently re-fetching
+   `supabase.auth.getUser()` and, in most cases, the profile/subscription too — on top of the
+   `(app)/layout.tsx` already having fetched all three for every request. That's at minimum 2x the
+   necessary Supabase round trips on every navigation, before any page-specific data fetching even
+   starts. Fixed with React's per-request `cache()`:
+   [src/lib/supabase/server.ts](src/lib/supabase/server.ts) now exports a cached `createClient`
+   plus a new cached `getCurrentUser()` helper; `getProfileByUserId`
+   ([src/lib/repositories/profile.ts](src/lib/repositories/profile.ts)) and `getSubscription`
+   ([src/lib/repositories/subscriptions.ts](src/lib/repositories/subscriptions.ts)) are now
+   `cache()`-wrapped too. Every page listed above was updated to call `getCurrentUser()` instead of
+   `(await createClient()).auth.getUser()` directly — that's the part that actually makes the
+   dedup work, since Supabase's `getUser()` always revalidates over the network regardless of
+   client-instance reuse. This is the standard documented pattern for this exact layout+page
+   double-fetch problem; not fully verified with before/after production timing numbers (see next
+   steps below), but it's a straightforward, low-risk correctness fix regardless — the duplicate
+   fetches were never doing anything useful.
+
 ## Exact next steps (priority order)
 
 **Done since the last update:** deployed to production at `discoverzolo.com` (fixed a Vercel
@@ -216,41 +285,55 @@ fully rebuilt via Termly's questionnaire (dispute resolution = informal negotiat
 arbitration in Maryland, liability capped to amount paid, 1-year claim limit, no UGC posting live,
 external booking links disclosed); added `/contact` page with a working form (Resend-backed);
 added résumé upload on `/careers/apply` (Supabase Storage, public `resumes` bucket); **Stripe live
-mode set up** (one real checkout still needs to be run by the user); accidentally-created
-duplicate Vercel project `real-app` was deleted; onboarding's "Your world is ready" screen now
-has a visible fill-animation progress bar instead of looking frozen; every async button site-wide
-(Surprise Me, Weekend Planner, login/signup, save, share, log out, etc.) now shows a spinner
-instead of just swapping text, and route-level `loading.tsx` skeletons were added for
+mode set up and verified with a real checkout** (user ran a real trial signup 2026-08-31; confirmed
+in the DB: `subscriptions.status = 'trialing'`, correct live price id, `current_period_end` exactly
+7 days out, a real $0 trial invoice recorded in `payments` — the webhook chain works end to end);
+accidentally-created duplicate Vercel project `real-app` was deleted; onboarding's "Your world is
+ready" screen now has a visible fill-animation progress bar instead of looking frozen; every async
+button site-wide (Surprise Me, Weekend Planner, login/signup, save, share, log out, etc.) now shows
+a spinner instead of just swapping text, and route-level `loading.tsx` skeletons were added for
 `/home`, `/discover`, `/map`, `/saved`, `/trips`, `/trips/[id]`, `/travel/[destination]`,
-`/experience/[id]`, `/profile` (none existed before — pages doing server-side data fetching
-showed a blank/frozen screen); **fictional demo catalog removed from production** (see dedicated
-section above — this is the big one, don't skip it); **Surprise Me now persists its last result**
-to `localStorage` (`src/components/home/surprise-me-button.tsx`) with a "View my Surprise: ___"
-link that reopens it without a new AI call, since it used to vanish for good once you closed it.
+`/experience/[id]`, `/profile` (none existed before — pages doing server-side data fetching showed
+a blank/frozen screen); **fictional demo catalog removed from production**, Surprise Me's
+repeat/exclude bug fixed, recommendation diversity fixed, and a real **AI Trip Planner** built (see
+dedicated sections above — read those before touching the catalog, recommendation engine, or
+itinerary code); **Surprise Me now persists its last result** to `localStorage`
+(`src/components/home/surprise-me-button.tsx`) with a "View my Surprise: ___" link that reopens it
+without a new AI call; **Discover's Premium limit now actually does something** (100 results
+instead of a hardcoded 24, server-verified); **duplicate per-navigation auth/profile/subscription
+fetches fixed** via React `cache()` (see dedicated section above) — the likely main cause of pages
+feeling slow to switch between, though not yet confirmed with real before/after timing numbers.
 
-1. **Run one real checkout in live mode** — needs the user to actually do it (real card, real
-   charge), not an agent. Confirms the live product/price/webhook wiring actually works end to end
-   and that `subscriptions`/`payments` rows update correctly after payment.
-2. **Enable PayPal** eventually (user confirmed 2026-08-30) — requires turning it on in the Stripe
+1. **Enable PayPal** eventually (user confirmed 2026-08-30) — requires turning it on in the Stripe
    Dashboard → Settings → Payment Methods; the checkout code has no `payment_method_types`
    restriction so once PayPal is enabled account-side it should just work with no code changes
    needed. Not done yet — the current Terms of Service intentionally only lists Visa/Mastercard/
    Amex/Discover, since PayPal isn't actually live. Update the Terms' payment-methods sentence in
    [src/app/(marketing)/terms/page.tsx](<src/app/(marketing)/terms/page.tsx>) when PayPal goes live.
-3. Legal review of `/privacy` and `/terms` by an actual lawyer — Termly's questionnaire flow is a
+2. Legal review of `/privacy` and `/terms` by an actual lawyer — Termly's questionnaire flow is a
    reasonable stand-in for launch, not a substitute for one.
-4. User reported the site "running a little slow" (2026-08-31) — not yet investigated. Likely
-   partly explained by production now calling the live Google Places API + Claude AI reasoning on
-   every catalog request instead of reading pre-seeded rows from Supabase (a real latency
-   trade-off for the accuracy fix above, not obviously a bug) — but worth actually profiling
-   (Vercel function duration logs, `next: { revalidate }` cache hit rate on the Google Places
-   fetches) before assuming that's the whole story.
+3. **Confirm the "slow switching pages" complaint is actually resolved** — the layout+page
+   duplicate-fetch fix above is a real bug fix regardless, but it hasn't been confirmed against
+   the user's original complaint with real timing data (Vercel function duration logs, or just
+   asking the user if it feels faster now). If it's still slow, the next suspects in order: (a)
+   the Google Places diversity fanout added the same day (7 parallel type queries per unfiltered
+   catalog request — necessary for recommendation variety, mitigated by the 1hr `next.revalidate`
+   cache but still real latency on a cold cache/new location), (b) the live Claude call on every
+   `/home` and personalized-Discover load (inherent to AI reasoning, already has a loading skeleton
+   so at least it doesn't look frozen).
+4. Multi-day AI Trip Planner generation takes a while (order of 10-20+ seconds for a 3-day trip in
+   local testing) — has a loading state (`loading` prop on the Generate button) so it doesn't look
+   frozen, but if this feels too slow in practice, consider lowering `AI_REASONING_BATCH_SIZE`-style
+   trimming for `src/ai/trip-plan.ts`, or streaming/progressive UI, rather than reducing what it
+   actually plans.
 
 ## Verified clean as of last update
 
-`npm run typecheck` and `npm run lint` pass with zero errors as of the 2026-08-31 catalog-accuracy
-update. Git working tree — **check before assuming clean, verify with `git status`** (multiple
-uncommitted changes as of this update — Stripe/Terms commit from earlier the same day was pushed,
-but the loading-states and catalog-accuracy work after it were not, pending user review). Local
-dev server confirmed working against the now-empty-of-mock-data production Supabase + live Google
-Places for `/`, `/travel/new-york-usa`, `/home`, and the Surprise Me flow end to end.
+`npm run typecheck` and `npm run lint` pass with zero errors as of the 2026-08-31 AI Trip Planner +
+performance update. Git working tree — **check with `git status`, don't assume**. Verified live end
+to end on the local dev server (against the real production Supabase + live Google Places, same
+data production uses): generated a real 3-day New York trip via the new Trip Planner and confirmed
+every named business in it resolves to a real Google Places id; confirmed Discover returns 100
+results for a premium test account; confirmed the fictional-catalog and Surprise Me-repeat fixes
+from earlier the same day still hold. Not yet re-deployed to production as of this note — see
+below for deploy status once this session pushes.

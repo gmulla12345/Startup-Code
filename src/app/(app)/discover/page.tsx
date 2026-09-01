@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getCurrentUser } from "@/lib/supabase/server";
 import { getProfileByUserId } from "@/lib/repositories/profile";
 import { DiscoverGrid } from "@/components/discover/discover-grid";
 
@@ -10,9 +10,7 @@ const DEFAULT_LOCATION = { latitude: 40.7128, longitude: -74.006 };
 export default async function DiscoverPage({ searchParams }: PageProps<"/discover">) {
   const params = await searchParams;
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
 
   const profile = user ? await getProfileByUserId(supabase, user.id) : null;
 

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getCurrentUser } from "@/lib/supabase/server";
 import { getProfileByUserId } from "@/lib/repositories/profile";
 import { getSubscription, isPremium } from "@/lib/repositories/subscriptions";
 import { AppShell } from "@/components/layout/app-shell";
@@ -13,9 +13,7 @@ import { PublicHeader } from "@/components/layout/public-header";
  */
 export default async function AppLayout({ children }: LayoutProps<"/">) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
 
   if (!user) {
     return (

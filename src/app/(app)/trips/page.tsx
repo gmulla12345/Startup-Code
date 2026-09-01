@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Calendar, MapPin } from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getCurrentUser } from "@/lib/supabase/server";
 import { getSubscription, isPremium } from "@/lib/repositories/subscriptions";
 import { listItineraries } from "@/lib/repositories/itineraries";
 import { getTravelProvider } from "@/services/providers";
@@ -10,9 +10,7 @@ import { TravelModeSearch } from "@/components/trips/travel-mode-search";
 
 export default async function TripsPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) redirect("/login");
 
   const [subscription, itineraries, destinations] = await Promise.all([

@@ -61,3 +61,21 @@ export interface WeekendPlan {
   totalEstimatedCost: number;
   summary: string;
 }
+
+export interface TripPlanRequest {
+  destinationCity: string;
+  destinationCountry: string;
+  destinationLatitude: number;
+  destinationLongitude: number;
+  startDate: string; // ISO date, e.g. "2026-09-12"
+  endDate: string; // ISO date, inclusive
+  budgetLevel: string;
+  socialMode: "solo" | "group";
+  energyLevel: "low" | "medium" | "high";
+  interests: string[];
+}
+
+// Same shape as a weekend plan, just spanning as many real calendar days as
+// the trip covers instead of a fixed weekend — day labels are "day_1".."day_N".
+export type TripPlanItem = WeekendPlanItem;
+export type TripPlan = WeekendPlan;

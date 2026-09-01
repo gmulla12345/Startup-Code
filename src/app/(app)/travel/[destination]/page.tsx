@@ -3,7 +3,9 @@ import Image from "next/image";
 import type { Metadata } from "next";
 import { getTravelProvider, getExperienceProvider } from "@/services/providers";
 import { ExperienceRail } from "@/components/home/experience-rail";
-import { CreateTripButton } from "@/components/trips/create-trip-button";
+import { TripPlannerModal } from "@/components/trips/trip-planner-modal";
+import { createClient, getCurrentUser } from "@/lib/supabase/server";
+import { getSubscription, isPremium } from "@/lib/repositories/subscriptions";
 
 export async function generateMetadata({ params }: PageProps<"/travel/[destination]">): Promise<Metadata> {
   const { destination } = await params;
@@ -21,7 +23,15 @@ export default async function TravelDestinationPage({ params }: PageProps<"/trav
   const dest = await getTravelProvider().getDestination(destination);
   if (!dest) notFound();
 
-  const provider = await getExperienceProvider();
+  const supabase = await createClient();
+  const user = await getCurrentUser();
+
+  const [subscription, provider] = await Promise.all([
+    user ? getSubscription(supabase, user.id) : Promise.resolve(null),
+    getExperienceProvider(),
+  ]);
+  const userIsPremium = isPremium(subscription);
+
   const experiences = await provider.list({
     city: dest.city,
     latitude: dest.latitude,
@@ -55,7 +65,13 @@ export default async function TravelDestinationPage({ params }: PageProps<"/trav
               <p className="text-sm text-foreground-subtle mt-2">Best time to visit: {dest.bestMonths.join(", ")}</p>
             )}
           </div>
-          <CreateTripButton destinationCity={dest.city} destinationCountry={dest.country} />
+          <TripPlannerModal
+            destinationCity={dest.city}
+            destinationCountry={dest.country}
+            destinationLatitude={dest.latitude}
+            destinationLongitude={dest.longitude}
+            isPremium={userIsPremium}
+          />
         </div>
 
         <ExperienceRail title="Things to do" items={toItems(experiences.slice(0, 10))} emptyMessage="No experiences catalogued yet for this destination." />

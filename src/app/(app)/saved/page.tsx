@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getCurrentUser } from "@/lib/supabase/server";
 import { listSaved } from "@/lib/repositories/saved";
 import { getExperienceProvider } from "@/services/providers";
 import { ExperienceCard } from "@/components/experience/experience-card";
@@ -9,9 +9,7 @@ import { Button } from "@/components/ui/button";
 
 export default async function SavedPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) redirect("/login");
 
   const saved = await listSaved(supabase, user.id);

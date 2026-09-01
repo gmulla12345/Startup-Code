@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getCurrentUser } from "@/lib/supabase/server";
 import { getItineraryWithItems } from "@/lib/repositories/itineraries";
 import { ItineraryDetail } from "@/components/trips/itinerary-detail";
 import { ShareItineraryButton } from "@/components/trips/share-itinerary-button";
@@ -7,9 +7,7 @@ import { ShareItineraryButton } from "@/components/trips/share-itinerary-button"
 export default async function ItineraryPage({ params }: PageProps<"/trips/[id]">) {
   const { id } = await params;
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) redirect("/login");
 
   const result = await getItineraryWithItems(supabase, id);

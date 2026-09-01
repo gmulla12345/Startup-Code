@@ -190,7 +190,12 @@ create table if not exists public.itineraries (
 create table if not exists public.itinerary_items (
   id uuid primary key default gen_random_uuid(),
   itinerary_id uuid not null references public.itineraries(id) on delete cascade,
-  experience_id uuid references public.experiences(id) on delete set null,
+  -- text, not uuid: an itinerary item can point at a curated catalog row
+  -- (real uuid) or a live Google Places result ("g-<place_id>", never
+  -- persisted to public.experiences) — see the migration block below for
+  -- why this wasn't always text, and lib/repositories/itineraries.ts for how
+  -- AI-generated (weekend and multi-day trip) plans populate this.
+  experience_id text,
   day_index int not null default 0,
   start_time text not null default '09:00',
   title text not null,
@@ -200,6 +205,27 @@ create table if not exists public.itinerary_items (
 );
 
 create index if not exists idx_itinerary_items_itinerary on public.itinerary_items(itinerary_id);
+
+-- itinerary_items.experience_id was originally a `uuid` FK into
+-- public.experiences, which only ever worked for curated catalog rows.
+-- Since the catalog is Google Places-only in production (see CLAUDE.md,
+-- "Production catalog is Google Places-only"), every AI-generated plan that
+-- includes a real place now fails to save with a uuid-syntax error — fixed
+-- 2026-08-31 by loosening the column to plain text with no FK. The
+-- itinerary detail page already renders items from their own stored
+-- title/notes/estimated_cost, never by re-fetching the referenced
+-- experience, so this has no UI impact.
+do $$
+begin
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'itinerary_items'
+      and column_name = 'experience_id' and data_type = 'uuid'
+  ) then
+    alter table public.itinerary_items drop constraint if exists itinerary_items_experience_id_fkey;
+    alter table public.itinerary_items alter column experience_id type text using experience_id::text;
+  end if;
+end $$;
 
 -- -------------------------------------------------------------------------
 -- destinations — Travel Mode metadata

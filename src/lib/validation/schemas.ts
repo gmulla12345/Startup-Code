@@ -92,12 +92,29 @@ export const surpriseMeFeedbackSchema = z.object({
   excludeIds: z.array(z.string()).default([]),
 });
 
-export const createTripSchema = z.object({
-  destinationCity: z.string().min(1),
-  destinationCountry: z.string().min(1),
-  startDate: z.string().nullable().optional(),
-  endDate: z.string().nullable().optional(),
-});
+const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Expected YYYY-MM-DD");
+
+export const tripPlanRequestSchema = z
+  .object({
+    destinationCity: z.string().min(1),
+    destinationCountry: z.string().min(1),
+    destinationLatitude: z.number(),
+    destinationLongitude: z.number(),
+    startDate: isoDate,
+    endDate: isoDate,
+    budgetLevel: z.string(),
+    socialMode: z.enum(["solo", "group"]),
+    energyLevel: z.enum(["low", "medium", "high"]),
+    interests: z.array(z.string()).default([]),
+  })
+  .refine((v) => v.endDate >= v.startDate, { message: "End date must be on or after the start date." })
+  .refine(
+    (v) => {
+      const days = (new Date(`${v.endDate}T00:00:00Z`).getTime() - new Date(`${v.startDate}T00:00:00Z`).getTime()) / 86_400_000 + 1;
+      return days <= 14;
+    },
+    { message: "Trips longer than 14 days aren't supported yet — try a shorter date range." }
+  );
 
 export const experienceQuerySchema = z.object({
   city: z.string().optional(),

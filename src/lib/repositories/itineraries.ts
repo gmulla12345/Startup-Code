@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { randomUUID } from "crypto";
 import type { Itinerary, ItineraryItem } from "@/types/database";
-import type { WeekendPlan } from "@/types/ai";
+import type { TripPlan, WeekendPlan } from "@/types/ai";
 
 function rowToItinerary(row: Record<string, unknown>): Itinerary {
   return {
@@ -39,6 +39,25 @@ export async function saveWeekendPlanAsItinerary(
   title: string,
   plan: WeekendPlan
 ): Promise<{ itinerary: Itinerary; items: ItineraryItem[] }> {
+  return saveItinerary(client, userId, { title, type: "weekend", plan });
+}
+
+export async function saveTripPlanAsItinerary(
+  client: SupabaseClient,
+  userId: string,
+  title: string,
+  plan: TripPlan,
+  dates: { startDate: string; endDate: string }
+): Promise<{ itinerary: Itinerary; items: ItineraryItem[] }> {
+  return saveItinerary(client, userId, { title, type: "travel", plan, ...dates });
+}
+
+async function saveItinerary(
+  client: SupabaseClient,
+  userId: string,
+  opts: { title: string; type: Itinerary["type"]; plan: WeekendPlan | TripPlan; startDate?: string; endDate?: string }
+): Promise<{ itinerary: Itinerary; items: ItineraryItem[] }> {
+  const { title, type, plan, startDate, endDate } = opts;
   const dayIndexByLabel = new Map<string, number>();
   let nextDayIndex = 0;
 
@@ -47,7 +66,9 @@ export async function saveWeekendPlanAsItinerary(
     .insert({
       user_id: userId,
       title,
-      type: "weekend",
+      type,
+      start_date: startDate ?? null,
+      end_date: endDate ?? null,
       estimated_cost: plan.totalEstimatedCost,
       is_public: false,
       share_slug: randomUUID().slice(0, 8),
@@ -55,7 +76,7 @@ export async function saveWeekendPlanAsItinerary(
     .select("*")
     .single();
 
-  if (itineraryError) throw new Error(`saveWeekendPlanAsItinerary: ${itineraryError.message}`);
+  if (itineraryError) throw new Error(`saveItinerary: ${itineraryError.message}`);
 
   const itemsPayload = plan.items.map((item, index) => {
     if (!dayIndexByLabel.has(item.day)) dayIndexByLabel.set(item.day, nextDayIndex++);
@@ -76,7 +97,7 @@ export async function saveWeekendPlanAsItinerary(
     .insert(itemsPayload)
     .select("*");
 
-  if (itemsError) throw new Error(`saveWeekendPlanAsItinerary items: ${itemsError.message}`);
+  if (itemsError) throw new Error(`saveItinerary items: ${itemsError.message}`);
 
   return {
     itinerary: rowToItinerary(itineraryRow),

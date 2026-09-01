@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Pencil, Bookmark, CheckCircle2, Briefcase } from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getCurrentUser } from "@/lib/supabase/server";
 import { getProfileByUserId } from "@/lib/repositories/profile";
 import { getSubscription } from "@/lib/repositories/subscriptions";
 import { Avatar } from "@/components/ui/avatar";
@@ -15,9 +15,7 @@ import { deriveArchetype } from "@/lib/utils/archetype";
 
 export default async function ProfilePage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) redirect("/login");
 
   const profile = await getProfileByUserId(supabase, user.id);

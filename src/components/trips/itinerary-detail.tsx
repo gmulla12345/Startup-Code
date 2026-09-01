@@ -1,6 +1,14 @@
 import type { Itinerary, ItineraryItem } from "@/types/database";
 
-const DAY_LABELS = ["Day 1", "Day 2", "Day 3", "Day 4", "Day 5"];
+function dayLabel(itinerary: Itinerary, dayIndex: number): string {
+  if (itinerary.startDate) {
+    const date = new Date(`${itinerary.startDate}T00:00:00Z`);
+    date.setUTCDate(date.getUTCDate() + dayIndex);
+    const formatted = date.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric", timeZone: "UTC" });
+    return `Day ${dayIndex + 1} — ${formatted}`;
+  }
+  return `Day ${dayIndex + 1}`;
+}
 
 export function ItineraryDetail({ itinerary, items }: { itinerary: Itinerary; items: ItineraryItem[] }) {
   const byDay = new Map<number, ItineraryItem[]>();
@@ -12,15 +20,24 @@ export function ItineraryDetail({ itinerary, items }: { itinerary: Itinerary; it
   return (
     <div>
       <h1 className="font-display text-3xl font-semibold text-foreground mb-1">{itinerary.title}</h1>
-      {itinerary.estimatedCost != null && (
-        <p className="text-foreground-muted mb-8">Estimated cost: ${itinerary.estimatedCost}</p>
-      )}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-foreground-muted mb-8">
+        {itinerary.startDate && itinerary.endDate && (
+          <span>
+            {new Date(`${itinerary.startDate}T00:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" })}
+            {" – "}
+            {new Date(`${itinerary.endDate}T00:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" })}
+          </span>
+        )}
+        {itinerary.estimatedCost != null && (
+          <span>{itinerary.startDate ? "· " : ""}Estimated cost: ${itinerary.estimatedCost}</span>
+        )}
+      </div>
 
       <div className="space-y-10">
         {Array.from(byDay.entries()).map(([dayIndex, dayItems]) => (
           <div key={dayIndex}>
             <h2 className="font-display text-lg font-semibold text-foreground mb-4">
-              {DAY_LABELS[dayIndex] ?? `Day ${dayIndex + 1}`}
+              {dayLabel(itinerary, dayIndex)}
             </h2>
             <div className="space-y-4">
               {dayItems

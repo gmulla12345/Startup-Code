@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Subscription } from "@/types/database";
 
@@ -17,7 +18,8 @@ function rowToSubscription(row: Record<string, unknown>): Subscription {
   };
 }
 
-export async function getSubscription(
+/** Cached per request — see getProfileByUserId in repositories/profile.ts for why. */
+export const getSubscription = cache(async function getSubscription(
   client: SupabaseClient,
   userId: string
 ): Promise<Subscription | null> {
@@ -28,7 +30,7 @@ export async function getSubscription(
     .maybeSingle();
   if (error || !data) return null;
   return rowToSubscription(data);
-}
+});
 
 export function isPremium(subscription: Subscription | null): boolean {
   if (!subscription) return false;

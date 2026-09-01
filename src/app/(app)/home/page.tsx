@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getCurrentUser } from "@/lib/supabase/server";
 import { getProfileByUserId } from "@/lib/repositories/profile";
 import { getRecommendations } from "@/services/recommendation/engine";
 import { SurpriseMeButton } from "@/components/home/surprise-me-button";
@@ -16,9 +16,7 @@ function greeting(): string {
 
 export default async function HomePage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) redirect("/login");
 
   const profile = await getProfileByUserId(supabase, user.id);
