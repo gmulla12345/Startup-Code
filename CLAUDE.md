@@ -519,12 +519,22 @@ completely non-functional in production (not just for Google-sourced content), v
 tracking was silently broken for almost all content, and `reviews` had the same latent bug closed
 out preemptively (see dedicated section above).
 
-1. **Enable PayPal** eventually (user confirmed 2026-08-30) — requires turning it on in the Stripe
-   Dashboard → Settings → Payment Methods; the checkout code has no `payment_method_types`
-   restriction so once PayPal is enabled account-side it should just work with no code changes
-   needed. Not done yet — the current Terms of Service intentionally only lists Visa/Mastercard/
-   Amex/Discover, since PayPal isn't actually live. Update the Terms' payment-methods sentence in
-   [src/app/(marketing)/terms/page.tsx](<src/app/(marketing)/terms/page.tsx>) when PayPal goes live.
+1. **Enable PayPal** — user confirmed intent 2026-08-30. **Correction to an earlier, wrong note in
+   this file (2026-09-01)**: this is NOT a simple Dashboard toggle. The Stripe account is
+   US-based (`country: "US"`, confirmed via `GET /v1/account`), and Stripe's standard
+   Dashboard-toggle PayPal integration (Settings → Payment Methods) is only available to Stripe
+   accounts in supported European countries (docs.stripe.com/payments/paypal). For a US account,
+   PayPal requires the separate "PayPal custom payment method" program instead
+   (docs.stripe.com/payments/payment-methods/custom-payment-methods/paypal), which is gated
+   (request access first), has custom/negotiated fees ("contact Stripe for pricing," not published),
+   and — most importantly — requires hosting Stripe's adapter in this app's own infrastructure, i.e.
+   real integration work, not a no-code flip. Before doing anything else here: request access
+   (email the docs page's signup, or `merchant-hosted-adapter@stripe.com` directly) and get pricing
+   from Stripe first — this may not be worth the integration cost for a pre-launch app; reconsider
+   priority once actual pricing/terms come back. The current Terms of Service intentionally only
+   lists Visa/Mastercard/Amex/Discover, since PayPal isn't actually live — update the payment-methods
+   sentence in [src/app/(marketing)/terms/page.tsx](<src/app/(marketing)/terms/page.tsx>) only once
+   it genuinely is.
 2. Legal review of `/privacy` and `/terms` by an actual lawyer — Termly's questionnaire flow is a
    reasonable stand-in for launch, not a substitute for one.
 3. Multi-day AI Trip Planner generation takes a while (order of 10-20+ seconds for a 3-day trip in
