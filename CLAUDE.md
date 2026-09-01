@@ -429,7 +429,7 @@ real place's actual notes/experience_id; (3) "can you reorder the days and add a
 now, not reorder days or add new ones" without touching the database, proving the "clarify" path
 doesn't silently no-op or crash.
 
-## `user_events` and `saved_experiences` uuid-column bug fixed (2026-09-01)
+## `user_events`, `saved_experiences`, and `reviews` uuid-column bug fixed (2026-09-01)
 
 Same root cause and same fix as `itinerary_items.experience_id` (see the catalog section above),
 found while checking on a task that had been spawned for it — **the spawned task never actually
@@ -438,7 +438,7 @@ Error: 401 OAuth access token has expired.` and nothing else. Worth remembering 
 task chip showing "already started" only means a session was created for it, not that it made any
 progress — check `list_events` on the session, don't assume.
 
-Two columns had the exact same `uuid` FK problem as `itinerary_items.experience_id` used to:
+Three columns had the exact same `uuid` FK problem as `itinerary_items.experience_id` used to:
 - `user_events.experience_id` — `trackEvent()` (`src/lib/repositories/events.ts`) silently failed
   (`console.error`, swallowed) for every Google Places-sourced view/dismiss, which meant
   `buildContext()` in `src/services/recommendation/engine.ts` couldn't actually tell what a user
@@ -449,9 +449,13 @@ Two columns had the exact same `uuid` FK problem as `itinerary_items.experience_
   check for *every* save attempt, not just Google-sourced ones — it was completely non-functional
   in production, silently (the API route doesn't surface DB errors to the UI as a visible failure
   state beyond a generic error).
+- `reviews.experience_id` — **latent, not active**: there's no write path for reviews yet
+  (`src/lib/repositories/reviews.ts` is read-only today) and the table has zero rows in production,
+  so nothing was actually broken by this one. Fixed anyway, in the same pass, to close out the bug
+  class consistently rather than leave one column behind for whoever builds review-writing later.
 
-Fixed both with the identical migration pattern as `itinerary_items` (idempotent `do $$` block in
-`src/db/schema.sql`, drop the FK, widen to `text`; `create table` statements updated too, for
+Fixed all three with the identical migration pattern as `itinerary_items` (idempotent `do $$` block
+in `src/db/schema.sql`, drop the FK, widen to `text`; `create table` statements updated too, for
 fresh deployments). `getSavedTagCounts()` in `src/lib/repositories/saved.ts` was rewritten — it
 used to rely on `.select("experiences(tags)")`, a PostgREST embedded join that needs the FK to
 work, so dropping the FK breaks that specific query shape. It now does a manual two-step lookup:
@@ -461,12 +465,14 @@ up for them), then query `experiences.tags` for just those ids. Given `experienc
 empty in production, this function still returns `{}` today either way — the rewrite matters once
 curated content exists again, not right now.
 
-**Verified live end to end** (disposable test account, local dev): confirmed via direct REST
-inserts that both columns now accept a real Google-prefixed id (`201`, no error) before touching
-the app; then through the actual app — viewed a real experience page (`trackEvent("viewed_experience")`
-fired with no error in the logs) and clicked Save (`POST /api/saved` → `200`) — confirmed both rows
-landed in the DB with the correct `g-ChIJ...` id via direct query, and that `/saved` correctly
-renders the saved item.
+**Verified live end to end**: confirmed via direct REST inserts that all three columns now accept a
+real Google-prefixed id (`201`, no error) before touching the app; then through the actual app
+(disposable test accounts, both local dev and production `discoverzolo.com` after deploy) — viewed
+a real experience page (`trackEvent("viewed_experience")` fired with no error in the logs) and
+clicked Save (`POST /api/saved` → `200`) — confirmed both rows landed in the DB with the correct
+`g-ChIJ...` id via direct query on both environments, and that `/saved` correctly renders the saved
+item. `reviews` was verified with a direct insert/delete only (no UI write path to test through
+yet).
 
 ## Exact next steps (priority order)
 
@@ -508,9 +514,10 @@ smaller batch size, and repeat navigation within 30s is instant via `staleTimes`
 section above); **chat-based itinerary editing shipped** — the last of the three planned ways to
 edit a trip (alongside click-to-swap and Remove), a chat box on `/trips/[id]` that reuses the exact
 same real-candidate source and mutation functions as the picker (see dedicated section above);
-**`user_events`/`saved_experiences` uuid-column bug fixed** — the Save button was completely
-non-functional in production (not just for Google-sourced content), and view/dismiss tracking was
-silently broken for almost all content (see dedicated section above).
+**`user_events`/`saved_experiences`/`reviews` uuid-column bug fixed** — the Save button was
+completely non-functional in production (not just for Google-sourced content), view/dismiss
+tracking was silently broken for almost all content, and `reviews` had the same latent bug closed
+out preemptively (see dedicated section above).
 
 1. **Enable PayPal** eventually (user confirmed 2026-08-30) — requires turning it on in the Stripe
    Dashboard → Settings → Payment Methods; the checkout code has no `payment_method_types`
@@ -530,12 +537,12 @@ silently broken for almost all content (see dedicated section above).
 ## Verified clean as of last update
 
 `npm run typecheck` and `npm run lint` pass with zero errors as of the 2026-09-01
-`user_events`/`saved_experiences` fix. Git working tree — **check with `git status`, don't
-assume**.
+`user_events`/`saved_experiences`/`reviews` fix. Git working tree — **check with `git status`,
+don't assume**.
 
-`user_events`/`saved_experiences` uuid-column fix — migration applied to production via
-`npm run migrate` (confirmed successful). Verified via direct REST insert that both columns accept
-a real Google-prefixed id; verified through the actual app on both local dev and production
+`user_events`/`saved_experiences`/`reviews` uuid-column fix — migration applied to production via
+`npm run migrate` (confirmed successful). Verified via direct REST insert that all three columns
+accept a real Google-prefixed id; verified through the actual app on both local dev and production
 (`discoverzolo.com`, post-deploy) that viewing an experience and clicking Save both work end to
 end, with rows confirmed in the DB via direct query each time, and `/saved` renders correctly.
 

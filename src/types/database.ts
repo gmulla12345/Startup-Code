@@ -138,7 +138,7 @@ export interface Experience {
 
 export interface Review {
   id: UUID;
-  experienceId: UUID;
+  experienceId: string; // real uuid (curated) or "g-<place_id>" (Google Places) — see schema.sql
   userId: UUID | null;
   authorName: string;
   rating: number;

@@ -109,7 +109,13 @@ create index if not exists idx_experiences_featured on public.experiences(is_fea
 -- -------------------------------------------------------------------------
 create table if not exists public.reviews (
   id uuid primary key default gen_random_uuid(),
-  experience_id uuid not null references public.experiences(id) on delete cascade,
+  -- text, not uuid: see the migration block further down for why (same
+  -- reason as itinerary_items.experience_id above). No write path exists
+  -- for this table yet (reviews are read-only today, see
+  -- lib/repositories/reviews.ts), so this is currently latent rather than
+  -- actively broken — fixed anyway to close out the same bug class
+  -- consistently instead of leaving one column behind.
+  experience_id text not null,
   user_id uuid references auth.users(id) on delete set null,
   author_name text not null default 'Zolo user',
   rating int not null check (rating between 1 and 5),
@@ -261,17 +267,19 @@ begin
   end if;
 end $$;
 
--- user_events.experience_id and saved_experiences.experience_id were both
--- `uuid` FKs into public.experiences, the identical bug as
--- itinerary_items.experience_id above — and public.experiences has zero
--- rows in production (the fictional demo catalog was removed, see CLAUDE.md
--- "Production catalog is Google Places-only"). This silently broke
--- behavioral tracking (trackEvent logged an error for every Google-sourced
--- view/dismiss) and completely broke the Save button (every save failed the
--- FK check, since experiences is empty) for effectively all production
--- content. Fixed 2026-09-01 the same way: loosen to plain text with no FK.
--- getSavedTagCounts() in src/lib/repositories/saved.ts no longer relies on
--- the FK-based embed for this reason — see that file.
+-- user_events.experience_id, saved_experiences.experience_id, and
+-- reviews.experience_id were all `uuid` FKs into public.experiences, the
+-- identical bug as itinerary_items.experience_id above — and
+-- public.experiences has zero rows in production (the fictional demo
+-- catalog was removed, see CLAUDE.md "Production catalog is Google
+-- Places-only"). This silently broke behavioral tracking (trackEvent logged
+-- an error for every Google-sourced view/dismiss) and completely broke the
+-- Save button (every save failed the FK check, since experiences is empty)
+-- for effectively all production content; reviews had no write path yet so
+-- that one was latent rather than active. Fixed 2026-09-01 the same way:
+-- loosen all three to plain text with no FK. getSavedTagCounts() in
+-- src/lib/repositories/saved.ts no longer relies on the FK-based embed for
+-- this reason — see that file.
 do $$
 begin
   if exists (
@@ -290,6 +298,15 @@ begin
   ) then
     alter table public.saved_experiences drop constraint if exists saved_experiences_experience_id_fkey;
     alter table public.saved_experiences alter column experience_id type text using experience_id::text;
+  end if;
+
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'reviews'
+      and column_name = 'experience_id' and data_type = 'uuid'
+  ) then
+    alter table public.reviews drop constraint if exists reviews_experience_id_fkey;
+    alter table public.reviews alter column experience_id type text using experience_id::text;
   end if;
 end $$;
 
