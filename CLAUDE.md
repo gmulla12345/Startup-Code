@@ -514,8 +514,9 @@ Chat-based itinerary editing — verified live end to end on local dev with a ha
 the item (confirmed via direct DB query, not just hidden client-side); "swap dinner for something
 more casual and cheaper" picked a real nearby place in 7.7s total and persisted correctly; an
 out-of-scope request ("reorder the days and add day 3") correctly replied that it can't do that
-without touching the database. Not yet spot-checked on production after deploy — do that before
-trusting it's live-correct, same as any other change.
+without touching the database. Also confirmed live on production (`discoverzolo.com`) after
+deploy — a fresh test account's seeded itinerary, "remove Times Square" correctly removed it with
+a genuine AI-generated confirmation reply.
 
 Also still holding from earlier: fictional-catalog removal, Surprise Me repeat/exclude fix,
 Discover's 100-result Premium limit, the AI Trip Planner's core generation flow, and the
