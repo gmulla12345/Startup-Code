@@ -56,20 +56,36 @@ export async function unsaveExperience(
   if (error) throw new Error(`unsaveExperience: ${error.message}`);
 }
 
+/**
+ * Tag frequency across a user's saved experiences, used to bias future
+ * recommendations toward tags they keep saving. Does a manual two-step
+ * lookup instead of an embedded `.select("experiences(tags)")` join because
+ * saved_experiences.experience_id is plain text with no FK (see schema.sql
+ * — it has to hold Google Places ids like "g-ChIJ...", not just uuids).
+ * Only uuid-shaped ids can have a row in public.experiences at all — Google
+ * Places results are fetched live and never persisted there, and don't
+ * carry tags to begin with, so there's nothing to look up for them.
+ */
 export async function getSavedTagCounts(
   client: SupabaseClient,
   userId: string
 ): Promise<Record<string, number>> {
-  const { data, error } = await client
+  const { data: saved, error } = await client
     .from("saved_experiences")
-    .select("experiences(tags)")
+    .select("experience_id")
     .eq("user_id", userId);
+  if (error || !saved || saved.length === 0) return {};
 
-  if (error || !data) return {};
+  const uuidIds = saved
+    .map((row) => row.experience_id as string)
+    .filter((id) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id));
+  if (uuidIds.length === 0) return {};
+
+  const { data: experiences } = await client.from("experiences").select("tags").in("id", uuidIds);
 
   const counts: Record<string, number> = {};
-  for (const row of data as unknown as { experiences: { tags: string[] } | null }[]) {
-    for (const tag of row.experiences?.tags ?? []) {
+  for (const row of experiences ?? []) {
+    for (const tag of (row.tags as string[]) ?? []) {
       counts[tag] = (counts[tag] ?? 0) + 1;
     }
   }

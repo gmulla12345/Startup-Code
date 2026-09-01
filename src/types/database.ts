@@ -149,7 +149,7 @@ export interface Review {
 export interface SavedExperience {
   id: UUID;
   userId: UUID;
-  experienceId: UUID;
+  experienceId: string; // real uuid (curated) or "g-<place_id>" (Google Places) — see schema.sql
   collection: string; // e.g. "Weekend", "NYC", "Bucket List"
   status: "saved" | "planned" | "completed";
   notes: string | null;
@@ -173,7 +173,7 @@ export interface UserEvent {
   id: UUID;
   userId: UUID;
   eventType: UserEventType;
-  experienceId: UUID | null;
+  experienceId: string | null; // real uuid (curated) or "g-<place_id>" (Google Places) — see schema.sql
   metadata: Record<string, unknown>;
   createdAt: ISODateString;
 }

@@ -125,7 +125,9 @@ create index if not exists idx_reviews_experience on public.reviews(experience_i
 create table if not exists public.saved_experiences (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
-  experience_id uuid not null references public.experiences(id) on delete cascade,
+  -- text, not uuid: see the migration block further down for why (same
+  -- reason as itinerary_items.experience_id above).
+  experience_id text not null,
   collection text not null default 'Saved',
   status text not null default 'saved' check (status in ('saved','planned','completed')),
   notes text,
@@ -142,7 +144,9 @@ create table if not exists public.user_events (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
   event_type text not null,
-  experience_id uuid references public.experiences(id) on delete set null,
+  -- text, not uuid: see the migration block further down for why (same
+  -- reason as itinerary_items.experience_id above).
+  experience_id text,
   metadata jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now()
 );
@@ -254,6 +258,38 @@ begin
   ) then
     alter table public.itinerary_items drop constraint if exists itinerary_items_experience_id_fkey;
     alter table public.itinerary_items alter column experience_id type text using experience_id::text;
+  end if;
+end $$;
+
+-- user_events.experience_id and saved_experiences.experience_id were both
+-- `uuid` FKs into public.experiences, the identical bug as
+-- itinerary_items.experience_id above — and public.experiences has zero
+-- rows in production (the fictional demo catalog was removed, see CLAUDE.md
+-- "Production catalog is Google Places-only"). This silently broke
+-- behavioral tracking (trackEvent logged an error for every Google-sourced
+-- view/dismiss) and completely broke the Save button (every save failed the
+-- FK check, since experiences is empty) for effectively all production
+-- content. Fixed 2026-09-01 the same way: loosen to plain text with no FK.
+-- getSavedTagCounts() in src/lib/repositories/saved.ts no longer relies on
+-- the FK-based embed for this reason — see that file.
+do $$
+begin
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'user_events'
+      and column_name = 'experience_id' and data_type = 'uuid'
+  ) then
+    alter table public.user_events drop constraint if exists user_events_experience_id_fkey;
+    alter table public.user_events alter column experience_id type text using experience_id::text;
+  end if;
+
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'saved_experiences'
+      and column_name = 'experience_id' and data_type = 'uuid'
+  ) then
+    alter table public.saved_experiences drop constraint if exists saved_experiences_experience_id_fkey;
+    alter table public.saved_experiences alter column experience_id type text using experience_id::text;
   end if;
 end $$;
 

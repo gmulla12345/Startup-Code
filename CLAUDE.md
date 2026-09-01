@@ -429,6 +429,45 @@ real place's actual notes/experience_id; (3) "can you reorder the days and add a
 now, not reorder days or add new ones" without touching the database, proving the "clarify" path
 doesn't silently no-op or crash.
 
+## `user_events` and `saved_experiences` uuid-column bug fixed (2026-09-01)
+
+Same root cause and same fix as `itinerary_items.experience_id` (see the catalog section above),
+found while checking on a task that had been spawned for it — **the spawned task never actually
+ran**: `list_events` on that session showed a single turn, `[assistant] Failed to authenticate. API
+Error: 401 OAuth access token has expired.` and nothing else. Worth remembering for next time: a
+task chip showing "already started" only means a session was created for it, not that it made any
+progress — check `list_events` on the session, don't assume.
+
+Two columns had the exact same `uuid` FK problem as `itinerary_items.experience_id` used to:
+- `user_events.experience_id` — `trackEvent()` (`src/lib/repositories/events.ts`) silently failed
+  (`console.error`, swallowed) for every Google Places-sourced view/dismiss, which meant
+  `buildContext()` in `src/services/recommendation/engine.ts` couldn't actually tell what a user
+  had already seen or dismissed for almost any real content.
+- `saved_experiences.experience_id` — **worse than it first looked**: the FK pointed at
+  `public.experiences`, which has **zero rows in production** (the fictional catalog was removed —
+  confirmed by direct query before fixing this). That means the Save button was failing the FK
+  check for *every* save attempt, not just Google-sourced ones — it was completely non-functional
+  in production, silently (the API route doesn't surface DB errors to the UI as a visible failure
+  state beyond a generic error).
+
+Fixed both with the identical migration pattern as `itinerary_items` (idempotent `do $$` block in
+`src/db/schema.sql`, drop the FK, widen to `text`; `create table` statements updated too, for
+fresh deployments). `getSavedTagCounts()` in `src/lib/repositories/saved.ts` was rewritten — it
+used to rely on `.select("experiences(tags)")`, a PostgREST embedded join that needs the FK to
+work, so dropping the FK breaks that specific query shape. It now does a manual two-step lookup:
+fetch saved `experience_id`s, keep only the uuid-shaped ones (Google Places results are never
+persisted to `public.experiences` and don't carry tags to begin with, so there's nothing to look
+up for them), then query `experiences.tags` for just those ids. Given `experiences` is currently
+empty in production, this function still returns `{}` today either way — the rewrite matters once
+curated content exists again, not right now.
+
+**Verified live end to end** (disposable test account, local dev): confirmed via direct REST
+inserts that both columns now accept a real Google-prefixed id (`201`, no error) before touching
+the app; then through the actual app — viewed a real experience page (`trackEvent("viewed_experience")`
+fired with no error in the logs) and clicked Save (`POST /api/saved` → `200`) — confirmed both rows
+landed in the DB with the correct `g-ChIJ...` id via direct query, and that `/saved` correctly
+renders the saved item.
+
 ## Exact next steps (priority order)
 
 **Done since the last update:** deployed to production at `discoverzolo.com` (fixed a Vercel
@@ -468,7 +507,10 @@ unbounded timeout (was up to 33s observed) is now bounded to ~12s with real head
 smaller batch size, and repeat navigation within 30s is instant via `staleTimes` (see dedicated
 section above); **chat-based itinerary editing shipped** — the last of the three planned ways to
 edit a trip (alongside click-to-swap and Remove), a chat box on `/trips/[id]` that reuses the exact
-same real-candidate source and mutation functions as the picker (see dedicated section above).
+same real-candidate source and mutation functions as the picker (see dedicated section above);
+**`user_events`/`saved_experiences` uuid-column bug fixed** — the Save button was completely
+non-functional in production (not just for Google-sourced content), and view/dismiss tracking was
+silently broken for almost all content (see dedicated section above).
 
 1. **Enable PayPal** eventually (user confirmed 2026-08-30) — requires turning it on in the Stripe
    Dashboard → Settings → Payment Methods; the checkout code has no `payment_method_types`
@@ -484,21 +526,18 @@ same real-candidate source and mutation functions as the picker (see dedicated s
    should no longer fail outright on longer trips. If it still feels too slow in practice, consider
    trimming candidates sent to the model or a streaming/progressive UI, rather than reducing what
    it actually plans.
-4. **`events.experience_id` uuid-column bug — spotted while investigating site speed, fix was
-   spawned as a separate task (check its status / whether it's landed before redoing it)**:
-   `trackEvent` (`src/lib/repositories/events.ts`) silently fails for every Google Places-sourced
-   experience — `[events] trackEvent failed: invalid input syntax for type uuid: "g-ChIJ..."` shows
-   up in the logs constantly. The `events.experience_id` column is still `uuid`-typed and was never
-   migrated to `text` the way `itinerary_items.experience_id` was (see the catalog section above
-   for that precedent/migration pattern). Since Google Places is now the *only* production catalog,
-   this means "viewed"/"dismissed" tracking — which `buildContext()` in
-   `src/services/recommendation/engine.ts` uses to avoid re-recommending things a user already saw
-   or dismissed — silently doesn't work for almost any real content.
 
 ## Verified clean as of last update
 
-`npm run typecheck` and `npm run lint` pass with zero errors as of the 2026-09-01 chat-editing
-feature. Git working tree — **check with `git status`, don't assume**.
+`npm run typecheck` and `npm run lint` pass with zero errors as of the 2026-09-01
+`user_events`/`saved_experiences` fix. Git working tree — **check with `git status`, don't
+assume**.
+
+`user_events`/`saved_experiences` uuid-column fix — migration applied to production via
+`npm run migrate` (confirmed successful). Verified via direct REST insert that both columns accept
+a real Google-prefixed id; verified through the actual app (disposable test account, local dev)
+that viewing an experience and clicking Save both work end to end with rows confirmed in the DB,
+and `/saved` renders correctly. Not yet spot-checked on `discoverzolo.com` after deploy.
 
 Site-speed fix (Suspense streaming, bounded AI timeout, `staleTimes`) — verified live end to end
 using disposable Supabase test accounts (created via Admin API, deleted after): on local dev, four
