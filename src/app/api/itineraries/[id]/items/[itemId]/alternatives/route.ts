@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireUser, withErrorHandling, ApiError } from "@/lib/api/auth";
-import { getItineraryWithItems } from "@/lib/repositories/itineraries";
-import { getExperienceProvider } from "@/services/providers";
+import { getItineraryWithItems, getSwapCandidates } from "@/lib/repositories/itineraries";
 
 /**
  * Real alternatives near an itinerary's destination for swapping out one
@@ -22,27 +21,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
     }
 
     const excludeIds = items.map((i) => i.experienceId).filter((id): id is string => Boolean(id));
-
-    const provider = await getExperienceProvider();
-    const candidates = await provider.list({
-      city: itinerary.destinationCity ?? undefined,
-      latitude: itinerary.destinationLatitude,
-      longitude: itinerary.destinationLongitude,
-      radiusMiles: 20,
-      excludeIds,
-      limit: 12,
-    });
-
-    const alternatives = candidates.map((c) => ({
-      experienceId: c.id,
-      title: c.title,
-      category: c.category,
-      images: c.images.slice(0, 3),
-      priceEstimate: c.priceEstimate,
-      priceLevel: c.priceLevel,
-      rating: c.rating,
-      shortDescription: c.shortDescription,
-    }));
+    const alternatives = await getSwapCandidates(itinerary, excludeIds);
 
     return NextResponse.json({ alternatives });
   });

@@ -381,6 +381,54 @@ direct-API timing test (construct the same tool-use payload and time a raw `fetc
 in-app logs, since retries and Suspense streaming can obscure how long the underlying call
 actually took.
 
+## Chat-based itinerary editing (2026-09-01)
+
+The third (and last-planned) way to edit an itinerary, alongside the click-to-swap picker and
+Remove button — a chat box at the bottom of `/trips/[id]`
+([src/components/trips/itinerary-detail.tsx](src/components/trips/itinerary-detail.tsx)). Deferred
+from the itinerary-editing work above with the user's explicit agreement (they picked "Both" when
+asked, picker shipped first); this is that follow-up round.
+
+**Deliberately reuses the click-to-swap picker's exact machinery rather than inventing a new
+mutation path** — the whole point of scoping it this way (per the plan already written into this
+file before building it): `updateItineraryItem`/`deleteItineraryItem` in
+[src/lib/repositories/itineraries.ts](src/lib/repositories/itineraries.ts) are the *only* things
+that ever touch the database, same as the picker. The candidate-fetching query that used to live
+inline in the alternatives route was factored out into a shared `getSwapCandidates()` in that same
+repository file (both the picker and chat now call it, so they always offer identical real
+candidates — not two different notions of "nearby").
+
+**Two small AI calls, not one big one** — this project just spent an entire session learning that
+non-streamed structured-output calls scale badly with batch size (see the site-speed section
+above), so this was built to stay small and fast from the start:
+1. `interpretItineraryChat()` ([src/ai/itinerary-chat.ts](src/ai/itinerary-chat.ts)) — given the
+   user's message and a short summary of each item (day, time, title, notes), decides
+   `action: "remove" | "swap" | "clarify"`, which `itemId`, and (for swap) a free-form
+   `preference` string. Never sees or touches real place data.
+2. Only for `"swap"`: `pickSwapCandidate()` — given that preference and the real candidate list
+   from `getSwapCandidates()` (same live provider data as everything else, never AI-generated),
+   picks one `experienceId` or `null` if nothing fits. The model never invents a place, price, or
+   description — it only ever selects an id from what it's given, exactly like the recommendation
+   and trip-plan AI already does elsewhere in this codebase.
+
+New route: `POST /api/itineraries/[id]/chat`
+([src/app/api/itineraries/[id]/chat/route.ts](<src/app/api/itineraries/[id]/chat/route.ts>)),
+rate-limited 20/min per user, returns `{ reply }` for a clarification, or `{ reply, item }` /
+`{ reply, removed: true, itemId }` for an applied change — `itinerary-detail.tsx` uses exactly
+those to update its local `items` state (no reload), same pattern as the existing swap/remove
+buttons.
+
+**Verified live end to end** using a disposable Supabase test account with a hand-seeded itinerary
+(2 real items, real Google Places ids) — chose to seed directly via the DB rather than generating
+through the Trip Planner, to control exactly what was being tested: (1) "remove the Times Square
+visit" → item disappeared from the UI and was confirmed actually deleted via a direct DB query
+(not just hidden client-side); (2) "swap dinner for something more casual and cheaper" → both AI
+calls completed in 7.7s total, picked a real nearby place, confirmed persisted in the DB with the
+real place's actual notes/experience_id; (3) "can you reorder the days and add a whole new day 3"
+(deliberately out of scope) → correctly replied "I can only swap or remove existing items right
+now, not reorder days or add new ones" without touching the database, proving the "clarify" path
+doesn't silently no-op or crash.
+
 ## Exact next steps (priority order)
 
 **Done since the last update:** deployed to production at `discoverzolo.com` (fixed a Vercel
@@ -418,60 +466,60 @@ click-to-swap or remove any activity (see dedicated section above); **site-wide 
 root-caused and fixed** — Home/Map/Travel now stream instead of blocking, the AI reasoning call's
 unbounded timeout (was up to 33s observed) is now bounded to ~12s with real headroom under it via a
 smaller batch size, and repeat navigation within 30s is instant via `staleTimes` (see dedicated
-section above — this is what item #4 below used to be; both of its named suspects were correct and
-are now fixed).
+section above); **chat-based itinerary editing shipped** — the last of the three planned ways to
+edit a trip (alongside click-to-swap and Remove), a chat box on `/trips/[id]` that reuses the exact
+same real-candidate source and mutation functions as the picker (see dedicated section above).
 
-1. **Chat-based itinerary editing** — user explicitly asked for this alongside the click-to-swap
-   picker; deferred as separate scope with the user's agreement (they chose "both", picker shipped
-   now, chat is the follow-up). Needs: a new AI endpoint that takes a free-form request ("swap
-   Tuesday's lunch for something cheaper", "make day 2 more relaxed") plus the current itinerary
-   state and returns structured edits (which item(s), swap/remove/reorder) — reuse the
-   `alternatives` endpoint and `updateItineraryItem`/`deleteItineraryItem` repository functions
-   from the click-to-swap work as the actual mutation primitives once the AI has decided what to
-   change, rather than inventing a new mutation path. A chat box UI at the bottom of
-   `itinerary-detail.tsx` that calls it.
-2. **Enable PayPal** eventually (user confirmed 2026-08-30) — requires turning it on in the Stripe
+1. **Enable PayPal** eventually (user confirmed 2026-08-30) — requires turning it on in the Stripe
    Dashboard → Settings → Payment Methods; the checkout code has no `payment_method_types`
    restriction so once PayPal is enabled account-side it should just work with no code changes
    needed. Not done yet — the current Terms of Service intentionally only lists Visa/Mastercard/
    Amex/Discover, since PayPal isn't actually live. Update the Terms' payment-methods sentence in
    [src/app/(marketing)/terms/page.tsx](<src/app/(marketing)/terms/page.tsx>) when PayPal goes live.
-3. Legal review of `/privacy` and `/terms` by an actual lawyer — Termly's questionnaire flow is a
+2. Legal review of `/privacy` and `/terms` by an actual lawyer — Termly's questionnaire flow is a
    reasonable stand-in for launch, not a substitute for one.
-4. Multi-day AI Trip Planner generation takes a while (order of 10-20+ seconds for a 3-day trip in
+3. Multi-day AI Trip Planner generation takes a while (order of 10-20+ seconds for a 3-day trip in
    local testing) — has a loading state (`loading` prop on the Generate button) so it doesn't look
    frozen, and now has real headroom (`timeoutMs: 45_000`, see the site-speed section above) so it
    should no longer fail outright on longer trips. If it still feels too slow in practice, consider
    trimming candidates sent to the model or a streaming/progressive UI, rather than reducing what
    it actually plans.
-5. **Separate, unrelated bug spotted while investigating site speed, not yet fixed**: `trackEvent`
-   (`src/lib/repositories/events.ts`) silently fails for every Google Places-sourced experience —
-   `[events] trackEvent failed: invalid input syntax for type uuid: "g-ChIJ..."` shows up in the
-   logs constantly. The `events.experience_id` column is still `uuid`-typed and was never migrated
-   to `text` the way `itinerary_items.experience_id` was (see the catalog section above for that
-   precedent/migration pattern). Since Google Places is now the *only* production catalog, this
-   means "viewed"/"dismissed" tracking — which `buildContext()` in
-   `src/services/recommendation/engine.ts` uses to avoid re-recommending things a user already
-   saw or dismissed — silently doesn't work for almost any real content. Worth fixing with the same
-   migration approach used for `itinerary_items`.
+4. **`events.experience_id` uuid-column bug — spotted while investigating site speed, fix was
+   spawned as a separate task (check its status / whether it's landed before redoing it)**:
+   `trackEvent` (`src/lib/repositories/events.ts`) silently fails for every Google Places-sourced
+   experience — `[events] trackEvent failed: invalid input syntax for type uuid: "g-ChIJ..."` shows
+   up in the logs constantly. The `events.experience_id` column is still `uuid`-typed and was never
+   migrated to `text` the way `itinerary_items.experience_id` was (see the catalog section above
+   for that precedent/migration pattern). Since Google Places is now the *only* production catalog,
+   this means "viewed"/"dismissed" tracking — which `buildContext()` in
+   `src/services/recommendation/engine.ts` uses to avoid re-recommending things a user already saw
+   or dismissed — silently doesn't work for almost any real content.
 
 ## Verified clean as of last update
 
-`npm run typecheck` and `npm run lint` pass with zero errors as of the 2026-08-31 site-speed fix
-(Suspense streaming on Home/Map/Travel, bounded AI timeout, `staleTimes`). Git working tree —
-**check with `git status`, don't assume**. Verified live end to end using a disposable Supabase
-test account (created via Admin API, deleted after): on local dev, four fresh `/home` loads after
-the fix took 6.8s/7.6s/8.4s/10.3s (down from 14-33s before), all with genuine AI-written reasoning
-visible in the response (not the generic fallback text); Map loaded in 2.5s. Also confirmed live on
-production (`discoverzolo.com`) *before* this fix was deployed that the problem was real there too
-(not just a local dev artifact) — a fresh login took ~9-10s to show `/home`'s content, with the
-generic deterministic fallback reasoning showing instead of AI blurbs, consistent with the AI call
-failing on production too. Redeploy this fix and spot-check `discoverzolo.com/home` again after to
-confirm the same improvement holds in production, not just locally.
+`npm run typecheck` and `npm run lint` pass with zero errors as of the 2026-09-01 chat-editing
+feature. Git working tree — **check with `git status`, don't assume**.
 
-Also still holding from earlier the same day: fictional-catalog removal, Surprise Me repeat/exclude
-fix, Discover's 100-result Premium limit, the AI Trip Planner's core generation flow, and the
-itinerary-editing feature (quantitative budget, images/descriptions, click-to-swap/remove) —
+Site-speed fix (Suspense streaming, bounded AI timeout, `staleTimes`) — verified live end to end
+using disposable Supabase test accounts (created via Admin API, deleted after): on local dev, four
+fresh `/home` loads took 6.8s/7.6s/8.4s/10.3s (down from 14-33s before), all with genuine AI-written
+reasoning visible (not the generic fallback text); Map loaded in 2.5s. Confirmed on production
+(`discoverzolo.com`) both *before* the fix (a fresh login took ~9-10s to show `/home`'s content,
+generic fallback reasoning instead of real AI blurbs — the problem was real there too, not a local
+dev artifact) and *after* deploying (shell painted within ~3s of login, real AI-personalized
+reasoning visible within ~10s).
+
+Chat-based itinerary editing — verified live end to end on local dev with a hand-seeded itinerary
+(disposable test account + 2 real Google-sourced items): "remove the Times Square visit" deleted
+the item (confirmed via direct DB query, not just hidden client-side); "swap dinner for something
+more casual and cheaper" picked a real nearby place in 7.7s total and persisted correctly; an
+out-of-scope request ("reorder the days and add day 3") correctly replied that it can't do that
+without touching the database. Not yet spot-checked on production after deploy — do that before
+trusting it's live-correct, same as any other change.
+
+Also still holding from earlier: fictional-catalog removal, Surprise Me repeat/exclude fix,
+Discover's 100-result Premium limit, the AI Trip Planner's core generation flow, and the
+click-to-swap/remove itinerary-editing feature (quantitative budget, images/descriptions) —
 verified live end to end on local dev: generated a real 2-day New York trip, opened an activity's
 detail modal (real image gallery + description rendered), swapped Rockefeller Center for Lincoln
 Center for the Performing Arts (confirmed persisted in `itinerary_items` via direct DB query, UI

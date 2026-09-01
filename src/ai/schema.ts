@@ -33,3 +33,19 @@ export const weekendPlanSchema = z.object({
 });
 
 export type WeekendPlanAI = z.infer<typeof weekendPlanSchema>;
+
+export const itineraryChatIntentSchema = z.object({
+  action: z.enum(["remove", "swap", "clarify"]),
+  itemId: z.string().nullable(),
+  preference: z.string().nullable(),
+  reply: z.string().min(1).max(300),
+});
+
+export type ItineraryChatIntent = z.infer<typeof itineraryChatIntentSchema>;
+
+export const itineraryChatPickSchema = z.object({
+  experienceId: z.string().nullable(),
+  reply: z.string().min(1).max(300),
+});
+
+export type ItineraryChatPick = z.infer<typeof itineraryChatPickSchema>;

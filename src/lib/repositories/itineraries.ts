@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { randomUUID } from "crypto";
 import type { Itinerary, ItineraryItem } from "@/types/database";
 import type { TripPlan, WeekendPlan } from "@/types/ai";
+import { getExperienceProvider } from "@/services/providers";
 
 function rowToItinerary(row: Record<string, unknown>): Itinerary {
   return {
@@ -164,6 +165,52 @@ export async function getItineraryWithItems(
     .order("order_index", { ascending: true });
 
   return { itinerary: rowToItinerary(itineraryRow), items: (itemRows ?? []).map(rowToItem) };
+}
+
+export interface SwapCandidate {
+  experienceId: string;
+  title: string;
+  category: string;
+  images: string[];
+  priceEstimate: number | null;
+  priceLevel: string;
+  rating: number | null;
+  shortDescription: string;
+}
+
+/**
+ * Real, live alternatives near an itinerary's destination for swapping out
+ * one item — never AI-generated, the same provider data the rest of the
+ * catalog uses. Shared by the click-to-swap picker (alternatives route) and
+ * the chat-editing flow (src/ai/itinerary-chat.ts) so both offer the exact
+ * same real candidates, not two different notions of "nearby". Returns []
+ * if the itinerary has no destination coordinates (e.g. a Weekend Planner
+ * itinerary) — callers that need to distinguish "no destination" from
+ * "no candidates found" should check destinationLatitude/Longitude first.
+ */
+export async function getSwapCandidates(itinerary: Itinerary, excludeIds: string[]): Promise<SwapCandidate[]> {
+  if (itinerary.destinationLatitude == null || itinerary.destinationLongitude == null) return [];
+
+  const provider = await getExperienceProvider();
+  const candidates = await provider.list({
+    city: itinerary.destinationCity ?? undefined,
+    latitude: itinerary.destinationLatitude,
+    longitude: itinerary.destinationLongitude,
+    radiusMiles: 20,
+    excludeIds,
+    limit: 12,
+  });
+
+  return candidates.map((c) => ({
+    experienceId: c.id,
+    title: c.title,
+    category: c.category,
+    images: c.images.slice(0, 3),
+    priceEstimate: c.priceEstimate,
+    priceLevel: c.priceLevel,
+    rating: c.rating,
+    shortDescription: c.shortDescription,
+  }));
 }
 
 /** Throws if the itinerary doesn't exist or isn't owned by userId. */

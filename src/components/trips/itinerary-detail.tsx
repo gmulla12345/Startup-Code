@@ -1,13 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { toast } from "sonner";
-import { X, ChevronLeft, ChevronRight, Repeat, Trash2, Star } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Repeat, Trash2, Star, Send, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import type { Itinerary, ItineraryItem } from "@/types/database";
+
+interface ChatMessage {
+  role: "user" | "assistant";
+  text: string;
+}
 
 interface Alternative {
   experienceId: string;
@@ -37,8 +42,46 @@ export function ItineraryDetail({ itinerary, items: initialItems }: { itinerary:
   const [alternatives, setAlternatives] = useState<Alternative[] | null>(null);
   const [loadingAlternatives, setLoadingAlternatives] = useState(false);
   const [mutating, setMutating] = useState(false);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [chatLoading, setChatLoading] = useState(false);
+  const chatLogRef = useRef<HTMLDivElement>(null);
 
   const canSwap = itinerary.destinationLatitude != null;
+
+  useEffect(() => {
+    chatLogRef.current?.scrollTo({ top: chatLogRef.current.scrollHeight, behavior: "smooth" });
+  }, [chatMessages]);
+
+  async function sendChatMessage() {
+    const message = chatInput.trim();
+    if (!message || chatLoading) return;
+
+    setChatMessages((prev) => [...prev, { role: "user", text: message }]);
+    setChatInput("");
+    setChatLoading(true);
+    try {
+      const res = await fetch(`/api/itineraries/${itinerary.id}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Something went wrong.");
+
+      setChatMessages((prev) => [...prev, { role: "assistant", text: json.reply }]);
+      if (json.item) {
+        setItems((prev) => prev.map((i) => (i.id === json.item.id ? json.item : i)));
+      } else if (json.removed && json.itemId) {
+        setItems((prev) => prev.filter((i) => i.id !== json.itemId));
+      }
+    } catch (err) {
+      const text = err instanceof Error ? err.message : "Something went wrong.";
+      setChatMessages((prev) => [...prev, { role: "assistant", text }]);
+    } finally {
+      setChatLoading(false);
+    }
+  }
 
   function openItem(item: ItineraryItem) {
     setActiveItem(item);
@@ -175,6 +218,61 @@ export function ItineraryDetail({ itinerary, items: initialItems }: { itinerary:
             </div>
           </div>
         ))}
+      </div>
+
+      <div className="mt-10 border-t border-border pt-6">
+        <div className="flex items-center gap-2 mb-3">
+          <Sparkles className="h-4 w-4 text-ember" />
+          <h2 className="font-display text-lg font-semibold text-foreground">Ask for changes</h2>
+        </div>
+        <p className="text-sm text-foreground-muted mb-4">
+          {"Tell it what to change — \"swap Tuesday's lunch for something cheaper\" or \"remove the museum on day 2\"."}
+        </p>
+
+        {chatMessages.length > 0 && (
+          <div ref={chatLogRef} className="space-y-3 mb-4 max-h-72 overflow-y-auto pr-1">
+            {chatMessages.map((msg, i) => (
+              <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                <div
+                  className={`max-w-[85%] rounded-[var(--radius-md)] px-3.5 py-2 text-sm ${
+                    msg.role === "user"
+                      ? "bg-forest text-white"
+                      : "bg-surface-sunken text-foreground"
+                  }`}
+                >
+                  {msg.text}
+                </div>
+              </div>
+            ))}
+            {chatLoading && (
+              <div className="flex justify-start">
+                <div className="bg-surface-sunken rounded-[var(--radius-md)] px-3.5 py-2">
+                  <Spinner />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            sendChatMessage();
+          }}
+          className="flex gap-2"
+        >
+          <input
+            type="text"
+            value={chatInput}
+            onChange={(e) => setChatInput(e.target.value)}
+            placeholder="What would you like to change?"
+            disabled={chatLoading}
+            className="flex-1 rounded-[var(--radius-md)] border border-border bg-surface px-3.5 py-2.5 text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:ring-2 focus:ring-forest/40 disabled:opacity-50"
+          />
+          <Button type="submit" size="icon" disabled={!chatInput.trim()} loading={chatLoading} aria-label="Send">
+            {!chatLoading && <Send className="h-4 w-4" />}
+          </Button>
+        </form>
       </div>
 
       {activeItem && (
