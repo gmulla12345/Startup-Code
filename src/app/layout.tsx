@@ -37,7 +37,10 @@ export const metadata: Metadata = {
     title: `${brand.name} — ${brand.tagline}`,
     description: brand.description,
   },
-  icons: { icon: "/favicon.ico" },
+  // No explicit `icons` here — favicon.ico, icon.png, and apple-icon.png in
+  // this directory are auto-detected by Next's file-convention system and
+  // wired into <head> automatically. An explicit `icons` field would
+  // override that and suppress icon.png/apple-icon.png.
 };
 
 export const viewport: Viewport = {
