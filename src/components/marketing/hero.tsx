@@ -2,7 +2,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { brand } from "@/lib/config/brand";
 
 export function Hero() {
   return (
@@ -17,11 +16,13 @@ export function Hero() {
           </div>
 
           <h1 className="font-display text-5xl sm:text-6xl md:text-7xl font-semibold tracking-tight text-foreground leading-[1.05]">
-            {brand.tagline}
+            Stop deciding. Start doing.
           </h1>
 
           <p className="mt-6 text-lg sm:text-xl text-foreground-muted max-w-xl">
-            {brand.subTagline}
+            Zolo gives you a short, curated list of experiences matched to your interests, budget, and
+            personality — with a reason for every pick. Built for young professionals who want more from
+            their free time.
           </p>
 
           <div className="mt-9 flex flex-col sm:flex-row gap-3">
