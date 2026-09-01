@@ -202,6 +202,13 @@ export interface Itinerary {
   estimatedCost: number | null;
   isPublic: boolean;
   shareSlug: string | null;
+  // Set for AI Trip Planner itineraries (type "travel") — the geo anchor
+  // used to fetch real swap alternatives for an item. Null for Weekend
+  // Planner itineraries, which don't support swapping yet.
+  destinationCity: string | null;
+  destinationCountry: string | null;
+  destinationLatitude: number | null;
+  destinationLongitude: number | null;
   createdAt: ISODateString;
   updatedAt: ISODateString;
 }
@@ -209,13 +216,14 @@ export interface Itinerary {
 export interface ItineraryItem {
   id: UUID;
   itineraryId: UUID;
-  experienceId: UUID | null;
+  experienceId: string | null; // real uuid (curated) or "g-<place_id>" (Google Places) — see schema.sql
   dayIndex: number;
   startTime: string; // "09:00"
   title: string;
   notes: string | null;
   estimatedCost: number | null;
   orderIndex: number;
+  images: string[];
 }
 
 export interface Trip {

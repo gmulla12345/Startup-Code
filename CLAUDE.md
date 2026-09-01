@@ -271,6 +271,49 @@ Three more things fixed same day, after the catalog-accuracy work above:
    steps below), but it's a straightforward, low-risk correctness fix regardless — the duplicate
    fetches were never doing anything useful.
 
+## Trip Planner is now fully editable (2026-08-31, same day as the section above)
+
+User asked for: a quantitative budget picker (not just $ symbols), full editability of a generated
+trip plan, descriptions + images per activity (clickable), and a way to swap out or remove an
+activity — either by clicking it or via a chat box. **Chat-based editing is explicitly deferred to
+a follow-up round** — flagged to the user up front as separate, larger scope (a new AI agent that
+parses free-form requests into structured itinerary edits) from the click-to-swap picker, which
+shipped this round. Don't build the chat box without re-confirming scope with the user first.
+
+What shipped:
+- **Quantitative budget**: [src/components/trips/trip-planner-modal.tsx](src/components/trips/trip-planner-modal.tsx)'s
+  pills now read "Free / Under $75 / $75–200 / $200+" (per day, per person) instead of $/$$/$$$.
+  The underlying values (`free`/`low`/`medium`/`high`) are unchanged — only labels — but
+  [src/ai/trip-plan.ts](src/ai/trip-plan.ts)'s prompt now also spells out the real dollar range to
+  the model (`BUDGET_DESCRIPTIONS`), not just the bare label.
+- **Real images and descriptions per activity**: the AI never sees or invents image URLs — after
+  the model picks candidate ids, `attachImages()` (now exported from
+  [src/ai/weekend-plan.ts](src/ai/weekend-plan.ts), reused by `trip-plan.ts`) looks up each item's
+  real images from the actual candidate list. `WeekendPlanItem`/`TripPlanItem` gained an `images:
+  string[]` field; `itinerary_items` gained an `images text[]` column (migration in
+  [src/db/schema.sql](src/db/schema.sql), already applied). Descriptions were already there
+  (`notes`, AI-written per item) — just weren't surfaced anywhere clickable before.
+- **`itineraries` gained a destination** (`destination_city/country/latitude/longitude`, migration
+  applied) — populated for Trip Planner-created itineraries (`saveTripPlanAsItinerary`), left null
+  for Weekend Planner ones. This is the geo anchor the swap feature needs; it's also why swapping
+  is only available on trip-type itineraries for now, not weekend ones (feature-detected via
+  `itinerary.destinationLatitude != null`, not an explicit flag).
+- **`/trips/[id]` is now a fully interactive client component**
+  ([src/components/trips/itinerary-detail.tsx](src/components/trips/itinerary-detail.tsx)):
+  clicking any activity opens a modal with its full image gallery (swipeable if >1 image),
+  description, cost, a "View full details" link to the real experience page, and **Swap this** /
+  **Remove** actions. Swap fetches real nearby alternatives (never AI-generated — same live Google
+  Places data as everything else, excluding places already in the itinerary) from a new endpoint
+  and lets the user pick one, or "No event — leave this slot free." All mutations
+  (`PATCH`/`DELETE` on [src/app/api/itineraries/[id]/items/[itemId]/route.ts](<src/app/api/itineraries/[id]/items/[itemId]/route.ts>),
+  alternatives via [.../alternatives/route.ts](<src/app/api/itineraries/[id]/items/[itemId]/alternatives/route.ts>))
+  are ownership-checked in `lib/repositories/itineraries.ts` (`requireOwnedItinerary`) and update
+  local state immediately — no page reload. **Verified live end to end**: generated a real 2-day
+  NYC trip, swapped Rockefeller Center for Lincoln Center (persisted correctly in the DB, UI
+  updated without reload), removed Times Square entirely (persisted, UI updated). Screenshots were
+  unreliable/stale during this verification (a recurring browser-tool artifact this session, not an
+  app bug) — verified via direct DOM inspection and DB queries instead when screenshots looked stuck.
+
 ## Exact next steps (priority order)
 
 **Done since the last update:** deployed to production at `discoverzolo.com` (fixed a Vercel
@@ -302,17 +345,28 @@ itinerary code); **Surprise Me now persists its last result** to `localStorage`
 without a new AI call; **Discover's Premium limit now actually does something** (100 results
 instead of a hardcoded 24, server-verified); **duplicate per-navigation auth/profile/subscription
 fetches fixed** via React `cache()` (see dedicated section above) — the likely main cause of pages
-feeling slow to switch between, though not yet confirmed with real before/after timing numbers.
+feeling slow to switch between, though not yet confirmed with real before/after timing numbers;
+**trip plans are now fully editable** — quantitative budget, real images/descriptions per activity,
+click-to-swap or remove any activity (see dedicated section above).
 
-1. **Enable PayPal** eventually (user confirmed 2026-08-30) — requires turning it on in the Stripe
+1. **Chat-based itinerary editing** — user explicitly asked for this alongside the click-to-swap
+   picker; deferred as separate scope with the user's agreement (they chose "both", picker shipped
+   now, chat is the follow-up). Needs: a new AI endpoint that takes a free-form request ("swap
+   Tuesday's lunch for something cheaper", "make day 2 more relaxed") plus the current itinerary
+   state and returns structured edits (which item(s), swap/remove/reorder) — reuse the
+   `alternatives` endpoint and `updateItineraryItem`/`deleteItineraryItem` repository functions
+   from the click-to-swap work as the actual mutation primitives once the AI has decided what to
+   change, rather than inventing a new mutation path. A chat box UI at the bottom of
+   `itinerary-detail.tsx` that calls it.
+2. **Enable PayPal** eventually (user confirmed 2026-08-30) — requires turning it on in the Stripe
    Dashboard → Settings → Payment Methods; the checkout code has no `payment_method_types`
    restriction so once PayPal is enabled account-side it should just work with no code changes
    needed. Not done yet — the current Terms of Service intentionally only lists Visa/Mastercard/
    Amex/Discover, since PayPal isn't actually live. Update the Terms' payment-methods sentence in
    [src/app/(marketing)/terms/page.tsx](<src/app/(marketing)/terms/page.tsx>) when PayPal goes live.
-2. Legal review of `/privacy` and `/terms` by an actual lawyer — Termly's questionnaire flow is a
+3. Legal review of `/privacy` and `/terms` by an actual lawyer — Termly's questionnaire flow is a
    reasonable stand-in for launch, not a substitute for one.
-3. **Confirm the "slow switching pages" complaint is actually resolved** — the layout+page
+4. **Confirm the "slow switching pages" complaint is actually resolved** — the layout+page
    duplicate-fetch fix above is a real bug fix regardless, but it hasn't been confirmed against
    the user's original complaint with real timing data (Vercel function duration logs, or just
    asking the user if it feels faster now). If it's still slow, the next suspects in order: (a)
@@ -321,7 +375,7 @@ feeling slow to switch between, though not yet confirmed with real before/after 
    cache but still real latency on a cold cache/new location), (b) the live Claude call on every
    `/home` and personalized-Discover load (inherent to AI reasoning, already has a loading skeleton
    so at least it doesn't look frozen).
-4. Multi-day AI Trip Planner generation takes a while (order of 10-20+ seconds for a 3-day trip in
+5. Multi-day AI Trip Planner generation takes a while (order of 10-20+ seconds for a 3-day trip in
    local testing) — has a loading state (`loading` prop on the Generate button) so it doesn't look
    frozen, but if this feels too slow in practice, consider lowering `AI_REASONING_BATCH_SIZE`-style
    trimming for `src/ai/trip-plan.ts`, or streaming/progressive UI, rather than reducing what it
@@ -329,11 +383,13 @@ feeling slow to switch between, though not yet confirmed with real before/after 
 
 ## Verified clean as of last update
 
-`npm run typecheck` and `npm run lint` pass with zero errors as of the 2026-08-31 AI Trip Planner +
-performance update. Git working tree — **check with `git status`, don't assume**. Verified live end
-to end on the local dev server (against the real production Supabase + live Google Places, same
-data production uses): generated a real 3-day New York trip via the new Trip Planner and confirmed
-every named business in it resolves to a real Google Places id; confirmed Discover returns 100
-results for a premium test account; confirmed the fictional-catalog and Surprise Me-repeat fixes
-from earlier the same day still hold. Not yet re-deployed to production as of this note — see
-below for deploy status once this session pushes.
+`npm run typecheck` and `npm run lint` pass with zero errors as of the 2026-08-31 itinerary-editing
+update (quantitative budget, images/descriptions, click-to-swap/remove). Git working tree — **check
+with `git status`, don't assume**. Verified live end to end on the local dev server (against the
+real production Supabase + live Google Places, same data production uses): generated a real 2-day
+New York trip, opened an activity's detail modal (real image gallery + description rendered),
+swapped Rockefeller Center for Lincoln Center for the Performing Arts (confirmed persisted in
+`itinerary_items` via direct DB query, UI updated with no reload), removed Times Square entirely
+(confirmed deleted from the DB, UI updated with no reload). Also still holding from earlier the
+same day: fictional-catalog removal, Surprise Me repeat/exclude fix, Discover's 100-result Premium
+limit, the AI Trip Planner's core generation flow.

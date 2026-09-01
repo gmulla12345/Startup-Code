@@ -44,7 +44,13 @@ export async function POST(request: Request) {
       user.id,
       `Trip to ${body.destinationCity}`,
       plan,
-      { startDate: body.startDate, endDate: body.endDate }
+      { startDate: body.startDate, endDate: body.endDate },
+      {
+        city: body.destinationCity,
+        country: body.destinationCountry,
+        latitude: body.destinationLatitude,
+        longitude: body.destinationLongitude,
+      }
     );
 
     return NextResponse.json({ itineraryId: itinerary.id });

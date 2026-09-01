@@ -1,5 +1,6 @@
 import { callStructuredTool, isAIConfigured } from "./client";
 import { weekendPlanSchema } from "./schema";
+import { attachImages } from "./weekend-plan";
 import { brand } from "@/lib/config/brand";
 import type { Experience } from "@/types/database";
 import type { TripPlan, TripPlanRequest } from "@/types/ai";
@@ -38,6 +39,13 @@ function dayLabels(count: number): string[] {
   return Array.from({ length: count }, (_, i) => `day_${i + 1}`);
 }
 
+const BUDGET_DESCRIPTIONS: Record<string, string> = {
+  free: "free activities only, $0/day",
+  low: "budget-conscious, under $75/day per person",
+  medium: "moderate, $75-200/day per person",
+  high: "no strict limit, $200+/day per person",
+};
+
 const SYSTEM_PROMPT = `You are ${brand.name}'s AI Trip Planner. You build a realistic, well-paced multi-day
 itinerary for a trip to a specific destination, using a list of real candidate experiences at that
 destination plus generic filler items (breakfast, travel between spots, downtime) that don't map to a
@@ -72,7 +80,7 @@ export async function generateTripPlan(request: TripPlanRequest, candidates: Exp
   const prompt = `Trip: ${numDays}-day trip to ${request.destinationCity}, ${request.destinationCountry}
 (${request.startDate} to ${request.endDate}).
 Days to plan (use these exact labels): ${days.join(", ")}
-Budget: ${request.budgetLevel}. Group: ${request.socialMode}. Energy level: ${request.energyLevel}.
+Budget: ${BUDGET_DESCRIPTIONS[request.budgetLevel] ?? request.budgetLevel}. Group: ${request.socialMode}. Energy level: ${request.energyLevel}.
 Focus interests: ${request.interests.join(", ") || "any"}.
 
 Candidate experiences available to slot in (real places at this destination):
@@ -111,8 +119,9 @@ Build the full ${numDays}-day itinerary now, covering every day listed above.`;
 
   const validIds = new Set(candidates.map((c) => c.id));
   const validDays = new Set(days);
-  const items = parsed.data.items.filter(
-    (i) => (i.experienceId === null || validIds.has(i.experienceId)) && validDays.has(i.day)
+  const items = attachImages(
+    parsed.data.items.filter((i) => (i.experienceId === null || validIds.has(i.experienceId)) && validDays.has(i.day)),
+    candidates
   );
   if (items.length === 0) return null;
 

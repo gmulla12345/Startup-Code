@@ -183,9 +183,28 @@ create table if not exists public.itineraries (
   estimated_cost numeric(10,2),
   is_public boolean not null default false,
   share_slug text unique,
+  -- Geo anchor for fetching real swap alternatives on an item — set for AI
+  -- Trip Planner itineraries (type "travel"), null for Weekend Planner ones.
+  destination_city text,
+  destination_country text,
+  destination_latitude double precision,
+  destination_longitude double precision,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+do $$
+begin
+  if not exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'itineraries' and column_name = 'destination_city'
+  ) then
+    alter table public.itineraries add column destination_city text;
+    alter table public.itineraries add column destination_country text;
+    alter table public.itineraries add column destination_latitude double precision;
+    alter table public.itineraries add column destination_longitude double precision;
+  end if;
+end $$;
 
 create table if not exists public.itinerary_items (
   id uuid primary key default gen_random_uuid(),
@@ -201,8 +220,19 @@ create table if not exists public.itinerary_items (
   title text not null,
   notes text,
   estimated_cost numeric(10,2),
-  order_index int not null default 0
+  order_index int not null default 0,
+  images text[] not null default '{}'
 );
+
+do $$
+begin
+  if not exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'itinerary_items' and column_name = 'images'
+  ) then
+    alter table public.itinerary_items add column images text[] not null default '{}';
+  end if;
+end $$;
 
 create index if not exists idx_itinerary_items_itinerary on public.itinerary_items(itinerary_id);
 

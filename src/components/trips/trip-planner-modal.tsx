@@ -139,13 +139,13 @@ export function TripPlannerModal({
               </div>
 
               <div>
-                <label className="text-sm font-medium text-foreground mb-2 block">Budget</label>
+                <label className="text-sm font-medium text-foreground mb-2 block">Budget (per day, per person)</label>
                 <PillGroup
                   options={[
                     { value: "free", label: "Free" },
-                    { value: "low", label: "$" },
-                    { value: "medium", label: "$$" },
-                    { value: "high", label: "$$$" },
+                    { value: "low", label: "Under $75" },
+                    { value: "medium", label: "$75–200" },
+                    { value: "high", label: "$200+" },
                   ]}
                   value={budgetLevel}
                   onChange={setBudgetLevel}

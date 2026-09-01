@@ -54,6 +54,10 @@ export interface WeekendPlanItem {
   experienceId: string | null;
   estimatedCost: number | null;
   notes: string;
+  // Not part of the AI's output — attached after validation by looking up
+  // experienceId in the real candidate list (src/ai/weekend-plan.ts,
+  // src/ai/trip-plan.ts). Empty for generic filler items (experienceId null).
+  images: string[];
 }
 
 export interface WeekendPlan {

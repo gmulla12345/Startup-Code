@@ -14,6 +14,7 @@ const saveItinerarySchema = z.object({
         experienceId: z.string().nullable(),
         estimatedCost: z.number().nullable(),
         notes: z.string(),
+        images: z.array(z.string()).default([]),
       })
     ),
     totalEstimatedCost: z.number(),

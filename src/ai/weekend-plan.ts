@@ -86,7 +86,10 @@ Build the itinerary now.`;
   }
 
   const validIds = new Set(candidates.map((c) => c.id));
-  const items = parsed.data.items.filter((i) => i.experienceId === null || validIds.has(i.experienceId));
+  const items = attachImages(
+    parsed.data.items.filter((i) => i.experienceId === null || validIds.has(i.experienceId)),
+    candidates
+  );
   if (items.length === 0) return fallback;
 
   return {
@@ -94,6 +97,23 @@ Build the itinerary now.`;
     totalEstimatedCost: items.reduce((sum, i) => sum + (i.estimatedCost ?? 0), 0),
     summary: parsed.data.summary,
   };
+}
+
+/**
+ * The AI never sees or invents image URLs — it only picks experienceIds
+ * from the real candidate list. This attaches each item's actual images by
+ * looking up that same candidate, post-validation. Shared with
+ * src/ai/trip-plan.ts.
+ */
+export function attachImages<T extends { experienceId: string | null }>(
+  items: T[],
+  candidates: Experience[]
+): (T & { images: string[] })[] {
+  const byId = new Map(candidates.map((c) => [c.id, c]));
+  return items.map((item) => ({
+    ...item,
+    images: item.experienceId ? (byId.get(item.experienceId)?.images.slice(0, 5) ?? []) : [],
+  }));
 }
 
 function fallbackPlan(request: WeekendPlanRequest, candidates: Experience[]): WeekendPlan {
@@ -106,12 +126,21 @@ function fallbackPlan(request: WeekendPlanRequest, candidates: Experience[]): We
       experienceId: exp.id,
       estimatedCost: exp.priceEstimate,
       notes: exp.shortDescription,
+      images: exp.images.slice(0, 5),
     }))
   );
 
   return {
     items: items.length > 0 ? items : [
-      { day: request.days[0] ?? "saturday", startTime: "10:00", title: "Explore your city", experienceId: null, estimatedCost: 0, notes: "No matching experiences yet — try widening your interests." },
+      {
+        day: request.days[0] ?? "saturday",
+        startTime: "10:00",
+        title: "Explore your city",
+        experienceId: null,
+        estimatedCost: 0,
+        notes: "No matching experiences yet — try widening your interests.",
+        images: [],
+      },
     ],
     totalEstimatedCost: items.reduce((sum, i) => sum + (i.estimatedCost ?? 0), 0),
     summary: "A flexible plan built from your top-matched experiences.",
