@@ -485,9 +485,8 @@ not just a copy touch-up — this is live on production now:
   the ICP ("young professionals") instead of generic aspirational copy.
 - **Hypothesis being tested**: homepage-to-signup conversion for category-search traffic rises by
   at least 2 percentage points vs. the old copy. **Target: +2 to 4pp over a 4-week window** starting
-  2026-09-01. There's currently no analytics wiring in this codebase to actually measure
-  homepage-to-signup conversion by traffic source — if this hasn't been set up by the time someone
-  wants to read the result, that has to happen first.
+  2026-09-01. GA4 was wired up the same day specifically to be able to measure this — see the
+  dedicated section below.
 - The eyebrow ("Personalized discovery, built for real life") was deliberately left unchanged.
 - Hardcoded directly in the component rather than editing `brand.tagline`/`brand.subTagline` in
   `src/lib/config/brand.ts` — those two also drive `<title>` and OG/Twitter meta tags site-wide
@@ -495,6 +494,41 @@ not just a copy touch-up — this is live on production now:
   social share preview, which is out of scope for a hero-only test.
 - **Don't revert this without checking whether the 4-week measurement window has actually run** —
   if someone asks to "put the old homepage copy back," ask why first; it might be premature.
+
+## Google Analytics 4 wired up (2026-09-01) — needed to measure the hero test above
+
+There was no analytics in this codebase capable of measuring conversion by traffic source (the
+existing `user_events`/`src/services/analytics/track.ts` system requires an authenticated
+`user_id`, so it can't attribute anonymous homepage visits before signup). User chose GA4
+specifically (over PostHog or an in-house build) when asked.
+
+- `src/components/shared/google-analytics.tsx` — loads gtag.js and calls `gtag('config', ...)` via
+  `next/script`. Renders nothing if `NEXT_PUBLIC_GA_MEASUREMENT_ID` isn't set, so it's inert in any
+  environment where that env var isn't configured (confirmed locally: no script tag, no `window.gtag`).
+  Mounted in `src/app/layout.tsx` alongside the existing `GoogleAttribution` badge.
+- `src/lib/analytics/gtag.ts` — exports `gtagEvent(name, params)`, a safe no-op wrapper around
+  `window.gtag` for firing custom events from client components.
+- **Traffic-source/UTM attribution needs no extra code** — GA4's own "Traffic acquisition" report
+  segments pageviews by referrer/UTM source automatically from the `gtag('config', ...)` call alone.
+- **`sign_up` conversion event** wired into `src/app/(auth)/signup/page.tsx` at the two points that
+  actually matter for this test — right after a successful `supabase.auth.signUp()` call (email
+  path), and right before the redirect in the Google OAuth path. Deliberately *not* fired later (on
+  email confirmation, or on reaching `/onboarding`) — the hero test cares about the CTA conversion
+  itself, not a downstream step. Known imprecision, accepted as fine for a marketing metric: the
+  Google OAuth event fires on initiating the redirect, before Supabase actually knows whether it'll
+  create a new account or log into an existing one, so an existing user who lands on `/signup` by
+  mistake and clicks "Continue with Google" would be miscounted as a new signup. Rare edge case, not
+  worth the complexity of moving this to the server-side OAuth callback route (which can't fire a
+  client-side gtag event anyway).
+- **Not yet done — needs the user's own action**: create a free GA4 property at
+  analytics.google.com (a couple minutes) and hand over the Measurement ID (`G-XXXXXXX`). Once
+  received: add `NEXT_PUBLIC_GA_MEASUREMENT_ID` to Vercel Production env vars (`vercel env add`,
+  same pattern used for the Stripe keys earlier in this file) and redeploy — no code changes needed,
+  everything is already wired to read that env var. Until then GA4 stays inert and the hero test has
+  no way to actually be measured.
+- There's a pre-existing, unrelated, already-dead `analyticsEvents.signupCompleted()` function in
+  `src/services/analytics/track.ts` that was never called from anywhere before this change and still
+  isn't — left alone, out of scope here. Don't confuse it with the new GA4 `sign_up` event.
 
 ## Exact next steps (priority order)
 
@@ -541,9 +575,13 @@ completely non-functional in production (not just for Google-sourced content), v
 tracking was silently broken for almost all content, and `reviews` had the same latent bug closed
 out preemptively (see dedicated section above).
 
-1. Legal review of `/privacy` and `/terms` by an actual lawyer — Termly's questionnaire flow is a
+1. **Get a GA4 Measurement ID and hand it over** — needed to actually measure the homepage hero
+   test above. Create a free property at analytics.google.com, then give the `G-XXXXXXX` id; once
+   added to Vercel Production env vars (`NEXT_PUBLIC_GA_MEASUREMENT_ID`) and redeployed, no further
+   code work is needed — see the dedicated GA4 section above.
+2. Legal review of `/privacy` and `/terms` by an actual lawyer — Termly's questionnaire flow is a
    reasonable stand-in for launch, not a substitute for one.
-2. Multi-day AI Trip Planner generation takes a while (order of 10-20+ seconds for a 3-day trip in
+3. Multi-day AI Trip Planner generation takes a while (order of 10-20+ seconds for a 3-day trip in
    local testing) — has a loading state (`loading` prop on the Generate button) so it doesn't look
    frozen, and now has real headroom (`timeoutMs: 45_000`, see the site-speed section above) so it
    should no longer fail outright on longer trips. If it still feels too slow in practice, consider

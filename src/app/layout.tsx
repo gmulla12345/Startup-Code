@@ -3,6 +3,7 @@ import { Fraunces, Inter } from "next/font/google";
 import { Toaster } from "sonner";
 import { brand } from "@/lib/config/brand";
 import { GoogleAttribution } from "@/components/shared/google-attribution";
+import { GoogleAnalytics } from "@/components/shared/google-analytics";
 import "./globals.css";
 
 const inter = Inter({
@@ -59,6 +60,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         {children}
         <GoogleAttribution />
         <Toaster position="top-center" richColors closeButton />
+        <GoogleAnalytics />
       </body>
     </html>
   );

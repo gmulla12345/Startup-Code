@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { GoogleIcon } from "@/components/shared/google-icon";
 import { createClient } from "@/lib/supabase/client";
 import { brand } from "@/lib/config/brand";
+import { gtagEvent } from "@/lib/analytics/gtag";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -46,6 +47,11 @@ export default function SignupPage() {
       return;
     }
 
+    // Fires here, not after email confirmation or onboarding — this is the
+    // actual CTA conversion the homepage hero test cares about (did they
+    // complete the signup form), not a later downstream step.
+    gtagEvent("sign_up", { method: "email" });
+
     if (data.session) {
       router.push("/onboarding");
       router.refresh();
@@ -57,6 +63,14 @@ export default function SignupPage() {
   async function handleGoogle() {
     setGoogleLoading(true);
     const supabase = createClient();
+    // Fired on initiating the redirect, since Supabase doesn't distinguish
+    // "will create a new account" from "will log into an existing one"
+    // until the OAuth code is exchanged server-side after the redirect back
+    // — that exchange happens in a Route Handler, where a client-side GA
+    // event can't fire. This can over-count an existing user who lands on
+    // /signup by mistake and uses Google; acceptable imprecision for a
+    // marketing conversion metric, not billing-grade tracking.
+    gtagEvent("sign_up", { method: "google" });
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo: `${window.location.origin}/auth/callback?redirect=/onboarding` },
