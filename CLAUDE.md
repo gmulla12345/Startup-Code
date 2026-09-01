@@ -519,30 +519,37 @@ completely non-functional in production (not just for Google-sourced content), v
 tracking was silently broken for almost all content, and `reviews` had the same latent bug closed
 out preemptively (see dedicated section above).
 
-1. **Enable PayPal** — user confirmed intent 2026-08-30. **Correction to an earlier, wrong note in
-   this file (2026-09-01)**: this is NOT a simple Dashboard toggle. The Stripe account is
-   US-based (`country: "US"`, confirmed via `GET /v1/account`), and Stripe's standard
-   Dashboard-toggle PayPal integration (Settings → Payment Methods) is only available to Stripe
-   accounts in supported European countries (docs.stripe.com/payments/paypal). For a US account,
-   PayPal requires the separate "PayPal custom payment method" program instead
-   (docs.stripe.com/payments/payment-methods/custom-payment-methods/paypal), which is gated
-   (request access first), has custom/negotiated fees ("contact Stripe for pricing," not published),
-   and — most importantly — requires hosting Stripe's adapter in this app's own infrastructure, i.e.
-   real integration work, not a no-code flip. Before doing anything else here: request access
-   (email the docs page's signup, or `merchant-hosted-adapter@stripe.com` directly) and get pricing
-   from Stripe first — this may not be worth the integration cost for a pre-launch app; reconsider
-   priority once actual pricing/terms come back. The current Terms of Service intentionally only
-   lists Visa/Mastercard/Amex/Discover, since PayPal isn't actually live — update the payment-methods
-   sentence in [src/app/(marketing)/terms/page.tsx](<src/app/(marketing)/terms/page.tsx>) only once
-   it genuinely is.
-2. Legal review of `/privacy` and `/terms` by an actual lawyer — Termly's questionnaire flow is a
+1. Legal review of `/privacy` and `/terms` by an actual lawyer — Termly's questionnaire flow is a
    reasonable stand-in for launch, not a substitute for one.
-3. Multi-day AI Trip Planner generation takes a while (order of 10-20+ seconds for a 3-day trip in
+2. Multi-day AI Trip Planner generation takes a while (order of 10-20+ seconds for a 3-day trip in
    local testing) — has a loading state (`loading` prop on the Generate button) so it doesn't look
    frozen, and now has real headroom (`timeoutMs: 45_000`, see the site-speed section above) so it
    should no longer fail outright on longer trips. If it still feels too slow in practice, consider
    trimming candidates sent to the model or a streaming/progressive UI, rather than reducing what
    it actually plans.
+
+## PayPal — deliberately deferred, do not pick this up unprompted (2026-09-01)
+
+User decision: **not doing this now.** Originally on the priority list (confirmed intent
+2026-08-30), but once the real scope became clear it was explicitly deprioritized — revisit only
+once the app has hundreds of paying customers, not before. Do not treat this as an open task or
+suggest picking it up again until the user brings it up themselves.
+
+Why it's not a quick win (verified against Stripe's docs and the actual account, 2026-09-01,
+correcting an earlier wrong note in this file that assumed it was a no-code Dashboard toggle): the
+Stripe account is US-based (`country: "US"`, confirmed via `GET /v1/account`). Stripe's simple
+Dashboard-toggle PayPal integration only works for Stripe accounts in supported European countries
+(docs.stripe.com/payments/paypal). A US account needs the separate "PayPal custom payment method"
+program instead (docs.stripe.com/payments/payment-methods/custom-payment-methods/paypal) — gated
+(request access first), custom/negotiated fees ("contact Stripe for pricing," not published), and
+requires hosting Stripe's adapter in this app's own infrastructure. Real integration work, not
+worth it pre-revenue.
+
+When it's actually time to revisit: email `merchant-hosted-adapter@stripe.com` (or the signup on
+that docs page) to request access and get real pricing, then reconsider. The current Terms of
+Service intentionally only lists Visa/Mastercard/Amex/Discover — update the payment-methods
+sentence in [src/app/(marketing)/terms/page.tsx](<src/app/(marketing)/terms/page.tsx>) only once
+PayPal genuinely goes live.
 
 ## Verified clean as of last update
 
