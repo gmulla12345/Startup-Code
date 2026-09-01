@@ -541,6 +541,34 @@ specifically (over PostHog or an in-house build) when asked.
   `src/services/analytics/track.ts` that was never called from anywhere before this change and still
   isn't — left alone, out of scope here. Don't confuse it with the new GA4 `sign_up` event.
 
+## Organization + SoftwareApplication JSON-LD added site-wide (2026-09-01)
+
+`src/components/shared/site-jsonld.tsx`, mounted once in `src/app/layout.tsx` (applies to every
+page, not just the homepage) — so AI assistants and search engines can answer "What is Zolo?" and
+"How much does Zolo cost?" from structured data alone. Pricing (`Free $0`, `Premium $19.99/mo`)
+reads from `src/lib/config/pricing.ts`, the same source every price display on the site already
+uses, so it can't silently drift out of sync with what Stripe actually charges.
+
+**Deliberately has no `sameAs` social links.** `brand.social` in `src/lib/config/brand.ts` lists
+`@zoloapp` (X/Twitter) and `@zolo` (Instagram), but **neither belongs to this business** — checked
+both live before including anything:
+- `x.com/zoloapp` is a dormant account, last active 2015, posting about an unrelated "ZoLO•oolo"
+  game/creative-challenge promotion from 2013.
+- `instagram.com/zolo` is a private personal account belonging to someone named "Mike Zachaczewski,"
+  unrelated to this business.
+
+Including either as `sameAs` would have told search engines and AI systems that this business is
+those accounts, which is simply false — `brand.social` looks like placeholder data from early setup
+that was never actually verified against real, claimed accounts. **If real social accounts get
+claimed for this business, add them to `SiteJsonLd`'s `Organization.sameAs` array** (not currently
+present in the code at all) — don't just flip `brand.social` back into use without re-verifying it
+first, since that's exactly what caused this.
+
+Verified live on `discoverzolo.com` after deploy: both JSON-LD blocks present in the raw
+server-rendered HTML (not just client-hydrated DOM — confirmed via direct `curl`, which is what
+crawlers actually see) with the correct production domain, and present on `/about` and `/faq` too,
+confirming the root-layout mount actually applies site-wide as intended.
+
 ## Exact next steps (priority order)
 
 **Done since the last update:** deployed to production at `discoverzolo.com` (fixed a Vercel
@@ -586,7 +614,10 @@ completely non-functional in production (not just for Google-sourced content), v
 tracking was silently broken for almost all content, and `reviews` had the same latent bug closed
 out preemptively (see dedicated section above); **GA4 is live** with the real Measurement ID,
 confirmed serving on production and the `sign_up` conversion event verified for the Google OAuth
-path (see dedicated section above) — the homepage hero test can now actually be measured.
+path (see dedicated section above) — the homepage hero test can now actually be measured;
+**Organization + SoftwareApplication JSON-LD added site-wide** for AI-assistant/search visibility,
+deliberately without `sameAs` social links since neither configured handle actually belongs to this
+business (see dedicated section above).
 
 1. Legal review of `/privacy` and `/terms` by an actual lawyer — Termly's questionnaire flow is a
    reasonable stand-in for launch, not a substitute for one.
