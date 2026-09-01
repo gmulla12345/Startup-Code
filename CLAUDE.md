@@ -474,6 +474,28 @@ clicked Save (`POST /api/saved` → `200`) — confirmed both rows landed in the
 item. `reviews` was verified with a direct insert/delete only (no UI write path to test through
 yet).
 
+## Homepage hero copy test running (2026-09-01)
+
+`src/components/marketing/hero.tsx` H1/subhead were rewritten as a deliberate, measured experiment,
+not just a copy touch-up — this is live on production now:
+- H1: "Experience more of life" (aspirational, no pain point, no ICP) → **"Stop deciding. Start
+  doing."** (leads with the decision-fatigue pain the `/about` page already names but the hero
+  didn't).
+- Subhead now states the actual value prop (short curated list, reason for every pick) and names
+  the ICP ("young professionals") instead of generic aspirational copy.
+- **Hypothesis being tested**: homepage-to-signup conversion for category-search traffic rises by
+  at least 2 percentage points vs. the old copy. **Target: +2 to 4pp over a 4-week window** starting
+  2026-09-01. There's currently no analytics wiring in this codebase to actually measure
+  homepage-to-signup conversion by traffic source — if this hasn't been set up by the time someone
+  wants to read the result, that has to happen first.
+- The eyebrow ("Personalized discovery, built for real life") was deliberately left unchanged.
+- Hardcoded directly in the component rather than editing `brand.tagline`/`brand.subTagline` in
+  `src/lib/config/brand.ts` — those two also drive `<title>` and OG/Twitter meta tags site-wide
+  (`src/app/layout.tsx`), so changing them would have rewritten the browser tab title and every
+  social share preview, which is out of scope for a hero-only test.
+- **Don't revert this without checking whether the 4-week measurement window has actually run** —
+  if someone asks to "put the old homepage copy back," ask why first; it might be premature.
+
 ## Exact next steps (priority order)
 
 **Done since the last update:** deployed to production at `discoverzolo.com` (fixed a Vercel
