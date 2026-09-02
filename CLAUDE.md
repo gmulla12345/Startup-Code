@@ -569,6 +569,17 @@ server-rendered HTML (not just client-hydrated DOM — confirmed via direct `cur
 crawlers actually see) with the correct production domain, and present on `/about` and `/faq` too,
 confirming the root-layout mount actually applies site-wide as intended.
 
+## /llms.txt added (2026-09-02)
+
+Was 404ing. `src/app/llms.txt/route.ts` — a plain Route Handler on a literal `llms.txt` segment,
+since (unlike `robots.txt`/`sitemap.xml` via `src/app/robots.ts`/`sitemap.ts`) Next.js has no
+built-in file convention for this. Content is built from `brand` config, not hand-duplicated text,
+so name/description/domain can't drift out of sync with the rest of the site. Links to the
+homepage, `/about`, the homepage's `#pricing` anchor, and `/faq` — verified all four are real,
+working pages/anchors before linking them, same care as the JSON-LD `sameAs` check earlier. Verified
+live on `discoverzolo.com`: `200`, correct `text/plain` content-type, all links resolve to the real
+production domain.
+
 ## Homepage title tag (2026-09-02)
 
 `src/app/(marketing)/page.tsx` had no `metadata` export of its own, so it inherited the root
@@ -665,7 +676,8 @@ business (see dedicated section above); **homepage FAQ answers made crawlable + 
 added** — 4 of 5 answers genuinely didn't exist in the static HTML before, only mounting when a user
 clicked the accordion (see dedicated section above); **homepage title tag rewritten** with category
 keywords, shortened from the requested text to actually fit under 60 chars (see dedicated section
-above).
+above); **`/llms.txt` added** — was 404ing, now built from `brand` config for AI-assistant discovery
+(see dedicated section above).
 
 1. Legal review of `/privacy` and `/terms` by an actual lawyer — Termly's questionnaire flow is a
    reasonable stand-in for launch, not a substitute for one.
