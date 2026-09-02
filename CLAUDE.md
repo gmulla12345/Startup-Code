@@ -611,17 +611,16 @@ correct, different price id. (Along the way, test-mode Stripe Tax had no head-of
 which blocked *any* checkout — monthly included, pre-existing and unrelated to this change — fixed
 by setting one via the API so test-mode checkout works for future testing too.)
 
-**Not done — needs the user's own action, blocked on Vercel's own security design**: the equivalent
-LIVE-mode Stripe price doesn't exist yet. Vercel's "Sensitive" env vars (which `STRIPE_SECRET_KEY`
-is) are write-only from the CLI — `vercel env pull` returns `[SENSITIVE]` placeholders, by design,
-so the live secret key can't be read back to call the Stripe API with it directly. Until a live
-annual price exists and its id is added to Vercel Production as
-`NEXT_PUBLIC_STRIPE_PREMIUM_ANNUAL_PRICE_ID`, `createCheckoutSession` throws a clear, explicit
-"not configured" error for the annual path rather than silently falling back to monthly or
-misrepresenting the charge — fails closed, not open. To finish: create a $190.00/year recurring
-Price on the live "Premium" product in the Stripe Dashboard (Products →
-`prod_V8i89HwFONk0uA` — this is the live product id, confirmed via a direct API call, not
-assumed), then hand over the resulting live price id.
+**Live-mode price created and verified (2026-09-02, same day)**: user created the live $190/year
+Price in the Stripe Dashboard (couldn't be done directly — Vercel's "Sensitive" env vars, which
+`STRIPE_SECRET_KEY` is, are write-only from the CLI, so the live secret key can't be read back to
+call the Stripe API with) and handed over the id, `price_1UBGb4IBBCwBbnK3ABitNRsW`. Added to Vercel
+Production as `NEXT_PUBLIC_STRIPE_PREMIUM_ANNUAL_PRICE_ID`, redeployed, then **verified live in
+production with real Stripe live mode** (disposable test account, no payment info entered — deleted
+after): clicked all the way through to the actual live Stripe Checkout page (confirmed live, not
+sandbox — the tab title had no "sandbox" suffix, unlike the earlier test-mode verification) and
+read *"Then $190.00 per year starting September 9, 2026."* Annual billing is fully live end to end,
+nothing pending.
 
 ## /llms.txt added (2026-09-02)
 
@@ -731,23 +730,13 @@ added** — 4 of 5 answers genuinely didn't exist in the static HTML before, onl
 clicked the accordion (see dedicated section above); **homepage title tag rewritten** with category
 keywords, shortened from the requested text to actually fit under 60 chars (see dedicated section
 above); **`/llms.txt` added** — was 404ing, now built from `brand` config for AI-assistant discovery
-(see dedicated section above); **real annual billing added** ($190/year, a functioning Stripe price
-end to end, not just homepage display copy) plus the pricing value-anchor line — live-mode price
-still needs the user to create it in the Stripe Dashboard and hand over the id (see dedicated
-section above).
+(see dedicated section above); **real annual billing is fully live** ($190/year, a functioning
+Stripe price verified end to end in both test and live mode, not just homepage display copy) plus
+the pricing value-anchor line (see dedicated section above).
 
-1. **Create the live-mode annual Stripe price and hand over the id** — needed to actually activate
-   annual billing in production (the code and test-mode price are done and verified; only the live
-   equivalent is missing). Stripe Dashboard → Products → the live "Premium" product
-   (`prod_V8i89HwFONk0uA`) → add a price: $190.00 USD, recurring, yearly. Then add the resulting
-   `price_...` id to Vercel Production as `NEXT_PUBLIC_STRIPE_PREMIUM_ANNUAL_PRICE_ID` and redeploy
-   — no code changes needed, same pattern as the GA4 Measurement ID earlier. Until this is done,
-   annual checkout in production throws a clear "not configured" error rather than silently
-   charging monthly — see the dedicated section above for why this couldn't be done directly
-   (Vercel's Sensitive env vars are write-only from the CLI).
-2. Legal review of `/privacy` and `/terms` by an actual lawyer — Termly's questionnaire flow is a
+1. Legal review of `/privacy` and `/terms` by an actual lawyer — Termly's questionnaire flow is a
    reasonable stand-in for launch, not a substitute for one.
-3. Multi-day AI Trip Planner generation takes a while (order of 10-20+ seconds for a 3-day trip in
+2. Multi-day AI Trip Planner generation takes a while (order of 10-20+ seconds for a 3-day trip in
    local testing) — has a loading state (`loading` prop on the Generate button) so it doesn't look
    frozen, and now has real headroom (`timeoutMs: 45_000`, see the site-speed section above) so it
    should no longer fail outright on longer trips. If it still feels too slow in practice, consider
