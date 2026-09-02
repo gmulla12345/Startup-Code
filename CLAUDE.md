@@ -569,6 +569,23 @@ server-rendered HTML (not just client-hydrated DOM — confirmed via direct `cur
 crawlers actually see) with the correct production domain, and present on `/about` and `/faq` too,
 confirming the root-layout mount actually applies site-wide as intended.
 
+## Homepage title tag (2026-09-02)
+
+`src/app/(marketing)/page.tsx` had no `metadata` export of its own, so it inherited the root
+layout's default title — `"Zolo — Experience more of life."`, no category keywords, wasting the
+title tag's search-result real estate. Now sets its own `metadata.title = { absolute: "Zolo —
+Personalized Discovery for Things to Do Near You" }` — `absolute` bypasses the root layout's
+`"%s · Zolo"` template so this is the *exact* title, not `"... · Zolo"`. Scoped to the homepage
+only: confirmed via `curl` that `/faq` (`"FAQ · Zolo"`) and `/login` (still the old default) are
+unaffected.
+
+**The originally-requested title text was 66–68 characters** (depending on hyphen vs. em dash),
+which contradicts the same brief's own "under 60 chars" constraint — shortened to 57 chars
+(`"Zolo — Personalized Discovery for Things to Do Near You"`), deliberately keeping both exact
+phrases the hypothesis measures impressions on ("personalized discovery" and "things to do") rather
+than trimming those. Description was deliberately left unset on this page (inherits the root
+layout's unchanged, per the brief).
+
 ## Homepage FAQ answers were invisible to crawlers, plus FAQPage schema (2026-09-02)
 
 `src/components/marketing/faq.tsx`'s accordion used conditional *rendering*
@@ -646,7 +663,9 @@ path (see dedicated section above) — the homepage hero test can now actually b
 deliberately without `sameAs` social links since neither configured handle actually belongs to this
 business (see dedicated section above); **homepage FAQ answers made crawlable + FAQPage schema
 added** — 4 of 5 answers genuinely didn't exist in the static HTML before, only mounting when a user
-clicked the accordion (see dedicated section above).
+clicked the accordion (see dedicated section above); **homepage title tag rewritten** with category
+keywords, shortened from the requested text to actually fit under 60 chars (see dedicated section
+above).
 
 1. Legal review of `/privacy` and `/terms` by an actual lawyer — Termly's questionnaire flow is a
    reasonable stand-in for launch, not a substitute for one.
