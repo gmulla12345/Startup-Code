@@ -569,6 +569,60 @@ server-rendered HTML (not just client-hydrated DOM — confirmed via direct `cur
 crawlers actually see) with the correct production domain, and present on `/about` and `/faq` too,
 confirming the root-layout mount actually applies site-wide as intended.
 
+## Annual billing + pricing value anchor (2026-09-02)
+
+Built as a real, functioning annual billing path, not just homepage display copy — a toggle showing
+"$190/year" that wasn't wired to an actual Stripe price would mean checkout silently still charged
+monthly, which is a real bait-and-switch problem, not a cosmetic gap. The brief's "Where" said
+"homepage pricing section," but the homepage's "Start Premium" button only ever linked to
+`/signup` — actual checkout happens later, at `/profile/upgrade` or via the "Upgrade to Premium"
+button on `/profile` — so making the homepage promise real required touching the whole path, not
+just the marketing page.
+
+- **Real Stripe price**: created a $190/year recurring Price on the existing "Premium" product
+  (verified the actual product id first — `prod_V8i89HwFONk0uA` — rather than trusting what was
+  remembered from earlier in this file, which turned out to be wrong). Test-mode price
+  (`price_1UBGBuRHdGwkkemIyP69YS7y`) exists now; **live-mode does not yet** — see below.
+- `src/lib/config/pricing.ts`: added `priceAnnual` (190) and `annualPriceId`
+  (`NEXT_PUBLIC_STRIPE_PREMIUM_ANNUAL_PRICE_ID`), plus a `premiumPriceId(interval)` helper so
+  nothing has to duplicate the monthly/annual branch logic.
+- `src/lib/stripe/checkout.ts` / `src/app/api/stripe/checkout/route.ts`: `createCheckoutSession` now
+  takes an optional `billingInterval` (`"monthly" | "annual"`, defaults to `"monthly"` — existing
+  callers that don't pass it are unaffected). Validated via `checkoutRequestSchema` in
+  `src/lib/validation/schemas.ts`.
+- `src/lib/utils/billing-preference.ts`: tiny localStorage helper (`zolo:billingInterval`, matching
+  the `zolo:` key convention already used by Surprise Me) so the toggle choice made on the homepage
+  actually carries through the funnel instead of silently resetting to monthly. Read by
+  `src/components/marketing/pricing-section.tsx` (homepage), `src/components/profile/premium-plan-card.tsx`
+  (new, powers `/profile/upgrade`), and `src/components/profile/subscription-card.tsx`'s own
+  separate "Upgrade to Premium" button on `/profile` — **found and fixed this last one as a gap**:
+  it's a second, shorter path to checkout that bypasses `/profile/upgrade` entirely, and was still
+  hardcoded to monthly with no way to honor an annual choice before this fix.
+- Value anchor line ("Less than one guided tour per month — and you'll never waste a weekend
+  scrolling again.") added below the Premium card on the homepage, exactly as specified.
+
+**Verified live end to end in test mode** (disposable test account, no payment info entered):
+clicked all the way through to the real Stripe Checkout page and confirmed it read *"Then $190.00
+per year starting September 9, 2026"* — 7-day trial, exactly 7 days from today, proving Stripe
+itself is set to charge the right amount, not just that a session gets created. Also confirmed the
+monthly path is unaffected (same original price id, same trial behavior) — tested by triggering the
+same tax-configuration error on both paths and checking each one's idempotency key referenced the
+correct, different price id. (Along the way, test-mode Stripe Tax had no head-office address set,
+which blocked *any* checkout — monthly included, pre-existing and unrelated to this change — fixed
+by setting one via the API so test-mode checkout works for future testing too.)
+
+**Not done — needs the user's own action, blocked on Vercel's own security design**: the equivalent
+LIVE-mode Stripe price doesn't exist yet. Vercel's "Sensitive" env vars (which `STRIPE_SECRET_KEY`
+is) are write-only from the CLI — `vercel env pull` returns `[SENSITIVE]` placeholders, by design,
+so the live secret key can't be read back to call the Stripe API with it directly. Until a live
+annual price exists and its id is added to Vercel Production as
+`NEXT_PUBLIC_STRIPE_PREMIUM_ANNUAL_PRICE_ID`, `createCheckoutSession` throws a clear, explicit
+"not configured" error for the annual path rather than silently falling back to monthly or
+misrepresenting the charge — fails closed, not open. To finish: create a $190.00/year recurring
+Price on the live "Premium" product in the Stripe Dashboard (Products →
+`prod_V8i89HwFONk0uA` — this is the live product id, confirmed via a direct API call, not
+assumed), then hand over the resulting live price id.
+
 ## /llms.txt added (2026-09-02)
 
 Was 404ing. `src/app/llms.txt/route.ts` — a plain Route Handler on a literal `llms.txt` segment,
@@ -677,11 +731,23 @@ added** — 4 of 5 answers genuinely didn't exist in the static HTML before, onl
 clicked the accordion (see dedicated section above); **homepage title tag rewritten** with category
 keywords, shortened from the requested text to actually fit under 60 chars (see dedicated section
 above); **`/llms.txt` added** — was 404ing, now built from `brand` config for AI-assistant discovery
-(see dedicated section above).
+(see dedicated section above); **real annual billing added** ($190/year, a functioning Stripe price
+end to end, not just homepage display copy) plus the pricing value-anchor line — live-mode price
+still needs the user to create it in the Stripe Dashboard and hand over the id (see dedicated
+section above).
 
-1. Legal review of `/privacy` and `/terms` by an actual lawyer — Termly's questionnaire flow is a
+1. **Create the live-mode annual Stripe price and hand over the id** — needed to actually activate
+   annual billing in production (the code and test-mode price are done and verified; only the live
+   equivalent is missing). Stripe Dashboard → Products → the live "Premium" product
+   (`prod_V8i89HwFONk0uA`) → add a price: $190.00 USD, recurring, yearly. Then add the resulting
+   `price_...` id to Vercel Production as `NEXT_PUBLIC_STRIPE_PREMIUM_ANNUAL_PRICE_ID` and redeploy
+   — no code changes needed, same pattern as the GA4 Measurement ID earlier. Until this is done,
+   annual checkout in production throws a clear "not configured" error rather than silently
+   charging monthly — see the dedicated section above for why this couldn't be done directly
+   (Vercel's Sensitive env vars are write-only from the CLI).
+2. Legal review of `/privacy` and `/terms` by an actual lawyer — Termly's questionnaire flow is a
    reasonable stand-in for launch, not a substitute for one.
-2. Multi-day AI Trip Planner generation takes a while (order of 10-20+ seconds for a 3-day trip in
+3. Multi-day AI Trip Planner generation takes a while (order of 10-20+ seconds for a 3-day trip in
    local testing) — has a loading state (`loading` prop on the Generate button) so it doesn't look
    frozen, and now has real headroom (`timeoutMs: 45_000`, see the site-speed section above) so it
    should no longer fail outright on longer trips. If it still feels too slow in practice, consider
