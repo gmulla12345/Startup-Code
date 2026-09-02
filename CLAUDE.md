@@ -569,6 +569,33 @@ server-rendered HTML (not just client-hydrated DOM — confirmed via direct `cur
 crawlers actually see) with the correct production domain, and present on `/about` and `/faq` too,
 confirming the root-layout mount actually applies site-wide as intended.
 
+## Homepage FAQ answers were invisible to crawlers, plus FAQPage schema (2026-09-02)
+
+`src/components/marketing/faq.tsx`'s accordion used conditional *rendering*
+(`{open === i && <p>...}`), not conditional *visibility* — so 4 of its 5 answers genuinely didn't
+exist in the static HTML at all until a user clicked to expand them. Confirmed via `curl` before
+fixing (not just checking the browser DOM, which would have shown all 5 once JS hydrated and masked
+the problem). Search engines and AI crawlers don't click accordions, so they only ever saw one
+answer.
+
+Fixed by always rendering every answer and using a CSS grid `0fr`/`1fr` row-height transition for
+the visual collapse/expand instead of mount/unmount — same accordion UX for users (verified: clicking
+a question still correctly collapses the previously-open one and expands the clicked one), but every
+answer is now in the HTML regardless of open/closed state. This pattern is explicitly fine for
+Google's FAQPage rich results — accordion-hidden content is allowed as long as it's actually present
+in the page HTML, which this guarantees (confirmed via `curl` on production after deploy, not just
+locally).
+
+Added `FAQPage` JSON-LD generated from the same `FAQS` array the visible UI renders from, so schema
+and displayed content can't drift out of sync with each other. Scoped to the homepage only (where
+`<FAQ />` is mounted), not site-wide via the root layout — Google's guidelines say FAQPage schema
+should only be used on pages where the FAQ content is actually visibly present, and the full `/faq`
+page has entirely different, longer content, not these same 5 items.
+
+The "Is booking handled through Zolo?" and "Which cities does Zolo cover?" answers didn't need
+rewriting — the existing copy was already accurate for the current Google Places-based, genuinely
+worldwide architecture (not limited to launch cities). They just needed to actually be visible.
+
 ## Exact next steps (priority order)
 
 **Done since the last update:** deployed to production at `discoverzolo.com` (fixed a Vercel
@@ -617,7 +644,9 @@ confirmed serving on production and the `sign_up` conversion event verified for 
 path (see dedicated section above) — the homepage hero test can now actually be measured;
 **Organization + SoftwareApplication JSON-LD added site-wide** for AI-assistant/search visibility,
 deliberately without `sameAs` social links since neither configured handle actually belongs to this
-business (see dedicated section above).
+business (see dedicated section above); **homepage FAQ answers made crawlable + FAQPage schema
+added** — 4 of 5 answers genuinely didn't exist in the static HTML before, only mounting when a user
+clicked the accordion (see dedicated section above).
 
 1. Legal review of `/privacy` and `/terms` by an actual lawyer — Termly's questionnaire flow is a
    reasonable stand-in for launch, not a substitute for one.
