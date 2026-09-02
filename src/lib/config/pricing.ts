@@ -25,6 +25,13 @@ export const pricing = {
     name: "Premium",
     priceMonthly: Number(process.env.NEXT_PUBLIC_PREMIUM_PRICE ?? 19.99),
     priceId: process.env.NEXT_PUBLIC_STRIPE_PREMIUM_PRICE_ID ?? "",
+    // Annual billing: $190/year vs. $19.99 x 12 = $239.88/month-to-month —
+    // a real ~20.8% discount, not just display copy. annualPriceId is a
+    // separate real Stripe Price on the same product (not computed from
+    // priceMonthly), so what's charged always matches what Stripe has on
+    // file, never a client-side calculation that could drift.
+    priceAnnual: Number(process.env.NEXT_PUBLIC_PREMIUM_PRICE_ANNUAL ?? 190),
+    annualPriceId: process.env.NEXT_PUBLIC_STRIPE_PREMIUM_ANNUAL_PRICE_ID ?? "",
     description: `Unlock the full ${brand.name} experience.`,
     features: [
       "Unlimited personalized discovery",
@@ -41,6 +48,11 @@ export const pricing = {
 } as const;
 
 export type PlanId = keyof typeof pricing;
+export type BillingInterval = "monthly" | "annual";
+
+export function premiumPriceId(interval: BillingInterval): string {
+  return interval === "annual" ? pricing.premium.annualPriceId : pricing.premium.priceId;
+}
 
 export const FREE_TIER_LIMITS = {
   recommendationsPerWeek: 5,

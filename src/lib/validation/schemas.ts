@@ -1,5 +1,9 @@
 import { z } from "zod";
 
+export const checkoutRequestSchema = z.object({
+  billingInterval: z.enum(["monthly", "annual"]).default("monthly"),
+});
+
 export const contactMessageSchema = z.object({
   name: z.string().min(1).max(100),
   email: z.string().email(),

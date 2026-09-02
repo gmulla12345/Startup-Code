@@ -1,6 +1,6 @@
 import { getStripeClient } from "./client";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { pricing } from "@/lib/config/pricing";
+import { premiumPriceId, type BillingInterval } from "@/lib/config/pricing";
 
 async function getOrCreateStripeCustomer(userId: string, email: string): Promise<string> {
   const admin = createAdminClient();
@@ -32,9 +32,16 @@ export async function createCheckoutSession(params: {
   email: string;
   successUrl: string;
   cancelUrl: string;
+  billingInterval?: BillingInterval;
 }): Promise<string> {
-  if (!pricing.premium.priceId) {
-    throw new Error("NEXT_PUBLIC_STRIPE_PREMIUM_PRICE_ID is not configured.");
+  const interval = params.billingInterval ?? "monthly";
+  const priceId = premiumPriceId(interval);
+  if (!priceId) {
+    throw new Error(
+      interval === "annual"
+        ? "NEXT_PUBLIC_STRIPE_PREMIUM_ANNUAL_PRICE_ID is not configured."
+        : "NEXT_PUBLIC_STRIPE_PREMIUM_PRICE_ID is not configured."
+    );
   }
 
   const stripe = getStripeClient();
@@ -44,7 +51,7 @@ export async function createCheckoutSession(params: {
     {
       customer: customerId,
       mode: "subscription",
-      line_items: [{ price: pricing.premium.priceId, quantity: 1 }],
+      line_items: [{ price: priceId, quantity: 1 }],
       success_url: params.successUrl,
       cancel_url: params.cancelUrl,
       subscription_data: { trial_period_days: 7, metadata: { userId: params.userId } },
@@ -62,7 +69,7 @@ export async function createCheckoutSession(params: {
     // Idempotency key: if this request is retried (network blip, double
     // click before the button disables), Stripe returns the original
     // session instead of creating a second one for the same user+price.
-    { idempotencyKey: `checkout_${params.userId}_${pricing.premium.priceId}_${Date.now() / 60_000 | 0}` }
+    { idempotencyKey: `checkout_${params.userId}_${priceId}_${Date.now() / 60_000 | 0}` }
   );
 
   if (!session.url) throw new Error("Stripe did not return a checkout URL.");

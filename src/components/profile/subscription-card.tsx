@@ -7,6 +7,7 @@ import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { pricing } from "@/lib/config/pricing";
 import { brand } from "@/lib/config/brand";
+import { getBillingPreference } from "@/lib/utils/billing-preference";
 import type { Subscription } from "@/types/database";
 
 export function SubscriptionCard({ subscription }: { subscription: Subscription | null }) {
@@ -18,7 +19,16 @@ export function SubscriptionCard({ subscription }: { subscription: Subscription 
   async function handleUpgrade() {
     setLoading(true);
     try {
-      const res = await fetch("/api/stripe/checkout", { method: "POST" });
+      // Respects whatever billing interval the user picked on the homepage
+      // pricing toggle or /profile/upgrade — this button is a second,
+      // shorter path to checkout that bypasses that page, so it needs to
+      // honor the same saved preference instead of silently defaulting to
+      // monthly regardless of what they chose.
+      const res = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ billingInterval: getBillingPreference() }),
+      });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Checkout unavailable.");
       window.location.href = json.url;

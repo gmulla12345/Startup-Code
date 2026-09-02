@@ -3,14 +3,19 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import type { BillingInterval } from "@/lib/config/pricing";
 
-export function UpgradeButton() {
+export function UpgradeButton({ billingInterval }: { billingInterval: BillingInterval }) {
   const [loading, setLoading] = useState(false);
 
   async function handleClick() {
     setLoading(true);
     try {
-      const res = await fetch("/api/stripe/checkout", { method: "POST" });
+      const res = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ billingInterval }),
+      });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Checkout unavailable.");
       window.location.href = json.url;
