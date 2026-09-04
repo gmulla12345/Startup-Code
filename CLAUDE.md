@@ -883,6 +883,27 @@ hidden gem; "Not For Me" correctly cycled to a different one (Homewood Museum on
 of repeating. Deploy needed one retry — the "Not authorized" transient Vercel error documented
 elsewhere in this file recurred again, resolved by retrying `vercel deploy --prod` as before.
 
+**Same-day follow-up: Surprise Me now never repeats a spot across sessions, not just within one.**
+The hidden-gem fix above stopped same-session repeats (session `excludeIds` already covered that),
+but closing the app and coming back later — tomorrow, next week — could still resurface something
+already shown, since nothing tracked history across sessions. `getSurpriseMe()` now pulls every past
+`surprise_me_requested` event for the user via a new `getEventExperienceIds()`
+([src/lib/repositories/events.ts](src/lib/repositories/events.ts) — a targeted per-event-type query,
+not the existing `getRecentEvents`' shared 100-row window, which mixes in every event type and could
+miss older surprise picks for an active user) and excludes all of them. Falls back through
+hidden-gem-without-history-exclusion, then regular-recommendations-without-history-exclusion, before
+finally allowing a repeat (from history only, never a same-session dismissal) — only once someone
+has genuinely exhausted every real candidate nearby. Also added a `topCandidates.length === 0`
+short-circuit in `getRecommendations()` so this new multi-step fallback chain doesn't fire a wasted
+AI reasoning call on empty input at each step.
+
+Verified live on local dev: a disposable **Premium** test account (needed to bypass the free tier's
+1-per-week Surprise Me cap and actually get a second real request in the same test) got USCGC Taney
+WHEC-37 on the first Surprise Me, then Activate Body Personal Training - Clipper Mill on a second
+request from a completely fresh page load with no client-side exclude state — confirmed via a direct
+query on `user_events` that the first pick's `surprise_me_requested` row is what made the second
+request skip it, not coincidence.
+
 ## Exact next steps (priority order)
 
 **Done since the last update:** deployed to production at `discoverzolo.com` (fixed a Vercel
