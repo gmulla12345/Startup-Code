@@ -46,5 +46,5 @@ export const PERSONALITY_SLIDERS: {
   { key: "quietVsSocial", left: "Quiet", right: "Social" },
   { key: "adventurousVsComfortable", left: "Adventurous", right: "Comfortable" },
   { key: "budgetVsLuxury", left: "Budget-conscious", right: "Luxury" },
-  { key: "familiarVsNovel", left: "Familiar", right: "Novel" },
+  { key: "familiarVsNovel", left: "Tried & true", right: "Hidden gems" },
 ];
