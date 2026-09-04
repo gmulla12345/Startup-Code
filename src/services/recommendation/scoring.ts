@@ -19,7 +19,20 @@ export interface ScoredExperience {
 export function scoreExperience(
   experience: Experience,
   profile: Profile,
-  opts: { seenIds?: Set<string>; dismissedIds?: Set<string>; savedTagCounts?: Record<string, number> } = {}
+  opts: {
+    seenIds?: Set<string>;
+    dismissedIds?: Set<string>;
+    savedTagCounts?: Record<string, number>;
+    savedCategoryCounts?: Record<string, number>;
+    rejectedTagCounts?: Record<string, number>;
+    rejectedCategoryCounts?: Record<string, number>;
+    /** Surprise Me / Hidden Gems: blend in a continuous novelty bonus instead
+     * of the hard "isHiddenGem" gate those surfaces used to filter candidates
+     * down to — a well-matched, less-famous place should be able to compete
+     * on its merits rather than needing to clear a fixed rating/review-count
+     * cutoff. See getSurpriseMe() in engine.ts. */
+    noveltyBias?: boolean;
+  } = {}
 ): ScoredExperience {
   let score = 32; // baseline
   const reasons: string[] = [];
@@ -31,13 +44,34 @@ export function scoreExperience(
     reasons.push(`Matches your interests: ${overlap.join(", ")}`);
   }
 
-  // Learned affinity from saved experiences' tags.
+  // Learned affinity from saved experiences' tags/category — positive
+  // signal from what they've actually kept, not just their stated
+  // interests. (opts.savedTagCounts is keyed by Experience.tags, which
+  // are denormalized onto saved_experiences at save time — see
+  // lib/repositories/saved.ts.)
   if (opts.savedTagCounts) {
     const affinity = experience.tags.reduce((sum, t) => sum + (opts.savedTagCounts?.[t] ?? 0), 0);
     if (affinity > 0) {
       score += Math.min(affinity * 3, 15);
       reasons.push("Similar to experiences you've saved");
     }
+  }
+  if (opts.savedCategoryCounts?.[experience.category]) {
+    score += Math.min(opts.savedCategoryCounts[experience.category] * 2, 8);
+  }
+
+  // Learned negative affinity from what they've actively rejected — tapped
+  // "Not For Me" on a Surprise Me pick, or dismissed a recommendation.
+  // Symmetric to the saved-tag affinity above but pushing the other way, so
+  // repeatedly passing on (say) nightlife spots actually teaches the system
+  // to stop leading with nightlife, not just to avoid that one exact place
+  // again (opts.dismissedIds, below, already handled that narrower case).
+  if (opts.rejectedTagCounts) {
+    const rejection = experience.tags.reduce((sum, t) => sum + (opts.rejectedTagCounts?.[t] ?? 0), 0);
+    if (rejection > 0) score -= Math.min(rejection * 4, 25);
+  }
+  if (opts.rejectedCategoryCounts?.[experience.category]) {
+    score -= Math.min(opts.rejectedCategoryCounts[experience.category] * 3, 15);
   }
 
   // Budget alignment with personality slider + explicit preference.
@@ -88,6 +122,23 @@ export function scoreExperience(
   // Featured/quality nudge.
   if (experience.isFeatured) score += 3;
   if (experience.rating && experience.rating >= 4.7) score += 4;
+
+  // Surprise Me / Hidden Gems novelty bonus — continuous, not a pass/fail
+  // review-count-and-rating gate. A place doesn't need >=4.5 stars and
+  // under 200 reviews to be worth surprising someone with; it just needs to
+  // be less obvious than the mainstream top pick, and it can still lose out
+  // to a place that matches interests/learned taste better. Rating still
+  // matters (a low-rated place shouldn't get a novelty boost just for being
+  // obscure) but it's one input, not a gate.
+  if (opts.noveltyBias) {
+    const reviewCount = experience.reviewCount ?? 0;
+    const rating = experience.rating ?? 4.0;
+    const lowVisibilityBonus = Math.max(0, 12 - Math.log10(reviewCount + 10) * 5);
+    const ratingFactor = Math.max(0, Math.min(1, (rating - 3.5) / 1.2));
+    score += lowVisibilityBonus * ratingFactor;
+    if (experience.isHiddenGem) score += 4;
+    if (reviewCount > 3000) score -= 5; // gentle damper on the most mainstream megastars, not exclusionary
+  }
 
   return {
     experience,
