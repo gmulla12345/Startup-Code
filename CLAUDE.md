@@ -744,6 +744,32 @@ Verified: typecheck/lint clean; walked a disposable Supabase test account throug
 the preferences step and confirmed the pills read "Free / Under $25 / $25–75 / $75–150 / $150+"
 (screenshot taken, matches the reviewer's original complaint screen exactly); deployed and live.
 
+## Expired password-reset link no longer a dead end (2026-09-03)
+
+Third piece of feedback from the same review session (personality slider + budget picker fixes
+above). Screenshot showed them stuck on `/reset-password` with a red "This reset link has expired"
+toast over a **disabled** "Set a new password" form — the toast disappears and there was no visible
+way to actually get a new link short of navigating away and rediscovering the forgot-password entry
+point. "This made me mad — make it easier... like resend code."
+
+`src/app/(auth)/reset-password/page.tsx`'s recovery-flow branch was keyed only on
+`isRecoveryFlow` (whether a `?code=` param is present), not on whether
+`supabase.auth.exchangeCodeForSession(code)` actually succeeded — so an expired/invalid code still
+rendered the same "Set a new password" form, just permanently disabled once the exchange failed.
+Added a `linkExpired` state set in that exchange's error branch; when true, the page now falls
+through to the *same* request-a-new-link form already used for a fresh "forgot password" request
+(reused, not duplicated), with copy that names what happened: "Link expired — that reset link is no
+longer valid. Enter your email and we'll send you a new one." Getting a new link is now one form
+submit on the same screen, not a dead end.
+
+Verified: typecheck/lint clean; hit `/reset-password?code=<bogus>` on local dev — request form
+came up correctly (not the disabled one), submitted an email through it, got the "reset link is on
+its way" confirmation. Confirmed identical behavior live on `https://discoverzolo.com/reset-password?code=<bogus>`
+after deploy. (Noticed in dev only, not production: the exchange effect fires twice and shows the
+toast twice — that's React Strict Mode's intentional double-invoke of effects in development, not a
+real bug; confirmed by testing the same URL on production, where it fires exactly once. Pre-existing
+in this effect's structure before this change too, not something introduced here.)
+
 ## Exact next steps (priority order)
 
 **Done since the last update:** deployed to production at `discoverzolo.com` (fixed a Vercel
@@ -802,9 +828,10 @@ Stripe price verified end to end in both test and live mode, not just homepage d
 the pricing value-anchor line (see dedicated section above); **standalone `/pricing` page added**
 (feature comparison table, shared pricing FAQ, sitemap/nav/footer/llms.txt all pointing at it
 instead of the old homepage anchor) **the onboarding personality slider's confusing
-"Familiar/Novel" label fixed**, and **budget pickers site-wide now show real dollar ranges**
-instead of bare `$`/`$$`/`$$$`/`$$$$` symbols — both fixes came from the same real user reviewing
-the site (see dedicated sections above).
+"Familiar/Novel" label fixed**, **budget pickers site-wide now show real dollar ranges** instead of
+bare `$`/`$$`/`$$$`/`$$$$` symbols, and **an expired password-reset link now recovers gracefully**
+instead of leaving the user on a disabled dead-end form — all three fixes came from the same real
+user reviewing the site (see dedicated sections above).
 
 1. Legal review of `/privacy` and `/terms` by an actual lawyer — Termly's questionnaire flow is a
    reasonable stand-in for launch, not a substitute for one.
