@@ -8,7 +8,7 @@
 >
 > Full setup/architecture docs: [README.md](README.md). Full DB schema: [src/db/schema.sql](src/db/schema.sql).
 
-**Last updated:** 2026-08-31
+**Last updated:** 2026-09-03
 
 ## What this is
 
@@ -677,6 +677,48 @@ The "Is booking handled through Zolo?" and "Which cities does Zolo cover?" answe
 rewriting — the existing copy was already accurate for the current Google Places-based, genuinely
 worldwide architecture (not limited to launch cities). They just needed to actually be visible.
 
+## Standalone /pricing page (2026-09-03)
+
+Pricing previously only existed as a homepage anchor (`/#pricing`) — not indexable or linkable on
+its own, and missing from the sitemap. Built `src/app/(marketing)/pricing/page.tsx`:
+
+- **Extracted the toggle + free/premium card layout** out of
+  `src/components/marketing/pricing-section.tsx` into a new shared
+  `src/components/marketing/pricing-cards.tsx` (`PricingCards`), used by both the homepage's
+  `#pricing` section (unchanged, still there) and the new page — so the two can never show
+  different prices or copy.
+- **Feature comparison table** — a plain `<table>` (no UI library component existed for this),
+  Free vs. Premium across all 11 features, checks/dashes for boolean rows.
+- **Pricing FAQ now shared, not duplicated**: pulled the "Pricing & Premium" section out of
+  `/faq/page.tsx` into `src/lib/content/pricing-faq.ts` (`PRICING_FAQ_ITEMS`), used by both `/faq`
+  and `/pricing` — so answers like the cancellation policy can't drift between the two pages.
+  Rendered on `/pricing` as always-visible static blocks (not an accordion) so the answers are
+  guaranteed to be in the static HTML for crawlers, same principle as the homepage FAQ fix from
+  2026-09-02 — with its own scoped `FAQPage` JSON-LD.
+- Added to `src/app/sitemap.ts` (priority 0.6, between homepage and signup). Nav
+  (`src/components/marketing/nav.tsx`), footer (`src/components/marketing/footer.tsx`), and
+  `/llms.txt` all now link to `/pricing` instead of the `/#pricing` anchor.
+
+Verified: typecheck/lint clean, rendered live locally (toggle, comparison table, FAQ all correct),
+nav/footer links confirmed pointing at `/pricing`, and on production after deploy —
+`curl -o /dev/null -w '%{http_code}' https://discoverzolo.com/pricing` → `200`, sitemap and
+`/llms.txt` both show the new URL.
+
+## Onboarding personality slider label fixed (2026-09-03)
+
+A real user reviewing the site got stuck on the "How would you describe yourself?" onboarding step:
+"I don't know what familiar and novel mean" (the `familiarVsNovel` slider). Reviewed the rest of
+onboarding's copy at the same time — basics, interests, preferences, goals, and the other four
+personality sliders (Spontaneous/Planned, Quiet/Social, Adventurous/Comfortable,
+Budget-conscious/Luxury) all use plain, common words; this was the one genuine outlier.
+
+Relabeled in `src/lib/config/taxonomy.ts`'s `PERSONALITY_SLIDERS`: "Familiar" / "Novel" →
+**"Tried & true" / "Hidden gems"** — matches what the axis actually drives (checked
+`src/lib/utils/archetype.ts` and the `isHiddenGem` score boost in
+`src/services/recommendation/scoring.ts` before picking the wording), so it's self-explanatory
+without needing a helper caption. Display-only change — the `familiarVsNovel` key, DB column, and
+AI-prompt reference to it are untouched.
+
 ## Exact next steps (priority order)
 
 **Done since the last update:** deployed to production at `discoverzolo.com` (fixed a Vercel
@@ -732,7 +774,11 @@ keywords, shortened from the requested text to actually fit under 60 chars (see 
 above); **`/llms.txt` added** — was 404ing, now built from `brand` config for AI-assistant discovery
 (see dedicated section above); **real annual billing is fully live** ($190/year, a functioning
 Stripe price verified end to end in both test and live mode, not just homepage display copy) plus
-the pricing value-anchor line (see dedicated section above).
+the pricing value-anchor line (see dedicated section above); **standalone `/pricing` page added**
+(feature comparison table, shared pricing FAQ, sitemap/nav/footer/llms.txt all pointing at it
+instead of the old homepage anchor) and **the onboarding personality slider's confusing
+"Familiar/Novel" label fixed** after a real user got stuck on it during a review (see dedicated
+sections above).
 
 1. Legal review of `/privacy` and `/terms` by an actual lawyer — Termly's questionnaire flow is a
    reasonable stand-in for launch, not a substitute for one.
