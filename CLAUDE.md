@@ -770,6 +770,91 @@ toast twice — that's React Strict Mode's intentional double-invoke of effects 
 real bug; confirmed by testing the same URL on production, where it fires exactly once. Pre-existing
 in this effect's structure before this change too, not something introduced here.)
 
+## heycatch site audit — first response pass (2026-09-04)
+
+User ran a professional site audit (heycatch.ai, public report at
+`app.heycatch.ai/audit/hck_pk_Utdu2yDeE-XxmtRgBLi9HJLMcVF6O8HD`) scoring the site across 6
+dimensions (Positioning, Conversion clarity, Trust signals, Pricing, SEO, Brief fit) with a
+prioritized action plan (Quick wins, then Do this quarter — no Bigger bets tier existed on this
+report). Several Quick wins were **already done** in earlier sessions before this audit was even
+read here — the hero rewrite, JSON-LD, FAQ schema + visible answers, the title tag, llms.txt, and
+annual billing were all already live and matched the audit's own suggested fixes almost exactly,
+confirming those earlier calls were right. This entry covers what was newly built in response to
+the remaining findings.
+
+**D3.4 (trust reassurance near pricing CTAs)** — added "No credit card required" under the Free
+CTA and a "7-day free trial — cancel before it ends and you won't be charged" line under Premium
+(`src/components/marketing/pricing-cards.tsx`, shared by the homepage `#pricing` section and
+`/pricing`). **Deliberately did not use the audit's literal suggested "14-day money-back
+guarantee" copy** — the actual Terms of Service says fees are non-refundable except where required
+by law (visible in the very same FAQ, `src/lib/content/pricing-faq.ts`), so that line would have
+been a false claim next to a true one. The trial-cancellation line is accurate to what
+`src/lib/stripe/checkout.ts` actually does (`trial_period_days: 7`). Also added a "Payments secured
+by Stripe" line, since checkout genuinely goes through Stripe — didn't claim Apple Pay support
+since it isn't verified as enabled.
+
+**FIT (the "Worldwide" stat was unsupported — only 3 Travel Mode cities existed)** — went with the
+audit's preferred fix (add more real destinations) over softening the claim. Added 7 more cities to
+`DESTINATIONS` in `src/db/seed-data.ts` — Los Angeles, San Francisco, Chicago, London, Paris,
+Barcelona, Sydney — 10 total now, spanning 4 continents. Real coordinates; Unsplash photo IDs were
+verified live (searched Unsplash for each city, extracted a real photo ID from actual search
+results, curl'd each one for a 200) before using them, not guessed — a guessed/wrong Unsplash ID
+would silently 404 as a broken image. Descriptive copy matches the existing 3 cities' voice — short,
+atmospheric, no invented specific facts about businesses.
+
+**While fixing this, found a real overclaim already live and fixed it too**: both the homepage FAQ
+("Travel Mode works for any destination you search") and the full `/faq` page ("Search any
+destination...") promised universal Travel Mode coverage the code doesn't deliver —
+`CatalogTravelProvider.getDestination()` (`src/services/providers/travel-provider.ts`) only
+resolves destinations in the fixed `DESTINATIONS` catalog; anything else 404s. Corrected both FAQ
+answers to describe the real, growing 10-city catalog, and did the same everywhere "Travel Mode for
+any destination" appeared as a pricing feature bullet (`src/lib/config/pricing.ts`,
+`src/lib/content/pricing-faq.ts`, the `/pricing` comparison table) — now "Travel Mode for 10+
+destinations", accurate everywhere. Also fixed the Travel Mode search box's "Search anyway" button
+(`src/components/trips/travel-mode-search.tsx`), which pushed to a slug for literally any typed
+city and 404'd for anything not in the catalog — now a mailto "Request it" link instead, which
+doesn't overpromise. **Note for later**: Discover/Surprise Me genuinely do work anywhere (they run
+on live Google Places data, no fixed list) — only Travel Mode's dedicated destination guides are
+catalog-limited. Don't conflate the two again.
+
+**D5.3 (zero /vs comparison pages)** — built `/vs/zolo-vs-tripadvisor`, `/vs/zolo-vs-atlas-obscura`,
+`/vs/zolo-vs-google-maps` (the exact 3 competitors the audit's own research named) as one dynamic
+route (`src/app/(marketing)/vs/[slug]/page.tsx`) driven by content config
+(`src/lib/content/vs-pages.ts`), not 3 near-duplicate page files. Each has a feature comparison
+table, a "why switch" section, and a statically-rendered FAQ with its own FAQPage JSON-LD (same
+crawlable-by-default pattern as the homepage FAQ fix from 2026-09-02 — no accordion hiding
+answers). Comparison content is deliberately qualitative, not fabricated stats about a competitor —
+only well-known, defensible differences in what each product does, never disparaging. Added to the
+sitemap and linked from the footer's Product column. Extracted `comparison-cell.tsx` (the
+Check/Minus/text cell renderer) out of the `/pricing` page so both `/pricing` and the 3 `/vs` pages
+share one implementation.
+
+**D1.5 (hero showed stock activity photos, never the actual product)** — replaced the hero's
+4-photo Unsplash grid with `HeroRecommendationPreview`
+(`src/components/marketing/hero-recommendation-preview.tsx`): a mocked-up "Discover" panel with 3
+real places (from the same live catalog query already powering the homepage — not fabricated),
+styled like the real recommendation screen, with a Surprise Me button, match %, and reasoning. The
+places/photos are real; the match percentages and reasoning lines are illustrative example copy
+(using the audit's own example, "Because you love outdoor adventure and have a $50 budget") showing
+how personalization looks — not a live recommendation for a specific visitor, and not dressed up as
+a testimonial. Hero is now a proper two-column split (copy left, preview right) instead of
+headline-then-photo-strip; `(marketing)/page.tsx` fetches 6 experiences instead of 3 and splits
+them between the hero preview and "A taste of what you'll get" so the two sections don't repeat the
+same places.
+
+**Not done — flagged for the user, not fabricated (per explicit instruction not to invent this
+kind of content):**
+- **D3.3 — named founder + photo + LinkedIn on `/about`.** Needs the user's real name, a headshot,
+  a 1-2 sentence bio, and a LinkedIn URL. Inventing a fake founder identity would be exactly the
+  kind of fake trust signal this finding exists to fix.
+- **D3.2 / FIT — first user testimonials.** Needs the user to actually collect 3-5 quotes (with
+  photo + role/context) from real paying users, per the audit's own suggested approach ("ask the
+  first 20 paying users"). Fabricating quotes was never on the table.
+
+Everything above: typecheck/lint clean, verified live locally and on `discoverzolo.com` after
+deploy (all 3 `/vs` pages and all 10 `/travel` pages return 200, sitemap lists all 13, hero preview
+panel and corrected FAQ copy confirmed rendering on production).
+
 ## Exact next steps (priority order)
 
 **Done since the last update:** deployed to production at `discoverzolo.com` (fixed a Vercel
@@ -831,7 +916,12 @@ instead of the old homepage anchor) **the onboarding personality slider's confus
 "Familiar/Novel" label fixed**, **budget pickers site-wide now show real dollar ranges** instead of
 bare `$`/`$$`/`$$$`/`$$$$` symbols, and **an expired password-reset link now recovers gracefully**
 instead of leaving the user on a disabled dead-end form — all three fixes came from the same real
-user reviewing the site (see dedicated sections above).
+user reviewing the site (see dedicated sections above); **first response pass to the heycatch site
+audit** — trust reassurance copy near pricing CTAs, 7 more real Travel Mode destinations (10 total)
+backing the "Worldwide" claim plus a related overclaim fixed in FAQ/pricing copy, 3 `/vs` comparison
+pages, and a real-product-UI hero preview replacing the old stock photo grid (see dedicated section
+above). Founder bio/photo and user testimonials from that same audit are flagged below, not done —
+they need the user's real content, not fabricated placeholders.
 
 1. Legal review of `/privacy` and `/terms` by an actual lawyer — Termly's questionnaire flow is a
    reasonable stand-in for launch, not a substitute for one.
@@ -841,6 +931,11 @@ user reviewing the site (see dedicated sections above).
    should no longer fail outright on longer trips. If it still feels too slow in practice, consider
    trimming candidates sent to the model or a streaming/progressive UI, rather than reducing what
    it actually plans.
+3. heycatch audit D3.3 — add a real founder block to `/about` (name, headshot, 1-2 sentence bio,
+   LinkedIn link) once the user provides the actual details. See "heycatch site audit" section
+   above for exactly what's needed and where.
+4. heycatch audit D3.2/FIT — collect 3-5 real user testimonials (photo + role/context + an
+   outcome-specific quote) once there are paying users to ask. See same section above.
 
 ## PayPal — deliberately deferred, do not pick this up unprompted (2026-09-01)
 
