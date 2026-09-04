@@ -23,7 +23,7 @@ ${brand.name} is a personalized discovery engine for real-world experiences — 
 
 - [Homepage](${brand.domain}/): What ${brand.name} is and how personalized discovery works.
 - [About](${brand.domain}/about): Why ${brand.name} exists and the problem it solves.
-- [Pricing](${brand.domain}/#pricing): Free and Premium ($19.99/month) plans.
+- [Pricing](${brand.domain}/pricing): Free and Premium ($19.99/month or $190/year) plans, feature comparison, and FAQ.
 - [FAQ](${brand.domain}/faq): How recommendations work, booking, cancellation, and coverage.
 `;
 
