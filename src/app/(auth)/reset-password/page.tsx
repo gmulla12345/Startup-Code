@@ -19,13 +19,17 @@ function ResetPasswordForm() {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [sessionReady, setSessionReady] = useState(!isRecoveryFlow);
+  const [linkExpired, setLinkExpired] = useState(false);
 
   useEffect(() => {
     if (!isRecoveryFlow) return;
     const supabase = createClient();
     const code = searchParams.get("code")!;
     supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
-      if (error) toast.error("This reset link has expired. Request a new one.");
+      if (error) {
+        toast.error("This reset link has expired.");
+        setLinkExpired(true);
+      }
       setSessionReady(!error);
     });
   }, [isRecoveryFlow, searchParams]);
@@ -67,7 +71,7 @@ function ResetPasswordForm() {
     router.push("/home");
   }
 
-  if (isRecoveryFlow) {
+  if (isRecoveryFlow && !linkExpired) {
     return (
       <AuthShell title="Set a new password" subtitle="Choose something you haven't used before.">
         <form onSubmit={handleSetNewPassword} className="space-y-3">
@@ -88,10 +92,19 @@ function ResetPasswordForm() {
     );
   }
 
+  // Also reached when a recovery link turned out to be expired/invalid —
+  // rather than leaving the user stuck on a disabled "Set a new password"
+  // form with no way forward, drop straight into this same request-a-link
+  // form so getting a fresh one is one step, not a manual trip back to a
+  // "forgot password" entry point they'd have to find on their own.
   return (
     <AuthShell
-      title="Reset your password"
-      subtitle="We'll email you a link to get back in."
+      title={linkExpired ? "Link expired" : "Reset your password"}
+      subtitle={
+        linkExpired
+          ? "That reset link is no longer valid. Enter your email and we'll send you a new one."
+          : "We'll email you a link to get back in."
+      }
       footer={
         <p className="text-sm text-foreground-muted">
           Remembered it?{" "}
