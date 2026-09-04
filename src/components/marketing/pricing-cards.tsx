@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Check } from "lucide-react";
+import { Check, Lock } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { Button } from "@/components/ui/button";
 import { pricing, type BillingInterval } from "@/lib/config/pricing";
@@ -81,6 +81,7 @@ export function PricingCards() {
           <Button asChild variant="outline" size="lg" className="w-full">
             <Link href="/signup">Get started</Link>
           </Button>
+          <p className="mt-3 text-center text-xs text-foreground-subtle">No credit card required</p>
         </div>
 
         <div>
@@ -107,6 +108,9 @@ export function PricingCards() {
             <Button asChild size="lg" className="w-full">
               <Link href="/signup">Start Premium</Link>
             </Button>
+            <p className="mt-3 text-center text-xs text-foreground-subtle">
+              7-day free trial — cancel before it ends and you won&apos;t be charged
+            </p>
           </div>
 
           <p className="mt-4 text-center text-sm text-foreground-muted px-2">
@@ -114,6 +118,10 @@ export function PricingCards() {
           </p>
         </div>
       </div>
+
+      <p className="mt-8 flex items-center justify-center gap-1.5 text-xs text-foreground-subtle">
+        <Lock className="h-3.5 w-3.5" /> Payments secured by Stripe
+      </p>
     </div>
   );
 }
