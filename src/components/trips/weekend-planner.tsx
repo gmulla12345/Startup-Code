@@ -6,7 +6,7 @@ import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PillGroup } from "@/components/onboarding/pill-group";
 import { ChipSelect } from "@/components/onboarding/chip-select";
-import { INTERESTS } from "@/lib/config/taxonomy";
+import { BUDGET_LEVELS, INTERESTS } from "@/lib/config/taxonomy";
 import type { WeekendPlan, WeekendPlanRequest } from "@/types/ai";
 import type { InterestTag } from "@/types/database";
 
@@ -107,12 +107,7 @@ export function WeekendPlanner({ isPremium }: { isPremium: boolean }) {
           <div>
             <label className="text-sm font-medium text-foreground mb-2 block">Budget</label>
             <PillGroup
-              options={[
-                { value: "free", label: "Free" },
-                { value: "low", label: "$" },
-                { value: "medium", label: "$$" },
-                { value: "high", label: "$$$" },
-              ]}
+              options={BUDGET_LEVELS.filter((b) => b.value !== "luxury")}
               value={request.budgetLevel}
               onChange={(budgetLevel) => setRequest((r) => ({ ...r, budgetLevel }))}
             />

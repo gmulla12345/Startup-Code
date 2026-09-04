@@ -1,6 +1,7 @@
 "use client";
 
 import { PillGroup } from "./pill-group";
+import { BUDGET_LEVELS } from "@/lib/config/taxonomy";
 import type { UserPreferences } from "@/types/database";
 
 export function StepPreferences({
@@ -15,13 +16,7 @@ export function StepPreferences({
       <div>
         <label className="text-sm font-medium text-foreground mb-2 block">Typical budget</label>
         <PillGroup
-          options={[
-            { value: "free", label: "Free" },
-            { value: "low", label: "$" },
-            { value: "medium", label: "$$" },
-            { value: "high", label: "$$$" },
-            { value: "luxury", label: "$$$$" },
-          ]}
+          options={BUDGET_LEVELS}
           value={value.budgetLevel}
           onChange={(budgetLevel) => onChange({ ...value, budgetLevel })}
         />

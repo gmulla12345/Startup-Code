@@ -1,4 +1,4 @@
-import type { InterestTag, LifestyleGoal } from "@/types/database";
+import type { BudgetLevel, InterestTag, LifestyleGoal } from "@/types/database";
 
 export const INTERESTS: { value: InterestTag; label: string }[] = [
   { value: "outdoors", label: "Outdoors" },
@@ -36,6 +36,17 @@ export const LIFESTYLE_GOALS: { value: LifestyleGoal; label: string }[] = [
 ];
 
 export const AGE_RANGES = ["18-20", "21-24", "25-27", "28-30", "31-35", "36+"] as const;
+
+// Real dollar ranges instead of bare $/$$/$$$/$$$$ symbols, which tested
+// unclear — this is "typical cost of a single experience," a different
+// scale than the Trip Planner's per-day budget (src/ai/trip-plan.ts).
+export const BUDGET_LEVELS: { value: BudgetLevel; label: string }[] = [
+  { value: "free", label: "Free" },
+  { value: "low", label: "Under $25" },
+  { value: "medium", label: "$25–75" },
+  { value: "high", label: "$75–150" },
+  { value: "luxury", label: "$150+" },
+];
 
 export const PERSONALITY_SLIDERS: {
   key: "spontaneousVsPlanned" | "quietVsSocial" | "adventurousVsComfortable" | "budgetVsLuxury" | "familiarVsNovel";

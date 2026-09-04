@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs } from "@/components/ui/tabs";
 import { PillGroup } from "@/components/onboarding/pill-group";
 import { CATEGORIES } from "@/db/seed-data";
+import { BUDGET_LEVELS } from "@/lib/config/taxonomy";
 import { cn } from "@/lib/utils/cn";
 
 export interface DiscoverFilterState {
@@ -76,14 +77,7 @@ export function DiscoverFilters({
       </div>
 
       <PillGroup
-        options={[
-          { value: "", label: "Any price" },
-          { value: "free", label: "Free" },
-          { value: "low", label: "$" },
-          { value: "medium", label: "$$" },
-          { value: "high", label: "$$$" },
-          { value: "luxury", label: "$$$$" },
-        ]}
+        options={[{ value: "", label: "Any price" }, ...BUDGET_LEVELS]}
         value={filters.priceLevel ?? ""}
         onChange={(v) => onChange({ ...filters, priceLevel: v || null })}
       />
