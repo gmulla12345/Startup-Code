@@ -137,11 +137,29 @@ create table if not exists public.saved_experiences (
   collection text not null default 'Saved',
   status text not null default 'saved' check (status in ('saved','planned','completed')),
   notes text,
+  -- Denormalized from the Experience at save time (not looked up via a join
+  -- into public.experiences at read time) so taste-learning works for
+  -- Google Places saves too — that table is empty in production, so a join
+  -- would silently return nothing for the vast majority of real saves. See
+  -- getSavedTagCounts()/getSavedCategoryCounts() in lib/repositories/saved.ts.
+  tags text[] not null default '{}',
+  category text,
   created_at timestamptz not null default now(),
   unique(user_id, experience_id, collection)
 );
 
 create index if not exists idx_saved_user on public.saved_experiences(user_id);
+
+do $$
+begin
+  if not exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'saved_experiences' and column_name = 'tags'
+  ) then
+    alter table public.saved_experiences add column tags text[] not null default '{}';
+    alter table public.saved_experiences add column category text;
+  end if;
+end $$;
 
 -- -------------------------------------------------------------------------
 -- user_events — behavioral tracking that powers personalization

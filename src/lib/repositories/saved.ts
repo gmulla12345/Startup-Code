@@ -27,12 +27,14 @@ export async function saveExperience(
   client: SupabaseClient,
   userId: string,
   experienceId: string,
-  collection = "Saved"
+  collection = "Saved",
+  tags: string[] = [],
+  category: string | null = null
 ): Promise<SavedExperience> {
   const { data, error } = await client
     .from("saved_experiences")
     .upsert(
-      { user_id: userId, experience_id: experienceId, collection },
+      { user_id: userId, experience_id: experienceId, collection, tags, category },
       { onConflict: "user_id,experience_id,collection" }
     )
     .select("*")
@@ -57,37 +59,43 @@ export async function unsaveExperience(
 }
 
 /**
- * Tag frequency across a user's saved experiences, used to bias future
- * recommendations toward tags they keep saving. Does a manual two-step
- * lookup instead of an embedded `.select("experiences(tags)")` join because
- * saved_experiences.experience_id is plain text with no FK (see schema.sql
- * — it has to hold Google Places ids like "g-ChIJ...", not just uuids).
- * Only uuid-shaped ids can have a row in public.experiences at all — Google
- * Places results are fetched live and never persisted there, and don't
- * carry tags to begin with, so there's nothing to look up for them.
+ * Tag and category frequency across a user's saved experiences, used to
+ * bias future recommendations toward what they keep saving. Reads
+ * saved_experiences.tags/category directly (denormalized at save time by
+ * saveExperience()) rather than joining into public.experiences — that
+ * table is empty in production (Google Places results are fetched live and
+ * never persisted there), so a join-based lookup would silently return
+ * nothing for the vast majority of real saves. This used to be exactly that
+ * broken join; fixed 2026-09-04 alongside the rest of the taste-learning
+ * pass — see CLAUDE.md.
  */
 export async function getSavedTagCounts(
   client: SupabaseClient,
   userId: string
 ): Promise<Record<string, number>> {
-  const { data: saved, error } = await client
-    .from("saved_experiences")
-    .select("experience_id")
-    .eq("user_id", userId);
-  if (error || !saved || saved.length === 0) return {};
-
-  const uuidIds = saved
-    .map((row) => row.experience_id as string)
-    .filter((id) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id));
-  if (uuidIds.length === 0) return {};
-
-  const { data: experiences } = await client.from("experiences").select("tags").in("id", uuidIds);
+  const { data: saved, error } = await client.from("saved_experiences").select("tags").eq("user_id", userId);
+  if (error || !saved) return {};
 
   const counts: Record<string, number> = {};
-  for (const row of experiences ?? []) {
+  for (const row of saved) {
     for (const tag of (row.tags as string[]) ?? []) {
       counts[tag] = (counts[tag] ?? 0) + 1;
     }
+  }
+  return counts;
+}
+
+export async function getSavedCategoryCounts(
+  client: SupabaseClient,
+  userId: string
+): Promise<Record<string, number>> {
+  const { data: saved, error } = await client.from("saved_experiences").select("category").eq("user_id", userId);
+  if (error || !saved) return {};
+
+  const counts: Record<string, number> = {};
+  for (const row of saved) {
+    const category = row.category as string | null;
+    if (category) counts[category] = (counts[category] ?? 0) + 1;
   }
   return counts;
 }

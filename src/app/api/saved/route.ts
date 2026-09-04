@@ -24,7 +24,14 @@ export async function POST(request: Request) {
     const { user, supabase } = await requireUser();
     const body = saveExperienceSchema.parse(await request.json());
 
-    const saved = await saveExperience(supabase, user.id, body.experienceId, body.collection);
+    const saved = await saveExperience(
+      supabase,
+      user.id,
+      body.experienceId,
+      body.collection,
+      body.tags,
+      body.category ?? null
+    );
     await trackEvent(supabase, user.id, "saved_experience", body.experienceId, { collection: body.collection });
 
     return NextResponse.json({ saved });

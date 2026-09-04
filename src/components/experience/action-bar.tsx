@@ -13,6 +13,8 @@ export function ActionBar({
   slug,
   title,
   shortDescription,
+  tags,
+  category,
   isAuthenticated,
   initialSaved,
   externalBookingUrl,
@@ -21,6 +23,8 @@ export function ActionBar({
   slug: string;
   title: string;
   shortDescription: string;
+  tags: string[];
+  category: string;
   isAuthenticated: boolean;
   initialSaved: boolean;
   externalBookingUrl: string | null;
@@ -44,7 +48,7 @@ export function ActionBar({
         await fetch("/api/saved", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ experienceId }),
+          body: JSON.stringify({ experienceId, tags, category }),
         });
         toast.success("Saved");
       } else {

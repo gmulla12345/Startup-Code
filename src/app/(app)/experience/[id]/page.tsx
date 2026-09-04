@@ -139,6 +139,8 @@ export default async function ExperienceDetailPage({ params }: PageProps<"/exper
           slug={experience.slug}
           title={experience.title}
           shortDescription={experience.shortDescription}
+          tags={experience.tags}
+          category={experience.category}
           isAuthenticated={Boolean(user)}
           initialSaved={initialSaved}
           externalBookingUrl={locked ? null : experience.externalBookingUrl}

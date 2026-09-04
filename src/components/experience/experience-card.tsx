@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Heart, MapPin, Star, Gem } from "lucide-react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils/cn";
 import { formatPrice, formatDuration, formatCategoryLabel } from "@/lib/utils/format";
@@ -34,12 +35,34 @@ export function ExperienceCard({
   const [isSaved, setIsSaved] = useState(saved);
   const image = experience.images[0];
 
-  function handleSave(e: React.MouseEvent) {
+  // Previously this only flipped local state and called an onToggleSave prop
+  // that no caller ever actually passed — every card's heart button looked
+  // functional but never persisted a save anywhere. Now it calls /api/saved
+  // directly (same as the experience detail page's ActionBar), including the
+  // tags/category the taste-learning scoring reads back later.
+  async function handleSave(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
     const next = !isSaved;
     setIsSaved(next);
     onToggleSave?.(experience.id, next);
+
+    try {
+      if (next) {
+        const res = await fetch("/api/saved", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ experienceId: experience.id, tags: experience.tags, category: experience.category }),
+        });
+        if (!res.ok) throw new Error();
+      } else {
+        const res = await fetch(`/api/saved?experienceId=${encodeURIComponent(experience.id)}`, { method: "DELETE" });
+        if (!res.ok) throw new Error();
+      }
+    } catch {
+      setIsSaved(!next);
+      toast.error("Couldn't update your saves. Try again.");
+    }
   }
 
   return (
