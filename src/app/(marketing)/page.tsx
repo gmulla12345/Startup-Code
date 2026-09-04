@@ -20,13 +20,13 @@ export const metadata: Metadata = {
 
 export default async function LandingPage() {
   const provider = await getExperienceProvider();
-  const featured = await provider.list({ city: "New York", latitude: 40.7128, longitude: -74.006, radiusMiles: 15, limit: 3 });
+  const featured = await provider.list({ city: "New York", latitude: 40.7128, longitude: -74.006, radiusMiles: 15, limit: 6 });
 
   return (
     <>
-      <Hero />
+      <Hero previewExperiences={featured.slice(0, 3)} />
       <FeatureGrid />
-      <ExampleRecommendations experiences={featured} />
+      <ExampleRecommendations experiences={featured.slice(3, 6)} />
       <HowItWorks />
       <SocialProof />
       <PricingSection />
