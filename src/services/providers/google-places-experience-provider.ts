@@ -1,4 +1,4 @@
-import type { Experience, ExperienceCategory, BudgetLevel } from "@/types/database";
+import type { Experience, ExperienceCategory, BudgetLevel, InterestTag } from "@/types/database";
 import type { ExperienceProvider, ExperienceQuery } from "./types";
 
 /**
@@ -94,6 +94,80 @@ function inferCategory(types: string[] | undefined): ExperienceCategory {
   return "hidden_gem";
 }
 
+// Every real (Google Places-sourced) experience used to get `tags: []` and
+// `indoorOutdoor: "either"` unconditionally — meaning scoreExperience's
+// interest-tag-overlap bonus (its own comment calls this "the strongest
+// signal") and the indoor/outdoor preference bonus were both silent no-ops
+// for effectively all production content, since production is Google
+// Places-only (see CLAUDE.md). Fixed 2026-09-04 by actually deriving both
+// from Google's `types` array, the same source inferCategory already reads.
+const PLACE_TYPE_TO_TAGS: Partial<Record<string, InterestTag[]>> = {
+  restaurant: ["food"],
+  cafe: ["food"],
+  bakery: ["food"],
+  bar: ["nightlife"],
+  night_club: ["nightlife", "music"],
+  museum: ["art", "history", "culture", "learning"],
+  art_gallery: ["art", "culture"],
+  spa: ["wellness"],
+  gym: ["fitness"],
+  stadium: ["sports"],
+  movie_theater: ["music"],
+  tourist_attraction: ["adventure", "photography"],
+  park: ["outdoors", "nature"],
+  amusement_park: ["adventure"],
+  zoo: ["nature", "outdoors"],
+  aquarium: ["nature"],
+  natural_feature: ["nature", "outdoors"],
+  campground: ["outdoors", "nature", "adventure"],
+  library: ["learning"],
+  book_store: ["learning"],
+  shopping_mall: ["luxury"],
+  casino: ["nightlife", "luxury"],
+  bowling_alley: ["sports"],
+};
+
+function inferTags(types: string[] | undefined): InterestTag[] {
+  const tags = new Set<InterestTag>();
+  for (const t of types ?? []) {
+    for (const tag of PLACE_TYPE_TO_TAGS[t] ?? []) tags.add(tag);
+  }
+  return Array.from(tags).slice(0, 6);
+}
+
+// Only called when a type unambiguously signals one or the other — e.g.
+// "tourist_attraction" and "restaurant" both turn up on plenty of indoor AND
+// outdoor places in practice, so mixed/unclear results fall back to
+// "either" (no bonus, no penalty) rather than guessing wrong.
+const OUTDOOR_TYPES = new Set(["park", "amusement_park", "zoo", "natural_feature", "campground"]);
+const INDOOR_TYPES = new Set([
+  "restaurant",
+  "cafe",
+  "bakery",
+  "bar",
+  "night_club",
+  "museum",
+  "art_gallery",
+  "spa",
+  "gym",
+  "movie_theater",
+  "library",
+  "book_store",
+  "shopping_mall",
+  "casino",
+  "bowling_alley",
+  "aquarium",
+]);
+
+function inferIndoorOutdoor(types: string[] | undefined): "indoor" | "outdoor" | "either" {
+  const list = types ?? [];
+  const isOutdoor = list.some((t) => OUTDOOR_TYPES.has(t));
+  const isIndoor = list.some((t) => INDOOR_TYPES.has(t));
+  if (isOutdoor && !isIndoor) return "outdoor";
+  if (isIndoor && !isOutdoor) return "indoor";
+  return "either";
+}
+
 function photoUrl(photoReference: string, apiKey: string, maxWidth = 1200): string {
   return `https://maps.googleapis.com/maps/api/place/photo?maxwidth=${maxWidth}&photo_reference=${photoReference}&key=${apiKey}`;
 }
@@ -136,7 +210,7 @@ export class GooglePlacesExperienceProvider implements ExperienceProvider {
         `${place.name} is a real, live-listed place on Google Maps${place.rating ? ` rated ${place.rating}/5` : ""}. Details here are pulled directly from Google — verify hours and availability before you go.`,
       shortDescription: place.editorial_summary?.overview ?? `A real place near ${cityHint ?? "you"}, sourced live from Google Maps.`,
       category,
-      tags: [],
+      tags: inferTags(place.types),
       images,
       city: cityHint ?? cityFromAddress ?? "",
       region,
@@ -148,7 +222,7 @@ export class GooglePlacesExperienceProvider implements ExperienceProvider {
       priceEstimate: null,
       priceCurrency: "USD",
       durationMinutes: null,
-      indoorOutdoor: "either",
+      indoorOutdoor: inferIndoorOutdoor(place.types),
       socialMode: "either",
       bestTimeOfDay: "any",
       rating: place.rating ?? null,
