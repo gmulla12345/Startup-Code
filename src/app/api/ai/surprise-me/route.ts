@@ -53,6 +53,8 @@ export async function POST(request: Request) {
 
     await trackEvent(supabase, user.id, "surprise_me_feedback", body.experienceId, {
       feedback: body.feedback,
+      tags: body.tags,
+      category: body.category,
     });
 
     if (body.feedback === "lets_go") {

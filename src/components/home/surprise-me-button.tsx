@@ -95,7 +95,13 @@ export function SurpriseMeButton() {
     const res = await fetch("/api/ai/surprise-me", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ experienceId: result.experience.id, feedback: "not_for_me", excludeIds }),
+      body: JSON.stringify({
+        experienceId: result.experience.id,
+        feedback: "not_for_me",
+        excludeIds,
+        tags: result.experience.tags,
+        category: result.experience.category,
+      }),
     });
     const json = await res.json();
     setLoading(false);

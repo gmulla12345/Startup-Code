@@ -57,6 +57,48 @@ export function idSetForEventType(events: UserEvent[], type: UserEventType): Set
 }
 
 /**
+ * Learned negative affinity: tags/categories the user has actively rejected
+ * — tapped "Not For Me" on a Surprise Me pick (dismissed_experience is read
+ * too, for whenever a dismiss control exists elsewhere) — so future scoring
+ * can steer away from the *kind* of thing they don't want, not just avoid
+ * the exact same experience again. tags/category are read from the event's
+ * metadata (denormalized at track time, see surprise-me-button.tsx and the
+ * /api/ai/surprise-me route) rather than looked up via experience_id, since
+ * that id is frequently a live Google Places result never persisted
+ * anywhere tags could be joined back from.
+ */
+export async function getRejectedAffinity(
+  client: SupabaseClient,
+  userId: string,
+  limit = 300
+): Promise<{ tagCounts: Record<string, number>; categoryCounts: Record<string, number> }> {
+  const tagCounts: Record<string, number> = {};
+  const categoryCounts: Record<string, number> = {};
+
+  const { data, error } = await client
+    .from("user_events")
+    .select("event_type, metadata")
+    .eq("user_id", userId)
+    .in("event_type", ["dismissed_experience", "surprise_me_feedback"])
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error || !data) return { tagCounts, categoryCounts };
+
+  for (const row of data) {
+    const metadata = (row.metadata ?? {}) as Record<string, unknown>;
+    if (row.event_type === "surprise_me_feedback" && metadata.feedback !== "not_for_me") continue;
+
+    for (const tag of (metadata.tags as string[] | undefined) ?? []) {
+      tagCounts[tag] = (tagCounts[tag] ?? 0) + 1;
+    }
+    const category = metadata.category as string | undefined;
+    if (category) categoryCounts[category] = (categoryCounts[category] ?? 0) + 1;
+  }
+
+  return { tagCounts, categoryCounts };
+}
+
+/**
  * Targeted history lookup for one event type, independent of
  * getRecentEvents' shared 100-row window (which mixes in every event type
  * and would miss older surprise_me_requested rows for an active user).
