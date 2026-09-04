@@ -5,7 +5,7 @@ import { getExperienceProvider } from "@/services/providers";
 import { getWeather } from "@/services/providers/weather-provider";
 import { rankExperiences } from "./scoring";
 import { generateAIRecommendations } from "@/ai/recommend";
-import { getRecentEvents, idSetForEventType, summarizeEventsForAI } from "@/lib/repositories/events";
+import { getEventExperienceIds, getRecentEvents, idSetForEventType, summarizeEventsForAI } from "@/lib/repositories/events";
 import { getSavedTagCounts } from "@/lib/repositories/saved";
 
 export interface RankedRecommendation extends StructuredRecommendation {
@@ -81,6 +81,7 @@ export async function getRecommendations(
 
   const ranked = rankExperiences(candidates, profile, { seenIds, dismissedIds, savedTagCounts });
   const topCandidates = ranked.slice(0, Math.max(options.limit ?? 10, 10));
+  if (topCandidates.length === 0) return [];
 
   const recommendations =
     options.useAI === false
@@ -112,31 +113,38 @@ export async function getRecommendations(
  * `surfaceContext: "surprise_me"` didn't actually set `hiddenGemsOnly`, so
  * this ran the identical ranking as "For You" and could (and did) surface
  * the exact same #1 pick — this is what actually implements the novelty
- * bias the old comment here only claimed. Picks randomly among the top few
- * hidden-gem matches (not always the single #1) so repeat taps don't
- * converge on the same spot. excludeIds accumulates across "Not For Me"
- * taps within a single session so the next pick is always different.
+ * bias the old comment here only claimed.
+ *
+ * Never repeats a spot it's already surprised this user with — every past
+ * `surprise_me_requested` event (not just the current session's "Not For
+ * Me" taps) is pulled from history and excluded, so a fresh pick tomorrow,
+ * next week, or next month is still a new one, not the same place coming
+ * back around. Only once that history has exhausted every real candidate
+ * nearby does it fall back to allowing a repeat — better than showing
+ * nothing once someone has genuinely seen everything in range.
  */
 export async function getSurpriseMe(
   client: SupabaseClient,
   profile: Profile,
   excludeIds: string[] = []
 ): Promise<SurpriseMeResult | null> {
-  let results = await getRecommendations(client, profile, {
-    surfaceContext: "surprise_me",
-    limit: 8,
-    additionalExcludeIds: excludeIds,
-  });
+  const pastSurpriseIds = await getEventExperienceIds(client, profile.userId, "surprise_me_requested");
+  const neverRepeatExcludes = [...new Set([...excludeIds, ...pastSurpriseIds])];
 
-  // Some areas genuinely don't have enough low-review/high-rating spots yet
-  // — degrade to a regular recommendation rather than a dead "no matches"
-  // message, same fallback spirit as the resilient provider layer elsewhere.
-  if (results.length === 0) {
-    results = await getRecommendations(client, profile, {
-      surfaceContext: "for_you",
-      limit: 5,
-      additionalExcludeIds: excludeIds,
-    });
+  const attempts: EngineOptions[] = [
+    { surfaceContext: "surprise_me", limit: 8, additionalExcludeIds: neverRepeatExcludes },
+    { surfaceContext: "for_you", limit: 5, additionalExcludeIds: neverRepeatExcludes },
+    // History has covered every hidden gem and every regular recommendation
+    // nearby — only now is a repeat (of a past surprise, never of something
+    // already dismissed this session) allowed.
+    { surfaceContext: "surprise_me", limit: 8, additionalExcludeIds: excludeIds },
+    { surfaceContext: "for_you", limit: 5, additionalExcludeIds: excludeIds },
+  ];
+
+  let results: RankedRecommendation[] = [];
+  for (const options of attempts) {
+    results = await getRecommendations(client, profile, options);
+    if (results.length > 0) break;
   }
 
   if (results.length === 0) return null;
