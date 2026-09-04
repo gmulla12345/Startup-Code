@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Logo } from "@/components/shared/logo";
 import { brand } from "@/lib/config/brand";
+import { VS_PAGES } from "@/lib/content/vs-pages";
 
 const COLUMNS = [
   {
@@ -9,6 +10,7 @@ const COLUMNS = [
       { label: "How it works", href: "/#how-it-works" },
       { label: "Pricing", href: "/pricing" },
       { label: "FAQ", href: "/faq" },
+      ...VS_PAGES.map((p) => ({ label: `${brand.name} vs ${p.competitor}`, href: `/vs/${p.slug}` })),
     ],
   },
   {
