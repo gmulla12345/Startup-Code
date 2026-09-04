@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Check, Minus } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PricingCards } from "@/components/marketing/pricing-cards";
+import { ComparisonCellValue, type ComparisonCell } from "@/components/marketing/comparison-cell";
 import { brand } from "@/lib/config/brand";
 import { PRICING_FAQ_ITEMS } from "@/lib/content/pricing-faq";
 
@@ -10,8 +11,6 @@ export const metadata: Metadata = {
   title: "Pricing — Free & Premium Plans",
   description: `See ${brand.name} pricing for personalized discovery, AI trip planning, and things to do near you. Free plan available. Premium from $19.99/month or $190/year — cancel anytime.`,
 };
-
-type ComparisonCell = string | boolean;
 
 const COMPARISON_ROWS: { feature: string; free: ComparisonCell; premium: ComparisonCell }[] = [
   { feature: "Personalized discovery", free: "Top 5 picks / week", premium: "Unlimited" },
@@ -23,15 +22,9 @@ const COMPARISON_ROWS: { feature: string; free: ComparisonCell; premium: Compari
   { feature: "AI Trip Planner", free: false, premium: true },
   { feature: "Advanced personalization & filters", free: false, premium: true },
   { feature: "Premium & exclusive experiences", free: false, premium: true },
-  { feature: "Travel Mode for any destination", free: false, premium: true },
+  { feature: "Travel Mode for 10+ destinations", free: false, premium: true },
   { feature: "Priority access where supported", free: false, premium: true },
 ];
-
-function ComparisonCellValue({ value }: { value: ComparisonCell }) {
-  if (value === true) return <Check className="h-4 w-4 text-forest mx-auto" />;
-  if (value === false) return <Minus className="h-4 w-4 text-foreground-subtle mx-auto" />;
-  return <span className="text-foreground-muted">{value}</span>;
-}
 
 const PRICING_FAQ_JSON_LD = {
   "@context": "https://schema.org",

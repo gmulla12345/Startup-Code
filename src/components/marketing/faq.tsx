@@ -25,7 +25,7 @@ const FAQS = [
   },
   {
     q: `Which cities does ${brand.name} cover?`,
-    a: "Anywhere — we blend a curated catalog with live places data so discovery works worldwide, not just in a handful of launch cities. Travel Mode works for any destination you search.",
+    a: "Discover and Surprise Me work anywhere — they run on live places data, not a fixed city list. Travel Mode has dedicated destination guides for 10 cities across North America, Europe, and Australia today, with more being added regularly.",
   },
 ];
 

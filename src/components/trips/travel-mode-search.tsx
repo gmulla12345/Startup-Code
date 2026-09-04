@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Plane, ArrowRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { brand } from "@/lib/config/brand";
 import type { DestinationInfo } from "@/services/providers/types";
 
 export function TravelModeSearch({ destinations }: { destinations: DestinationInfo[] }) {
@@ -47,14 +48,10 @@ export function TravelModeSearch({ destinations }: { destinations: DestinationIn
         {filtered.length === 0 && <p className="text-sm text-foreground-muted px-3 py-2">No matching destinations yet.</p>}
       </div>
 
-      <Button
-        variant="link"
-        className="mt-3"
-        onClick={() => {
-          if (query.trim()) router.push(`/travel/${encodeURIComponent(query.trim().toLowerCase().replace(/\s+/g, "-"))}`);
-        }}
-      >
-        Don&apos;t see your destination? Search anyway
+      <Button asChild variant="link" className="mt-3">
+        <a href={`mailto:${brand.supportEmail}?subject=${encodeURIComponent(`Add ${query.trim() || "a city"} to Travel Mode`)}`}>
+          Don&apos;t see your destination? Request it
+        </a>
       </Button>
     </div>
   );

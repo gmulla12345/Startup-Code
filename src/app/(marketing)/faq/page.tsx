@@ -57,7 +57,7 @@ export default function FaqPage() {
         },
         {
           q: "How does Travel Mode work?",
-          a: "Search any destination and Travel Mode gives you a personalized set of recommendations and an itinerary for that trip, the same way Discover does for your home base.",
+          a: "Pick one of our dedicated destination guides — 10 cities and counting across North America, Europe, and Australia — and Travel Mode gives you a personalized set of recommendations and an itinerary for that trip, the same way Discover does for your home base. We're adding new destinations regularly.",
         },
       ],
     },

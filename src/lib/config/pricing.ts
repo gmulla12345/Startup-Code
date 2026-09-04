@@ -41,7 +41,7 @@ export const pricing = {
       "AI Trip Planner",
       "Advanced personalization & filters",
       "Premium & exclusive experiences",
-      "Travel Mode for any destination",
+      "Travel Mode for 10+ destinations",
       "Priority access where supported",
     ],
   },
