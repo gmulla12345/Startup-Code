@@ -719,6 +719,31 @@ Relabeled in `src/lib/config/taxonomy.ts`'s `PERSONALITY_SLIDERS`: "Familiar" / 
 without needing a helper caption. Display-only change — the `familiarVsNovel` key, DB column, and
 AI-prompt reference to it are untouched.
 
+## Budget pickers show real dollar ranges, not bare $ symbols (2026-09-03)
+
+Same user-review session as the personality slider fix above — next screenshot they sent showed
+the onboarding "Typical budget" step and said "change the dollar signs to actual money." Bare
+`$`/`$$`/`$$$`/`$$$$` pills don't mean anything without a reference point, same problem as
+"Familiar/Novel."
+
+Added `BUDGET_LEVELS` to `src/lib/config/taxonomy.ts` — one shared label set (`Free`, `Under $25`,
+`$25–75`, `$75–150`, `$150+`) for the `BudgetLevel` type — and pointed all three user-facing
+budget pickers at it: onboarding's `step-preferences.tsx`, `discover-filters.tsx` (keeps its own
+extra "Any price" option), and `weekend-planner.tsx` (filters out "luxury" — that picker never had
+a 5th tier). These ranges describe **a single experience's typical cost**, deliberately a
+different scale than the Trip Planner's existing "(per day, per person)" budget picker
+(`trip-planner-modal.tsx`, added 2026-08-31) — the two are labeled distinctly enough not to be
+confused, so no need to unify them.
+
+**Deliberately left `src/components/admin/experience-manager.tsx`'s price-tier field as bare `$`
+symbols** — that's an admin classifying which price tier a place falls into (the same convention
+Google/Yelp use), not a user stating a spending preference. Don't "fix" that one without checking
+back — it's a different kind of field, not an oversight.
+
+Verified: typecheck/lint clean; walked a disposable Supabase test account through onboarding to
+the preferences step and confirmed the pills read "Free / Under $25 / $25–75 / $75–150 / $150+"
+(screenshot taken, matches the reviewer's original complaint screen exactly); deployed and live.
+
 ## Exact next steps (priority order)
 
 **Done since the last update:** deployed to production at `discoverzolo.com` (fixed a Vercel
@@ -776,9 +801,10 @@ above); **`/llms.txt` added** — was 404ing, now built from `brand` config for 
 Stripe price verified end to end in both test and live mode, not just homepage display copy) plus
 the pricing value-anchor line (see dedicated section above); **standalone `/pricing` page added**
 (feature comparison table, shared pricing FAQ, sitemap/nav/footer/llms.txt all pointing at it
-instead of the old homepage anchor) and **the onboarding personality slider's confusing
-"Familiar/Novel" label fixed** after a real user got stuck on it during a review (see dedicated
-sections above).
+instead of the old homepage anchor) **the onboarding personality slider's confusing
+"Familiar/Novel" label fixed**, and **budget pickers site-wide now show real dollar ranges**
+instead of bare `$`/`$$`/`$$$`/`$$$$` symbols — both fixes came from the same real user reviewing
+the site (see dedicated sections above).
 
 1. Legal review of `/privacy` and `/terms` by an actual lawyer — Termly's questionnaire flow is a
    reasonable stand-in for launch, not a substitute for one.
