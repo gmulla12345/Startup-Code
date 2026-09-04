@@ -855,6 +855,34 @@ Everything above: typecheck/lint clean, verified live locally and on `discoverzo
 deploy (all 3 `/vs` pages and all 10 `/travel` pages return 200, sitemap lists all 13, hero preview
 panel and corrected FAQ copy confirmed rendering on production).
 
+## Surprise Me was surfacing the same pick already in For You (2026-09-04)
+
+User report, with a screenshot: Surprise Me returned Oriole Park at Camden Yards — the exact #1
+"For You" match, a major MLB stadium, not remotely niche. Root cause was real and simple once
+found: `getSurpriseMe()` in [src/services/recommendation/engine.ts](src/services/recommendation/engine.ts)
+called `getRecommendations()` with `surfaceContext: "surprise_me"`, but that value never actually
+set `hiddenGemsOnly` on the provider query — only `surfaceContext === "hidden_gem"` did. So Surprise
+Me ran the *identical* scoring/ranking as "For You" and just took `results[0]`, meaning the two were
+frequently the literal same experience. The existing docstring ("chosen with a bias toward novelty")
+and the headline copy (`pick.experience.isHiddenGem ? "You haven't tried this before..." : ...`) had
+both always assumed this bias existed — it just was never wired up.
+
+Fixed by actually setting `hiddenGemsOnly` for `surprise_me` too (reusing the real, already-defined
+`isHiddenGem` signal from `GooglePlacesExperienceProvider`: `reviewCount < 200 && rating >= 4.5` —
+genuinely low-visibility, highly-rated places, not a fabricated notion of "niche"), picking randomly
+among the top 3 hidden-gem matches instead of always the single #1 (so repeat taps and different
+sessions don't converge on the same spot), and falling back to a regular (non-hidden-gem)
+recommendation only if an area has zero hidden gems at all — better than a dead "no matches" message
+for sparse areas.
+
+**Verified live end to end, matching the reported bug's exact conditions** — a disposable test
+account with a Baltimore profile (same city as the screenshot), on both local dev and production
+(`discoverzolo.com`) after deploy: "For You"'s top pick was Oriole Park at Camden Yards (60-62%
+match, as reported); Surprise Me now returns USCGC Taney WHEC-37, a genuine low-review historic-ship
+hidden gem; "Not For Me" correctly cycled to a different one (Homewood Museum on local dev) instead
+of repeating. Deploy needed one retry — the "Not authorized" transient Vercel error documented
+elsewhere in this file recurred again, resolved by retrying `vercel deploy --prod` as before.
+
 ## Exact next steps (priority order)
 
 **Done since the last update:** deployed to production at `discoverzolo.com` (fixed a Vercel
