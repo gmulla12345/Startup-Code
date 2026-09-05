@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { Heart, Gem, Shuffle } from "lucide-react";
+import { Heart, Gem } from "lucide-react";
 import { formatCategoryLabel } from "@/lib/utils/format";
 import type { Experience } from "@/types/database";
 
@@ -15,9 +15,9 @@ const PREVIEW_REASONING = [
 /**
  * Shows what using Zolo actually looks like — real places pulled from the
  * same live catalog as the rest of the homepage, laid out like the real
- * recommendation screen (match %, reasoning, save, Surprise Me). Replaces
- * the old 4-photo aspirational Unsplash grid, which showed activities but
- * never the product itself.
+ * recommendation screen (match %, reasoning, save). Replaces the old
+ * 4-photo aspirational Unsplash grid, which showed activities but never
+ * the product itself.
  */
 export function HeroRecommendationPreview({ experiences }: { experiences: Experience[] }) {
   if (experiences.length < 3) return null;
@@ -25,11 +25,8 @@ export function HeroRecommendationPreview({ experiences }: { experiences: Experi
 
   return (
     <div className="rounded-[var(--radius-xl)] border border-border bg-surface shadow-[var(--shadow-raised)] overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-surface-sunken">
+      <div className="px-4 py-3 border-b border-border bg-surface-sunken">
         <span className="text-sm font-semibold text-foreground">Discover</span>
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-ember text-white text-xs font-semibold px-3 py-1.5">
-          <Shuffle className="h-3 w-3" /> Surprise Me
-        </span>
       </div>
 
       <div className="divide-y divide-border">
