@@ -58,8 +58,24 @@ async function RecommendationRails({ profile }: { profile: Profile }) {
     useAI: true,
   });
 
+  // Every rail shows distance when we have a location to measure from, not
+  // just "Nearby" — a recommendation 17 miles away (a real, correctly-
+  // matched place, just genuinely far) looked indistinguishable from
+  // something downtown without this, which is exactly what caused real
+  // confusion (a Baltimore-based profile getting a Hanover, MD result with
+  // no distance shown to explain why it didn't feel local).
   const toItems = (recs: typeof recommendations): RailItem[] =>
-    recs.map((r) => ({ experience: r.experience, matchScore: r.matchScore, reasoning: r.reasoning }));
+    recs.map((r) => ({
+      experience: r.experience,
+      matchScore: r.matchScore,
+      reasoning: r.reasoning,
+      distanceLabel:
+        profile.latitude != null && profile.longitude != null
+          ? formatDistance(
+              distanceMiles(profile.latitude, profile.longitude, r.experience.latitude, r.experience.longitude)
+            )
+          : undefined,
+    }));
 
   const forYou = recommendations.slice(0, 8);
 
@@ -90,16 +106,7 @@ async function RecommendationRails({ profile }: { profile: Profile }) {
       <ExperienceRail
         title="Nearby"
         subtitle={profile.city ? `Close to ${profile.city}` : undefined}
-        items={
-          profile.latitude != null && profile.longitude != null
-            ? toItems(nearby).map((item) => ({
-                ...item,
-                distanceLabel: formatDistance(
-                  distanceMiles(profile.latitude!, profile.longitude!, item.experience.latitude, item.experience.longitude)
-                ),
-              }))
-            : []
-        }
+        items={profile.latitude != null && profile.longitude != null ? toItems(nearby) : []}
         seeAllHref="/map"
         emptyMessage="Add your location in Profile to see what's nearby."
       />

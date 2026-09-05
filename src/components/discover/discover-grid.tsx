@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { FREE_TIER_LIMITS } from "@/lib/config/pricing";
 import type { Experience } from "@/types/database";
 import { analyticsEvents } from "@/services/analytics/track";
+import { distanceMiles } from "@/lib/utils/geo";
+import { formatDistance } from "@/lib/utils/format";
 
 interface RecommendationLite {
   experienceId: string;
@@ -100,6 +102,15 @@ export function DiscoverGrid({
 
   const isFiltering = Boolean(filters.category || filters.priceLevel || filters.search);
 
+  // A recommendation can be a real, correctly-matched place that's still
+  // genuinely far away (a different city or county, not just a different
+  // neighborhood) — without a distance shown, that's indistinguishable from
+  // something around the corner. Same fix as Home's rails.
+  function distanceLabelFor(experience: Experience): string | undefined {
+    if (latitude == null || longitude == null) return undefined;
+    return formatDistance(distanceMiles(latitude, longitude, experience.latitude, experience.longitude));
+  }
+
   return (
     <div className="space-y-6">
       <DiscoverFilters filters={filters} onChange={setFilters} showPersonalized={isAuthenticated} />
@@ -129,7 +140,13 @@ export function DiscoverGrid({
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredRecommendations.map((r) => (
-              <ExperienceCard key={r.experienceId} experience={r.experience} matchScore={r.matchScore} reasoning={r.reasoning} />
+              <ExperienceCard
+                key={r.experienceId}
+                experience={r.experience}
+                matchScore={r.matchScore}
+                reasoning={r.reasoning}
+                distanceLabel={distanceLabelFor(r.experience)}
+              />
             ))}
           </div>
         )
@@ -138,7 +155,7 @@ export function DiscoverGrid({
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {experiences.map((exp) => (
-            <ExperienceCard key={exp.id} experience={exp} />
+            <ExperienceCard key={exp.id} experience={exp} distanceLabel={distanceLabelFor(exp)} />
           ))}
         </div>
       )}
