@@ -54,11 +54,18 @@ const PLACE_TYPE_TO_CATEGORY: Record<string, ExperienceCategory> = {
   aquarium: "outdoor_adventure",
 };
 
+interface AddressComponent {
+  long_name: string;
+  short_name: string;
+  types: string[];
+}
+
 interface GooglePlace {
   place_id: string;
   name: string;
   vicinity?: string;
   formatted_address?: string;
+  address_components?: AddressComponent[];
   geometry: { location: { lat: number; lng: number } };
   rating?: number;
   user_ratings_total?: number;
@@ -68,6 +75,10 @@ interface GooglePlace {
   opening_hours?: { open_now?: boolean };
   editorial_summary?: { overview?: string };
   reviews?: { text: string }[];
+}
+
+function addressComponent(components: AddressComponent[] | undefined, type: string): string | null {
+  return components?.find((c) => c.types.includes(type))?.long_name ?? null;
 }
 
 function priceLevelToBudget(level: number | undefined): BudgetLevel {
@@ -184,22 +195,36 @@ export class GooglePlacesExperienceProvider implements ExperienceProvider {
       .slice(0, 5)
       .map((p) => photoUrl(p.photo_reference, this.apiKey));
 
-    // Nearby Search only returns `vicinity` ("<landmark>, <city>" — no
-    // country); Place Details returns full `formatted_address` (ends in
-    // country). A precise structured split needs address_components, which
-    // neither of these calls returns, so treat the two shapes differently
-    // rather than guessing one heuristic across both.
+    // Nearby Search (list results) only returns `vicinity` ("<landmark>,
+    // <city>" — no country), so the comma-split heuristic below is the only
+    // option there. Place Details (single-experience lookups) can return
+    // structured `address_components` instead — requested explicitly in
+    // fetchDetails() below — which is used whenever present, since it's
+    // reliably correct regardless of how many comma-separated segments the
+    // formatted address happens to have. The old formatted_address
+    // comma-split fallback got this wrong for a standard 4-segment US
+    // address ("<street>, <city>, <state> <zip>, <country>") — it grabbed
+    // the second-to-last segment expecting it to be the city, but that's
+    // "<state> <zip>", not the city (e.g. "MD 21076" instead of "Hanover").
     let country = "";
     let cityFromAddress = "";
-    if (place.formatted_address) {
+    let region: string | null = null;
+    if (place.address_components) {
+      cityFromAddress =
+        addressComponent(place.address_components, "locality") ??
+        addressComponent(place.address_components, "postal_town") ??
+        addressComponent(place.address_components, "sublocality") ??
+        "";
+      region = addressComponent(place.address_components, "administrative_area_level_1");
+      country = addressComponent(place.address_components, "country") ?? "";
+    } else if (place.formatted_address) {
       const parts = place.formatted_address.split(",").map((s) => s.trim()).filter(Boolean);
       country = parts[parts.length - 1] ?? "";
-      cityFromAddress = parts.length >= 2 ? parts[parts.length - 2] : (parts[0] ?? "");
+      cityFromAddress = parts.length >= 3 ? parts[parts.length - 3] : (parts[0] ?? "");
     } else if (place.vicinity) {
       const parts = place.vicinity.split(",").map((s) => s.trim()).filter(Boolean);
       cityFromAddress = parts[parts.length - 1] ?? "";
     }
-    const region = null;
 
     return {
       id: `${GooglePlacesExperienceProvider.PREFIX}${place.place_id}`,
@@ -300,7 +325,7 @@ export class GooglePlacesExperienceProvider implements ExperienceProvider {
     url.searchParams.set("place_id", placeId);
     url.searchParams.set(
       "fields",
-      "place_id,name,formatted_address,geometry,rating,user_ratings_total,price_level,types,photos,opening_hours,editorial_summary,reviews"
+      "place_id,name,formatted_address,address_components,geometry,rating,user_ratings_total,price_level,types,photos,opening_hours,editorial_summary,reviews"
     );
     url.searchParams.set("key", this.apiKey);
 
