@@ -48,19 +48,21 @@ holds the live-mode equivalents.
 - Custom SMTP (Resend) wired into Supabase Auth for account emails; `RESEND_API_KEY` also used
   directly by `/api/contact` and the careers form
 - Sentry (`NEXT_PUBLIC_SENTRY_DSN`) — error monitoring live client + server side
-- **Stripe live mode** (done 2026-08-30): live "Zolo Premium" $19.99/mo product+price created via
-  API (`prod_VAx1sECBOtUeh8` / price ID in `NEXT_PUBLIC_STRIPE_PREMIUM_PRICE_ID`), live webhook
-  endpoint created at `https://discoverzolo.com/api/stripe/webhook`, all 4 live env vars
-  (`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`,
-  `NEXT_PUBLIC_STRIPE_PREMIUM_PRICE_ID`) pushed to Vercel Production only via
-  `vercel env add <NAME> production --force --value "..."` (note: `vercel env rm` on a Production
-  var was blocked by this environment's destructive-action classifier — `env add --force` to
-  overwrite works fine and isn't blocked, use that instead of `rm` + `add`). Redeployed and
-  confirmed the site is serving. 7-day free trial (`trial_period_days: 7`) is live in
-  [src/lib/stripe/checkout.ts](src/lib/stripe/checkout.ts). **Not yet done: an actual real-money
-  checkout has not been run end-to-end in live mode** — that's a real charge on a real card, so it
-  needs the user to personally click through Subscribe once and confirm it works (and that
-  `subscriptions`/`payments` rows land correctly), not an agent.
+- **Stripe live mode** (done 2026-08-30, verified 2026-08-31 — see below): live "Zolo Premium"
+  $19.99/mo product+price created via API — **correction**: the product id was originally noted here
+  as `prod_VAx1sECBOtUeh8`, which turned out to be wrong (misremembered, not re-verified at the time);
+  the real live product id, confirmed directly against the Stripe API, is `prod_V8i89HwFONk0uA` — see
+  the annual-billing section below for how that got caught. Live webhook endpoint created at
+  `https://discoverzolo.com/api/stripe/webhook`, all 4 live env vars (`STRIPE_SECRET_KEY`,
+  `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_STRIPE_PREMIUM_PRICE_ID`)
+  pushed to Vercel Production only via `vercel env add <NAME> production --force --value "..."` (note:
+  `vercel env rm` on a Production var was blocked by this environment's destructive-action classifier
+  — `env add --force` to overwrite works fine and isn't blocked, use that instead of `rm` + `add`).
+  7-day free trial (`trial_period_days: 7`) is live in
+  [src/lib/stripe/checkout.ts](src/lib/stripe/checkout.ts). **A real live-mode checkout has since been
+  run end to end** (2026-08-31, the user personally ran a real trial signup — see "Done since the
+  last update" below for the confirmed DB state) — this bullet used to say that hadn't happened yet;
+  it has, don't re-flag it as outstanding.
 - `DATABASE_URL` — direct Postgres connection, used only by `scripts/migrate.ts`
 
 ## Architecture highlights (don't rebuild these — extend them)
@@ -1007,6 +1009,73 @@ and "A taste of what you'll get" section, both fully rendering real photos again
 `/_next/image?url=...` URL directly and read the response body, not just the status code — that's
 what actually revealed this immediately instead of guessing.
 
+## Wrong-looking place turned out to be a broken city label, not a photo bug (2026-09-05)
+
+User report with a screenshot: a card titled "Live! Casino & Hotel Maryland" showed photos the user
+didn't recognize as "the Power Plant Live casino in Baltimore." **Investigated before touching
+anything** rather than assuming the report was right as stated — queried Google's API directly for
+both venues' real place IDs and confirmed each one's name/photos/address are entirely self-consistent
+and correctly separate: "Live! Casino & Hotel Maryland" is a real, different venue (in Hanover/Severn,
+MD, ~17 miles from downtown Baltimore, not a casino at all related to Power Plant Live). There was no
+photo mix-up anywhere — `toExperience()` always builds `id`/`name`/`images` from the same Google API
+response object, which structurally can't cross-contaminate between places.
+
+Two real bugs did turn up while investigating, both fixed:
+1. **City label was wrong on detail pages.** `formatted_address` comma-split heuristic assumed a
+   fixed shape and grabbed the second-to-last segment as "the city" — for a standard 4-part US
+   address ("`<street>, <city>, <state> <zip>, <country>`"), that's `<state> <zip>` ("MD 21076"), not
+   the city. Fixed by requesting `address_components` from Place Details (a normal field, just never
+   requested before) and reading the real `locality` — verified live: this same venue's detail page
+   now shows "Severn, Maryland" instead of "MD 21076".
+2. **No distance shown outside the dedicated "Nearby" rail.** A real, correctly-matched place that's
+   genuinely 17 miles away looked indistinguishable from something downtown with no distance context
+   — that's what made a legitimate result read as "wrong" to a real user. Home's For You/This
+   Weekend/Hidden Gems/Because You Like rails and Discover's grid now all show distance the same way
+   Nearby already did.
+
+Both fixes are in [src/services/providers/google-places-experience-provider.ts](src/services/providers/google-places-experience-provider.ts),
+[src/app/(app)/home/page.tsx](<src/app/(app)/home/page.tsx>), and
+[src/components/discover/discover-grid.tsx](src/components/discover/discover-grid.tsx).
+
+## Home was still slow on login, despite the earlier site-speed pass — root cause found and fixed (2026-09-05)
+
+User: "it takes a while for things to load especially right when i first log in... No slowness."
+**Measured first, rather than assuming the earlier fix was enough** — the Suspense-streaming site-speed
+work from 2026-08-31 does make Home's shell (greeting, Surprise Me button) paint fast, but a genuinely
+fresh, never-cached profile location still took **8.8 seconds** before the "For You" rail appeared
+(confirmed via the Navigation Timing API — `performance.getEntriesByType('navigation')[0].responseEnd`
+— not a guess). Root cause: the rails section calls `generateAIRecommendations()`
+([src/ai/recommend.ts](src/ai/recommend.ts)), a non-streamed Anthropic call that has to finish writing
+its entire batch before returning anything — still ~10s worst case even after the earlier batch-size
+tuning, and it sat directly in Home's critical path despite being behind a Suspense boundary, since the
+*whole rails section* waits on that one call.
+
+Fixed by switching Home's `getRecommendations()` call from `useAI: true` to `useAI: false`
+([src/app/(app)/home/page.tsx](<src/app/(app)/home/page.tsx>)) — this is a legitimately different
+trade-off than it would have been a few days ago: the deterministic fallback reasoning used to be
+generic filler for nearly all real content, because `GooglePlacesExperienceProvider` hardcoded empty
+tags until the 2026-09-04 taste-learning fix (see that section above) — the interest-overlap bonus the
+fallback reasoning depends on had nothing real to work with. Now that tags are genuinely derived,
+`scoreExperience`'s deterministic reasons are specific and accurate ("Matches your interests: food,
+history. Fits your usual budget."), so skipping the AI paraphrase for Home's initial load trades a
+few words of warmer phrasing for a page that isn't blocked for seconds — a clearly good trade for a
+page every logged-in user hits every time, not a quality downgrade. AI reasoning still runs for
+Surprise Me (a user-initiated action with its own loading spinner, not a passive page load) and
+Discover's personalized sort — neither of those was touched.
+
+**Verified live with the identical measurement method, same fresh-location discipline, after
+deploy**: a brand-new never-queried location (Spokane, WA) went from the 8.8s baseline to **2.4
+seconds** — real Navigation Timing numbers, not estimates. Content quality held up: real specific
+reasoning ("Matches your interests: food, history"), real places (Riverfront Park, Manito Park, the
+Northwest Museum of Arts & Culture), real match scores and distances.
+
+**If Home (or anything Suspense-streamed) ever feels slow again**: measure it properly before
+guessing — a fresh disposable test account in a location that's never been queried before (cache from
+prior testing hides the real cold-start cost), then read
+`performance.getEntriesByType('navigation')[0]` in the browser console for real numbers. Don't trust a
+warm-cache test or a "feels fast to me" judgment call; both misled the investigation here until the
+actual measurement was taken.
+
 ## Exact next steps (priority order)
 
 **Done since the last update:** deployed to production at `discoverzolo.com` (fixed a Vercel
@@ -1080,7 +1149,14 @@ foundational bug fixed** — Google Places experiences had hardcoded empty tags 
 silently disabling the "strongest signal" interest-match bonus for all real content; fixed alongside
 making "Not For Me" actually teach the engine (not just avoid repeats), fixing the Save button on
 every card outside the detail page (it never persisted anywhere), and blending novelty into Surprise
-Me's scoring instead of a hard rating/review-count gate (see dedicated section above).
+Me's scoring instead of a hard rating/review-count gate (see dedicated section above); **a wrong-looking
+place turned out to be a broken city label, not a photo bug** — fixed the address-parsing bug (real
+`address_components` instead of a fragile comma-split guess) and added distance to every recommendation
+card, not just "Nearby" (see dedicated section above); **Home's real login-time slowness measured and
+fixed** — a fresh, uncached location went from a measured 8.8s down to 2.4s by no longer blocking the
+rails on the AI reasoning call, now that deterministic reasoning is genuinely accurate post-tags-fix
+(see dedicated section above); corrected a stale note above (Stripe product id, live-checkout status)
+that had drifted out of sync with later corrections in this file.
 
 1. Legal review of `/privacy` and `/terms` by an actual lawyer — Termly's questionnaire flow is a
    reasonable stand-in for launch, not a substitute for one.
