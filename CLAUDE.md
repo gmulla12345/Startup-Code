@@ -971,6 +971,42 @@ environments. Deploy hit a transient `"fetch failed"` build error on the first a
 mode, not the previously-documented "Not authorized" one) — resolved by simply retrying
 `vercel deploy --prod`, consistent with every other transient Vercel error seen this project.
 
+## Every image on the site went blank — Vercel Image Optimization quota exhausted (2026-09-05)
+
+User report with screenshots: every experience photo on the homepage (hero preview panel, "A taste
+of what you'll get") was rendering as a blank/black box. **Not a code bug** — confirmed by curling
+the failing `/_next/image` URL directly: `HTTP 402`, body
+`"OPTIMIZED_IMAGE_REQUEST_PAYMENT_REQUIRED"` — Vercel's own error for exceeding the account's Image
+Optimization quota for the current billing period. Ruled out a Google-side problem first: hit the
+underlying `maps.googleapis.com/maps/api/place/photo` URL directly, got a normal `302` redirect to
+`lh3.googleusercontent.com`, so Google's side was completely healthy the whole time — this was
+specifically Vercel's own resize/optimize proxy refusing new requests.
+
+Almost certainly caused by this project's own testing volume: real experience photos are Google
+Places photos, and every distinct place is a distinct source URL that counts against the quota —
+this session alone has hit Google Places live across 10+ cities and dozens of disposable test
+accounts today. Production traffic would eventually hit the same wall regardless.
+
+Fixed with `images.unoptimized: true` in
+[next.config.ts](next.config.ts) — every real image source already requests an
+appropriately-sized image from its own CDN (the Google Photos redirect already gets `maxwidth`;
+Unsplash URLs already carry `w=`/`h=`/`q=`), so Next's extra resize pass added little value but 100%
+of the quota risk. This doesn't just work around the current exhaustion — it stops the app from
+ever consuming this quota again, since images now serve directly from their origin CDN instead of
+proxying through Vercel's billed optimizer. Chose this over waiting for the quota to reset or
+upgrading the Vercel plan (a billing decision that's the user's to make, not something to do
+unprompted) since it's a permanent, free, code-level fix with no real downside for this app's image
+sources.
+
+**Verified live on production immediately after deploy**: direct DOM inspection confirmed `<img>`
+tags now point straight at `maps.googleapis.com` (not `/_next/image`), `complete: true`,
+`naturalWidth: 1200` — real, loaded images, not broken ones. Screenshotted the homepage hero preview
+and "A taste of what you'll get" section, both fully rendering real photos again.
+
+**If images ever go blank again**, check this first before assuming a new bug: curl the failing
+`/_next/image?url=...` URL directly and read the response body, not just the status code — that's
+what actually revealed this immediately instead of guessing.
+
 ## Exact next steps (priority order)
 
 **Done since the last update:** deployed to production at `discoverzolo.com` (fixed a Vercel
