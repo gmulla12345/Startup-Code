@@ -1060,8 +1060,9 @@ fallback reasoning depends on had nothing real to work with. Now that tags are g
 history. Fits your usual budget."), so skipping the AI paraphrase for Home's initial load trades a
 few words of warmer phrasing for a page that isn't blocked for seconds — a clearly good trade for a
 page every logged-in user hits every time, not a quality downgrade. AI reasoning still runs for
-Surprise Me (a user-initiated action with its own loading spinner, not a passive page load) and
-Discover's personalized sort — neither of those was touched.
+Surprise Me (a user-initiated action with its own loading spinner, not a passive page load) — see
+the next section for Discover, which *did* have the identical problem and got the identical fix
+same-day.
 
 **Verified live with the identical measurement method, same fresh-location discipline, after
 deploy**: a brand-new never-queried location (Spokane, WA) went from the 8.8s baseline to **2.4
@@ -1075,6 +1076,42 @@ prior testing hides the real cold-start cost), then read
 `performance.getEntriesByType('navigation')[0]` in the browser console for real numbers. Don't trust a
 warm-cache test or a "feels fast to me" judgment call; both misled the investigation here until the
 actual measurement was taken.
+
+## Same-day follow-up: audited every other page for the identical slowness, fixed three more (2026-09-05)
+
+User: "not just the home page loads fast can you also look at all of the other ones." Read every
+`page.tsx` under `(app)/` (Discover, Map, Trips, Trips detail, Saved, Profile, Profile edit/upgrade,
+Experience detail, Travel destination) looking for the same two patterns that made Home slow: a
+blocking `useAI: true` call, or a slow data fetch with no Suspense boundary splitting it from the
+rest of the page. Map, Trips, Profile, Profile edit/upgrade, and Travel destination were already fine
+(no AI dependency, either already Suspense-streamed or fast enough not to need it) — left untouched.
+Three real problems turned up:
+
+1. **Discover's "Personalized" sort — the *default* view for a logged-in visitor — had the exact
+   same `useAI: true` blocking call as Home** ([src/app/api/ai/recommendations/route.ts](src/app/api/ai/recommendations/route.ts)).
+   Measured live before touching it: **8.14s** (Resource Timing API on the `/api/ai/recommendations`
+   fetch, fresh uncached location). Identical fix: `useAI: false`. Re-measured after deploy, same
+   fresh-location discipline: **1.6s**.
+2. **The experience detail page and `/api/experiences/[id]` blocked their entire response on "You
+   might also like"** — a Google Places `list()` call — even though the primary content (gallery,
+   title, price, save button, description, reviews) doesn't depend on it at all. Suspense-split it
+   out ([src/app/(app)/experience/[id]/page.tsx](<src/app/(app)/experience/[id]/page.tsx>)). While
+   in there, also found and fixed a separate real inefficiency: `ExperienceProvider.getRelated()`
+   took just an id and re-fetched that experience via `getById()` internally to read its
+   lat/long/category — except every real call site already had the full `Experience` object loaded
+   before calling it. Changed the interface to take the source `Experience` directly (all 5
+   provider implementations updated: Google Places, mock, Supabase, Composite, Resilient) — cuts a
+   second full Google Places Details round trip out of every single experience page view, on top of
+   the Suspense split.
+3. **`/saved` made one Google Places Details call per saved item via `Promise.all`, with zero
+   Suspense boundary** — the "Saved" header waited on every lookup before painting anything.
+   Suspense-split the header (instant) from the grid
+   ([src/app/(app)/saved/page.tsx](<src/app/(app)/saved/page.tsx>)).
+
+**Verified live end to end after deploy** (fresh test account, uncached Wichita, KS location): saved
+a card from Discover, opened its detail page (real "You might also like" results streamed in
+correctly, real address-component-derived city "Wichita, Kansas"), then loaded `/saved` and confirmed
+the saved item rendered correctly. Typecheck/lint/all 34 tests clean throughout.
 
 ## Exact next steps (priority order)
 
