@@ -54,17 +54,19 @@ export default async function ExperienceDetailPage({ params }: PageProps<"/exper
   const reviews = await getReviewsForExperience(supabase, experience.id);
 
   let initialSaved = false;
+  let initialCompleted = false;
   let userIsPremium = false;
   let match: { score: number; reasons: string[] } | null = null;
 
   if (user) {
     await trackEvent(supabase, user.id, "viewed_experience", experience.id, { source: "detail_page" });
     const [{ data: savedRow }, subscription, profile] = await Promise.all([
-      supabase.from("saved_experiences").select("id").eq("user_id", user.id).eq("experience_id", experience.id).maybeSingle(),
+      supabase.from("saved_experiences").select("id, status").eq("user_id", user.id).eq("experience_id", experience.id).maybeSingle(),
       getSubscription(supabase, user.id),
       getProfileByUserId(supabase, user.id),
     ]);
     initialSaved = Boolean(savedRow);
+    initialCompleted = savedRow?.status === "completed";
     userIsPremium = isPremium(subscription);
 
     if (profile?.onboardingCompleted) {
@@ -148,6 +150,7 @@ export default async function ExperienceDetailPage({ params }: PageProps<"/exper
           category={experience.category}
           isAuthenticated={Boolean(user)}
           initialSaved={initialSaved}
+          initialCompleted={initialCompleted}
           externalBookingUrl={locked ? null : experience.externalBookingUrl}
         />
       </div>

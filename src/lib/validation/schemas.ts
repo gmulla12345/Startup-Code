@@ -66,6 +66,14 @@ export const saveExperienceSchema = z.object({
   category: z.string().nullable().optional(),
 });
 
+export const updateSavedStatusSchema = z.object({
+  experienceId: z.string().min(1),
+  collection: z.string().min(1).max(50).default("Saved"),
+  status: z.enum(["saved", "planned", "completed"]),
+  tags: z.array(z.string()).max(30).default([]),
+  category: z.string().nullable().optional(),
+});
+
 export const trackEventSchema = z.object({
   eventType: z.enum([
     "viewed_experience",

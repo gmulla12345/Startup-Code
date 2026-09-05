@@ -31,5 +31,9 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
 
   const subscription = await getSubscription(supabase, user.id);
 
-  return <AppShell premium={isPremium(subscription)}>{children}</AppShell>;
+  return (
+    <AppShell profile={profile} email={user.email ?? null} premium={isPremium(subscription)}>
+      {children}
+    </AppShell>
+  );
 }

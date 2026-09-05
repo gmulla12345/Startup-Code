@@ -42,10 +42,27 @@ export default async function TripsPage() {
                 <div className="h-10 w-10 rounded-full bg-[var(--forest-soft)] flex items-center justify-center shrink-0">
                   <Calendar className="h-5 w-5 text-forest" />
                 </div>
-                <div>
-                  <p className="font-medium text-foreground">{it.title}</p>
-                  <p className="text-xs text-foreground-muted">
-                    {it.estimatedCost ? `~$${it.estimatedCost}` : "Cost varies"}
+                <div className="min-w-0">
+                  <p className="font-medium text-foreground truncate">{it.title}</p>
+                  <p className="text-xs text-foreground-muted flex flex-wrap items-center gap-x-1.5">
+                    {it.destinationCity && (
+                      <span className="inline-flex items-center gap-1">
+                        <MapPin className="h-3 w-3" /> {it.destinationCity}
+                        {it.destinationCountry ? `, ${it.destinationCountry}` : ""}
+                      </span>
+                    )}
+                    {it.startDate && it.endDate && (
+                      <span>
+                        {it.destinationCity ? "· " : ""}
+                        {new Date(`${it.startDate}T00:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" })}
+                        {" – "}
+                        {new Date(`${it.endDate}T00:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" })}
+                      </span>
+                    )}
+                    <span>
+                      {it.destinationCity || it.startDate ? "· " : ""}
+                      {it.estimatedCost ? `~$${it.estimatedCost}` : "Cost varies"}
+                    </span>
                   </p>
                 </div>
               </Link>

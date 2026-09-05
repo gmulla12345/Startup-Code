@@ -43,6 +43,47 @@ export async function saveExperience(
   return rowToSaved(data);
 }
 
+/**
+ * Flips a saved_experiences row's status between "saved" and "completed"
+ * (see the `status` check constraint in db/schema.sql — "planned" exists in
+ * the type but has no UI path yet). Upserts rather than a plain update so
+ * marking something "completed" works even if the user never explicitly hit
+ * Save first (the experience detail page's "mark as done" action calls this
+ * directly) — same onConflict target as saveExperience, so it lands on the
+ * exact same row a save would have created instead of a duplicate.
+ */
+export async function setSavedStatus(
+  client: SupabaseClient,
+  userId: string,
+  experienceId: string,
+  status: SavedExperience["status"],
+  collection = "Saved",
+  tags: string[] = [],
+  category: string | null = null
+): Promise<SavedExperience> {
+  const { data, error } = await client
+    .from("saved_experiences")
+    .upsert(
+      { user_id: userId, experience_id: experienceId, collection, status, tags, category },
+      { onConflict: "user_id,experience_id,collection" }
+    )
+    .select("*")
+    .single();
+  if (error) throw new Error(`setSavedStatus: ${error.message}`);
+  return rowToSaved(data);
+}
+
+export async function listCompleted(client: SupabaseClient, userId: string): Promise<SavedExperience[]> {
+  const { data, error } = await client
+    .from("saved_experiences")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("status", "completed")
+    .order("created_at", { ascending: false });
+  if (error || !data) return [];
+  return data.map(rowToSaved);
+}
+
 export async function unsaveExperience(
   client: SupabaseClient,
   userId: string,

@@ -67,7 +67,12 @@ async function SavedGrid({ userId }: { userId: string }) {
             {valid
               .filter((s) => s.saved.collection === collection)
               .map((s) => (
-                <ExperienceCard key={s.saved.id} experience={s.experience!} saved />
+                <ExperienceCard
+                  key={s.saved.id}
+                  experience={s.experience!}
+                  saved
+                  completed={s.saved.status === "completed"}
+                />
               ))}
           </div>
         </section>

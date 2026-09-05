@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { requireUser, withErrorHandling } from "@/lib/api/auth";
-import { listSaved, saveExperience, unsaveExperience } from "@/lib/repositories/saved";
+import { listSaved, saveExperience, setSavedStatus, unsaveExperience } from "@/lib/repositories/saved";
 import { trackEvent } from "@/lib/repositories/events";
 import { getExperienceProvider } from "@/services/providers";
-import { saveExperienceSchema } from "@/lib/validation/schemas";
+import { saveExperienceSchema, updateSavedStatusSchema } from "@/lib/validation/schemas";
 
 export async function GET() {
   return withErrorHandling(async () => {
@@ -33,6 +33,35 @@ export async function POST(request: Request) {
       body.category ?? null
     );
     await trackEvent(supabase, user.id, "saved_experience", body.experienceId, { collection: body.collection });
+
+    return NextResponse.json({ saved });
+  });
+}
+
+/**
+ * Flips a saved experience's status (currently only "saved" <-> "completed",
+ * driven by the "Mark as completed" toggle on the experience detail page's
+ * ActionBar). Upserts, so this also works for an experience the user never
+ * explicitly saved first — see setSavedStatus().
+ */
+export async function PATCH(request: Request) {
+  return withErrorHandling(async () => {
+    const { user, supabase } = await requireUser();
+    const body = updateSavedStatusSchema.parse(await request.json());
+
+    const saved = await setSavedStatus(
+      supabase,
+      user.id,
+      body.experienceId,
+      body.status,
+      body.collection,
+      body.tags,
+      body.category ?? null
+    );
+
+    if (body.status === "completed") {
+      await trackEvent(supabase, user.id, "attended_experience", body.experienceId, { collection: body.collection });
+    }
 
     return NextResponse.json({ saved });
   });

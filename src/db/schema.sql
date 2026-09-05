@@ -475,6 +475,16 @@ insert into storage.buckets (id, name, public)
 values ('resumes', 'resumes', true)
 on conflict (id) do nothing;
 
+-- Storage bucket for user profile photos, uploaded via /api/profile/avatar
+-- (using the service-role client, same as resumes above — not user-scoped
+-- storage RLS). Public so the stored URL works directly in <img>/next/image.
+-- Paths are namespaced under the uploader's own user id
+-- (avatars/<user_id>/<uuid>.<ext>), so nothing is guessable/listable in a way
+-- that matters even though the bucket itself is public.
+insert into storage.buckets (id, name, public)
+values ('avatars', 'avatars', true)
+on conflict (id) do nothing;
+
 -- =========================================================================
 -- updated_at triggers
 -- =========================================================================

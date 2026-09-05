@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, MapPin, Star, Gem } from "lucide-react";
+import { CheckCircle2, Heart, MapPin, Star, Gem } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils/cn";
@@ -17,6 +17,7 @@ interface ExperienceCardProps {
   reasoning?: string;
   distanceLabel?: string;
   saved?: boolean;
+  completed?: boolean;
   onToggleSave?: (id: string, nextSaved: boolean) => void;
   className?: string;
   priority?: boolean;
@@ -28,6 +29,7 @@ export function ExperienceCard({
   reasoning,
   distanceLabel,
   saved = false,
+  completed = false,
   onToggleSave,
   className,
   priority = false,
@@ -90,6 +92,14 @@ export function ExperienceCard({
           <div className="absolute top-3 left-3">
             <Badge variant="ember" className="bg-white/95 font-semibold shadow-sm">
               {Math.round(matchScore)}% match
+            </Badge>
+          </div>
+        )}
+
+        {matchScore == null && completed && (
+          <div className="absolute top-3 left-3">
+            <Badge variant="forest" className="bg-white/95 font-semibold shadow-sm">
+              <CheckCircle2 className="h-3 w-3" /> Completed
             </Badge>
           </div>
         )}

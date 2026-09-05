@@ -8,7 +8,7 @@
 >
 > Full setup/architecture docs: [README.md](README.md). Full DB schema: [src/db/schema.sql](src/db/schema.sql).
 
-**Last updated:** 2026-09-03
+**Last updated:** 2026-09-05
 
 ## What this is
 
@@ -1113,6 +1113,71 @@ a card from Discover, opened its detail page (real "You might also like" results
 correctly, real address-component-derived city "Wichita, Kansas"), then loaded `/saved` and confirmed
 the saved item rendered correctly. Typecheck/lint/all 34 tests clean throughout.
 
+## Profile picture upload, a corner account menu, and Saved/Completed/Trips finally clickable (2026-09-05)
+
+User asked for four things on the profile: (1) upload a profile picture, (2) a persistent avatar
+"in a corner of the page" when logged in, clickable to a dropdown of account actions, (3) being able
+to click through to view Saved/Completed/Trips in full, (4) trip details showing the complete
+generated plan. Investigated before writing anything — #4 turned out to already be fully built
+([ItineraryDetail](src/components/trips/itinerary-detail.tsx): day-by-day items, full image gallery,
+swap/remove, AI chat editing, cost/dates) — nothing to do there beyond a small `/trips` list-card
+upgrade (destination + date range now shown before you click in, not just the title). The other
+three needed real work, and turned up two pre-existing bugs along the way:
+
+- **The "Completed" stat on `/profile` was permanently stuck at 0, and there was no way to ever mark
+  anything completed.** It counted `user_events` rows for `attended_experience`/`booked_experience`
+  — event types that existed in the type system and validation schema but that nothing in the app
+  ever wrote. Rather than bolt on a whole second table, reused `saved_experiences.status` (schema
+  already had `'saved' | 'planned' | 'completed'` as a check constraint, unused until now — see
+  [db/schema.sql](src/db/schema.sql)). Added `setSavedStatus()`/`listCompleted()` to
+  [saved.ts](src/lib/repositories/saved.ts), a `PATCH /api/saved` endpoint, and a "mark as completed"
+  checkmark button on the experience detail page's [ActionBar](src/components/experience/action-bar.tsx)
+  (mirrors the existing Heart/save toggle exactly — upserts, so it works even if you never explicitly
+  saved the thing first). New `/profile/completed` page, Suspense-streamed the same way `/saved` is.
+  `ExperienceCard` gained a `completed` badge prop, shown on both `/saved` and `/profile/completed`.
+- **The "Trips" stat on `/profile` was also stuck at 0** — it counted `public.trips`, a table that
+  exists in the schema (RLS policy and all) but that nothing in the codebase has ever written a row
+  to. Real trip plans (Weekend Planner + AI Trip Planner) live in `itineraries`. Fixed the count to
+  read from there instead. Left the dead `trips` table itself alone (out of scope, not worth a
+  destructive migration for a profile stat fix).
+- All three `/profile` stat cards (Saved/Completed/Trips) are now actual links to their pages —
+  previously inert `<div>`s.
+- **Avatar upload**: new `avatars` Supabase Storage bucket (public, same pattern as the existing
+  `resumes` bucket — service-role client does the write, not user-scoped storage RLS), applied via
+  `npm run migrate` and confirmed live via the Storage REST API. `POST /api/profile/avatar` validates
+  type/size (5MB, jpeg/png/webp/gif), uploads to `avatars/<user_id>/<uuid>.<ext>`, updates
+  `profiles.avatar_url`, and best-effort deletes the previous photo so storage doesn't grow unbounded.
+  New [AvatarUpload](src/components/profile/avatar-upload.tsx) client component on `/profile` — click
+  the camera badge on your photo to replace it, optimistic preview via `URL.createObjectURL`.
+- **Corner account menu**: new [Topbar](src/components/layout/topbar.tsx) rendered inside
+  [AppShell](src/components/layout/app-shell.tsx) on every authenticated page, carrying a
+  [UserMenu](src/components/layout/user-menu.tsx) — the avatar-plus-dropdown pattern from
+  Gmail/Notion/Linear/Airbnb. Dropdown: name/email header, View profile, Edit profile, Saved,
+  Completed, Trips, Upgrade to Premium (hidden once already premium), Log out. Closes on outside
+  click, Escape, or picking a link (via each link's own `onClick`, not a `pathname`-watching
+  `useEffect` — that tripped `react-hooks/set-state-in-effect`; the direct-in-handler version is both
+  the lint-clean and the simpler fix). `profile`/`email` are already fetched once in the `(app)`
+  layout for the onboarding-completed check, so this added zero new queries.
+
+**Root-caused before fixing, not guessed**: grepped for actual writers of `public.trips` and of
+`attended_experience`/`booked_experience` events and found none, which is what justified reusing
+`saved_experiences.status` instead of adding new schema.
+
+**Verified live end to end** with a disposable premium test account (Boise, ID): logged in, opened
+the corner menu (name/email/all links render, Upgrade hidden since premium), generated and saved a
+real Weekend Planner itinerary (`/trips` list now shows it; detail page still renders the full
+day-by-day plan and chat editor as before), opened a real experience ("Julia Davis Park"), tapped
+"Mark as completed" (toast confirms, button turns green, heart also fills in since completing
+implies saved), confirmed it appears on both `/profile/completed` (green "Completed" badge) and
+`/saved` (same badge, still filed under the "Saved" collection) — and confirmed `/profile`'s three
+stat cards read 1/1/1, not the permanent 0/0/0 they showed before. Avatar upload's storage path was
+verified directly against the Supabase Storage REST API (upload, public-URL fetch returns real image
+bytes, old-file cleanup actually removes the object — a stale 200 on the just-deleted URL immediately
+after was confirmed to be CDN edge-cache lag, not a real leak, by listing the bucket prefix and
+seeing it empty) since Claude in Chrome wasn't connected in this session to drive a real OS file
+picker. Test account and both test avatar uploads deleted afterward. Typecheck/lint/all 34 tests
+clean throughout.
+
 ## Exact next steps (priority order)
 
 **Done since the last update:** deployed to production at `discoverzolo.com` (fixed a Vercel
@@ -1193,7 +1258,13 @@ card, not just "Nearby" (see dedicated section above); **Home's real login-time 
 fixed** — a fresh, uncached location went from a measured 8.8s down to 2.4s by no longer blocking the
 rails on the AI reasoning call, now that deterministic reasoning is genuinely accurate post-tags-fix
 (see dedicated section above); corrected a stale note above (Stripe product id, live-checkout status)
-that had drifted out of sync with later corrections in this file.
+that had drifted out of sync with later corrections in this file; **audited every other page for
+the same slowness pattern and fixed three more** (Discover's default sort, experience detail's
+"You might also like", `/saved` — see dedicated section above); **profile picture upload, a corner
+account menu (avatar + dropdown, present on every authenticated page), and working Saved/Completed/
+Trips click-throughs** — including fixing two stats on `/profile` that were silently stuck at 0
+forever (Completed and Trips both read from tables/columns nothing ever wrote to) — see dedicated
+section above.
 
 1. Legal review of `/privacy` and `/terms` by an actual lawyer — Termly's questionnaire flow is a
    reasonable stand-in for launch, not a substitute for one.

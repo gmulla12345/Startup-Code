@@ -4,7 +4,7 @@ import { Pencil, Bookmark, CheckCircle2, Briefcase } from "lucide-react";
 import { createClient, getCurrentUser } from "@/lib/supabase/server";
 import { getProfileByUserId } from "@/lib/repositories/profile";
 import { getSubscription } from "@/lib/repositories/subscriptions";
-import { Avatar } from "@/components/ui/avatar";
+import { AvatarUpload } from "@/components/profile/avatar-upload";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SubscriptionCard } from "@/components/profile/subscription-card";
@@ -24,12 +24,19 @@ export default async function ProfilePage() {
   const [subscription, savedCountRes, completedCountRes, tripsCountRes, paymentsRes] = await Promise.all([
     getSubscription(supabase, user.id),
     supabase.from("saved_experiences").select("*", { count: "exact", head: true }).eq("user_id", user.id),
+    // Reads saved_experiences.status='completed' (see the "Mark as
+    // completed" toggle on the experience detail page's ActionBar), not
+    // user_events — nothing ever wrote attended_experience/booked_experience
+    // rows there, so that count was permanently stuck at 0.
     supabase
-      .from("user_events")
-      .select("experience_id", { count: "exact", head: true })
+      .from("saved_experiences")
+      .select("*", { count: "exact", head: true })
       .eq("user_id", user.id)
-      .in("event_type", ["attended_experience", "booked_experience"]),
-    supabase.from("trips").select("*", { count: "exact", head: true }).eq("user_id", user.id),
+      .eq("status", "completed"),
+    // Real trip plans (Weekend Planner + AI Trip Planner output) live in
+    // itineraries, not public.trips — that table is unused dead schema
+    // nothing in the app ever writes to, so counting it always returned 0.
+    supabase.from("itineraries").select("*", { count: "exact", head: true }).eq("user_id", user.id),
     supabase
       .from("payments")
       .select("id, amount, currency, status, created_at")
@@ -53,7 +60,7 @@ export default async function ProfilePage() {
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
       <div className="flex items-start justify-between gap-4 mb-8">
         <div className="flex items-center gap-4">
-          <Avatar src={profile.avatarUrl} name={profile.firstName || user.email || "You"} size={72} />
+          <AvatarUpload avatarUrl={profile.avatarUrl} name={profile.firstName || user.email || "You"} size={72} />
           <div>
             <h1 className="font-display text-2xl font-semibold text-foreground">{profile.firstName || "Your profile"}</h1>
             <p className="text-sm text-foreground-muted">{user.email}</p>
@@ -68,9 +75,9 @@ export default async function ProfilePage() {
       </div>
 
       <div className="grid grid-cols-3 gap-4 mb-8">
-        <StatCard icon={Bookmark} value={savedCountRes.count ?? 0} label="Saved" />
-        <StatCard icon={CheckCircle2} value={completedCountRes.count ?? 0} label="Completed" />
-        <StatCard icon={Briefcase} value={tripsCountRes.count ?? 0} label="Trips" />
+        <StatCard href="/saved" icon={Bookmark} value={savedCountRes.count ?? 0} label="Saved" />
+        <StatCard href="/profile/completed" icon={CheckCircle2} value={completedCountRes.count ?? 0} label="Completed" />
+        <StatCard href="/trips" icon={Briefcase} value={tripsCountRes.count ?? 0} label="Trips" />
       </div>
 
       <div className="rounded-[var(--radius-lg)] border border-border bg-[linear-gradient(160deg,var(--ember-soft),var(--surface))] p-6 mb-8">
@@ -109,12 +116,25 @@ export default async function ProfilePage() {
   );
 }
 
-function StatCard({ icon: Icon, value, label }: { icon: React.ElementType; value: number; label: string }) {
+function StatCard({
+  href,
+  icon: Icon,
+  value,
+  label,
+}: {
+  href: string;
+  icon: React.ElementType;
+  value: number;
+  label: string;
+}) {
   return (
-    <div className="rounded-[var(--radius-lg)] border border-border bg-surface p-4 text-center">
+    <Link
+      href={href}
+      className="rounded-[var(--radius-lg)] border border-border bg-surface p-4 text-center transition-shadow hover:shadow-[var(--shadow-card)]"
+    >
       <Icon className="h-5 w-5 text-ember mx-auto mb-2" />
       <div className="font-display text-2xl font-semibold text-foreground">{value}</div>
       <div className="text-xs text-foreground-muted">{label}</div>
-    </div>
+    </Link>
   );
 }

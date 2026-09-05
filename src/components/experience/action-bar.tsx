@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Heart, Share2 } from "lucide-react";
+import { CheckCircle2, Heart, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { shareEntity } from "@/lib/utils/share";
 import { track } from "@/services/analytics/track";
+import { cn } from "@/lib/utils/cn";
 
 export function ActionBar({
   experienceId,
@@ -17,6 +18,7 @@ export function ActionBar({
   category,
   isAuthenticated,
   initialSaved,
+  initialCompleted = false,
   externalBookingUrl,
 }: {
   experienceId: string;
@@ -27,11 +29,14 @@ export function ActionBar({
   category: string;
   isAuthenticated: boolean;
   initialSaved: boolean;
+  initialCompleted?: boolean;
   externalBookingUrl: string | null;
 }) {
   const router = useRouter();
   const [saved, setSaved] = useState(initialSaved);
   const [saving, setSaving] = useState(false);
+  const [completed, setCompleted] = useState(initialCompleted);
+  const [markingCompleted, setMarkingCompleted] = useState(false);
 
   async function toggleSave() {
     if (!isAuthenticated) {
@@ -59,6 +64,33 @@ export function ActionBar({
       toast.error("Couldn't update your saves. Try again.");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function toggleCompleted() {
+    if (!isAuthenticated) {
+      router.push(`/login?redirect=/experience/${slug}`);
+      return;
+    }
+
+    setMarkingCompleted(true);
+    const next = !completed;
+    setCompleted(next);
+
+    try {
+      const res = await fetch("/api/saved", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ experienceId, tags, category, status: next ? "completed" : "saved" }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success(next ? "Marked as completed" : "Removed from completed");
+      if (next) setSaved(true);
+    } catch {
+      setCompleted(!next);
+      toast.error("Couldn't update. Try again.");
+    } finally {
+      setMarkingCompleted(false);
     }
   }
 
@@ -91,6 +123,16 @@ export function ActionBar({
       )}
       <Button variant="outline" size="icon" onClick={toggleSave} disabled={saving} aria-label="Save">
         <Heart className={saved ? "fill-ember text-ember" : ""} />
+      </Button>
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={toggleCompleted}
+        disabled={markingCompleted}
+        aria-label={completed ? "Marked as completed" : "Mark as completed"}
+        className={cn(completed && "border-forest bg-[var(--forest-soft)]")}
+      >
+        <CheckCircle2 className={completed ? "fill-forest text-white" : ""} />
       </Button>
       <Button variant="outline" size="icon" onClick={handleShare} aria-label="Share">
         <Share2 />
