@@ -126,14 +126,12 @@ export class SupabaseExperienceProvider implements ExperienceProvider {
     return rowToExperience(data);
   }
 
-  async getRelated(experienceId: string, limit = 4): Promise<Experience[]> {
-    const source = await this.getById(experienceId);
-    if (!source) return [];
+  async getRelated(source: Experience, limit = 4): Promise<Experience[]> {
     const { data, error } = await this.client
       .from("experiences")
       .select("*")
       .eq("category", source.category)
-      .neq("id", experienceId)
+      .neq("id", source.id)
       .neq("source_provider", "mock")
       .limit(limit);
     if (error) return [];

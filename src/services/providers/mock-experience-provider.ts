@@ -97,10 +97,8 @@ export class MockExperienceProvider implements ExperienceProvider {
     return CATALOG.find((e) => e.slug === slug) ?? null;
   }
 
-  async getRelated(experienceId: string, limit = 4): Promise<Experience[]> {
-    const source = CATALOG.find((e) => e.id === experienceId);
-    if (!source) return [];
-    return CATALOG.filter((e) => e.id !== experienceId)
+  async getRelated(source: Experience, limit = 4): Promise<Experience[]> {
+    return CATALOG.filter((e) => e.id !== source.id)
       .map((e) => ({
         e,
         score:

@@ -28,7 +28,12 @@ export interface ExperienceProvider {
   list(query: ExperienceQuery): Promise<Experience[]>;
   getById(id: string): Promise<Experience | null>;
   getBySlug(slug: string): Promise<Experience | null>;
-  getRelated(experienceId: string, limit?: number): Promise<Experience[]>;
+  // Takes the already-loaded source Experience, not just its id — every
+  // real call site already has the full object in hand (it just rendered
+  // the detail page from it), and re-fetching by id here used to cost a
+  // second full Google Places Details round trip on every single experience
+  // page view for no reason.
+  getRelated(source: Experience, limit?: number): Promise<Experience[]>;
 }
 
 export interface GeocodeResult {

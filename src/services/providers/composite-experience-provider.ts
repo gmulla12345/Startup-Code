@@ -45,9 +45,7 @@ export class CompositeExperienceProvider implements ExperienceProvider {
     return this.isGoogleId(slug) ? this.google.getBySlug(slug) : this.curated.getBySlug(slug);
   }
 
-  async getRelated(experienceId: string, limit = 4): Promise<Experience[]> {
-    return this.isGoogleId(experienceId)
-      ? this.google.getRelated(experienceId, limit)
-      : this.curated.getRelated(experienceId, limit);
+  async getRelated(source: Experience, limit = 4): Promise<Experience[]> {
+    return this.isGoogleId(source.id) ? this.google.getRelated(source, limit) : this.curated.getRelated(source, limit);
   }
 }

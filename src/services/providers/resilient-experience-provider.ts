@@ -46,9 +46,9 @@ export class ResilientExperienceProvider implements ExperienceProvider {
     }
   }
 
-  async getRelated(experienceId: string, limit = 4): Promise<Experience[]> {
+  async getRelated(source: Experience, limit = 4): Promise<Experience[]> {
     try {
-      return await this.primary.getRelated(experienceId, limit);
+      return await this.primary.getRelated(source, limit);
     } catch (err) {
       console.error("[providers] primary experience provider failed:", err);
       return [];

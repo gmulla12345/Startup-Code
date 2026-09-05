@@ -352,9 +352,7 @@ export class GooglePlacesExperienceProvider implements ExperienceProvider {
     return this.getById(slug);
   }
 
-  async getRelated(experienceId: string, limit = 4): Promise<Experience[]> {
-    const source = await this.getById(experienceId);
-    if (!source) return [];
+  async getRelated(source: Experience, limit = 4): Promise<Experience[]> {
     const related = await this.list({
       latitude: source.latitude,
       longitude: source.longitude,

@@ -42,7 +42,7 @@ describe("MockExperienceProvider", () => {
 
   it("getRelated excludes the source experience itself", async () => {
     const all = await provider.list({});
-    const related = await provider.getRelated(all[0].id, 4);
+    const related = await provider.getRelated(all[0], 4);
     expect(related.find((e) => e.id === all[0].id)).toBeUndefined();
   });
 
