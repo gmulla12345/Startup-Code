@@ -30,10 +30,16 @@ export async function GET(request: Request) {
     const premium = isPremium(subscription);
     const effectiveLimit = premium ? limit : Math.min(limit, FREE_TIER_LIMITS.recommendationsPerWeek);
 
+    // useAI: false — same fix as Home (see home/page.tsx): this route backs
+    // Discover's "Personalized" sort, which is the *default* view for a
+    // logged-in visitor, so it was hitting the identical non-streamed,
+    // multi-second AI reasoning call on every load. Deterministic reasoning
+    // is accurate now that Experience.tags are real (see the taste-learning
+    // fix), so this is a real speed win, not a quality downgrade.
     const recommendations = await getRecommendations(supabase, profile, {
       surfaceContext,
       limit: effectiveLimit,
-      useAI: true,
+      useAI: false,
     });
 
     return NextResponse.json({ recommendations, premium });

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { Clock, MapPin, Sparkles, Star, Users } from "lucide-react";
 import { createClient, getCurrentUser } from "@/lib/supabase/server";
@@ -11,10 +12,12 @@ import { PremiumLock } from "@/components/experience/premium-lock";
 import { ReviewsList } from "@/components/experience/reviews-list";
 import { ExperienceCard } from "@/components/experience/experience-card";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { formatCategoryLabel, formatDuration, formatPrice } from "@/lib/utils/format";
 import { trackEvent } from "@/lib/repositories/events";
 import { getProfileByUserId } from "@/lib/repositories/profile";
 import { scoreExperience } from "@/services/recommendation/scoring";
+import type { Experience } from "@/types/database";
 import type { Metadata } from "next";
 
 export async function generateMetadata({ params }: PageProps<"/experience/[id]">): Promise<Metadata> {
@@ -43,10 +46,12 @@ export default async function ExperienceDetailPage({ params }: PageProps<"/exper
   const experience = (await provider.getBySlug(id)) ?? (await provider.getById(id));
   if (!experience) notFound();
 
-  const [reviews, related] = await Promise.all([
-    getReviewsForExperience(supabase, experience.id),
-    provider.getRelated(experience.id, 4),
-  ]);
+  // Reviews are a fast local DB read, kept in the main render path. Related
+  // experiences require a real Google Places list() call (a second, slower
+  // network round trip beyond the one that already loaded this page's own
+  // experience) — Suspense-streamed below so it doesn't hold up everything
+  // else on the page.
+  const reviews = await getReviewsForExperience(supabase, experience.id);
 
   let initialSaved = false;
   let userIsPremium = false;
@@ -195,16 +200,39 @@ export default async function ExperienceDetailPage({ params }: PageProps<"/exper
         </div>
       </div>
 
-      {related.length > 0 && (
-        <section className="mt-14">
-          <h2 className="font-display text-xl font-semibold text-foreground mb-4">You might also like</h2>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {related.map((exp) => (
-              <ExperienceCard key={exp.id} experience={exp} />
-            ))}
-          </div>
-        </section>
-      )}
+      <Suspense fallback={<RelatedSkeleton />}>
+        <RelatedSection experience={experience} />
+      </Suspense>
     </div>
+  );
+}
+
+async function RelatedSection({ experience }: { experience: Experience }) {
+  const provider = await getExperienceProvider();
+  const related = await provider.getRelated(experience, 4);
+  if (related.length === 0) return null;
+
+  return (
+    <section className="mt-14">
+      <h2 className="font-display text-xl font-semibold text-foreground mb-4">You might also like</h2>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {related.map((exp) => (
+          <ExperienceCard key={exp.id} experience={exp} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function RelatedSkeleton() {
+  return (
+    <section className="mt-14">
+      <Skeleton className="h-6 w-40 mb-4" />
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="aspect-[4/3] w-full" />
+        ))}
+      </div>
+    </section>
   );
 }
