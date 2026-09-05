@@ -52,10 +52,22 @@ export default async function HomePage() {
 
 async function RecommendationRails({ profile }: { profile: Profile }) {
   const supabase = await createClient();
+  // useAI: false — the AI reasoning call is a non-streamed request that has
+  // to finish generating its entire batch before anything comes back
+  // (measured directly against the API: ~10s for 10 candidates), and it sat
+  // on Home's critical path even behind Suspense, since the whole rails
+  // section waits on this one call. Measured live on a fresh, uncached
+  // location: 8.8s before content appeared. Now that scoreExperience's
+  // deterministic reasons are grounded in real derived tags (see the
+  // taste-learning fix — they used to be empty for all Google Places
+  // content), the fallback reasoning ("Matches your interests: history,
+  // food. Fits your usual budget.") is accurate and specific, not the
+  // generic filler it used to be — not worth a multi-second wait on every
+  // single login for a more naturally-phrased version of the same facts.
   const recommendations = await getRecommendations(supabase, profile, {
     surfaceContext: "for_you",
     limit: 24,
-    useAI: true,
+    useAI: false,
   });
 
   // Every rail shows distance when we have a location to measure from, not
