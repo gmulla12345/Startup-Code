@@ -904,6 +904,73 @@ request from a completely fresh page load with no client-side exclude state — 
 query on `user_events` that the first pick's `surprise_me_requested` row is what made the second
 request skip it, not coincidence.
 
+## Real taste learning: "Not For Me" now teaches the engine, and a foundational tags bug got fixed (2026-09-05)
+
+User ask, same day as the two Surprise Me fixes above: make "Not For Me" actually improve future
+recommendations (not just avoid repeats), and make recommendations generally much better at finding
+what someone truly likes. Also, mid-request, clarified that novelty/hidden-gem-ness "doesn't need to
+be high reviews only" — it should be one signal blended with others, not a rigid gate. This turned
+into a multi-part fix, including one foundational bug that had nothing to do with the original ask.
+
+**The foundational bug, found while wiring the rest of this up**: `GooglePlacesExperienceProvider`
+([src/services/providers/google-places-experience-provider.ts](src/services/providers/google-places-experience-provider.ts))
+hardcoded `tags: []` and `indoorOutdoor: "either"` for **every single** Google-sourced experience.
+Production is Google Places-only (see "Production catalog is Google Places-only" above) — so
+`scoreExperience`'s interest-tag-overlap bonus, its own comment calls this "the strongest signal",
+and the indoor/outdoor preference bonus have both been **silent no-ops for effectively all real
+recommendations this whole time**. AI-written reasoning text could still reference a profile's
+interests directly and sound personalized without the underlying deterministic ranking ever actually
+matching real tags — that gap is exactly why "for you" never felt like it was truly learning. Fixed
+by deriving both from `place.types` (the same field `inferCategory` already reads): a new
+`PLACE_TYPE_TO_TAGS` map (restaurant→food, museum→art/history/culture/learning, park→outdoors/nature,
+etc.) and an indoor/outdoor classifier that only commits when types unambiguously signal one or the
+other, defaulting to `"either"` (no bonus, no penalty) rather than guessing wrong. **Verified**: a
+test account's "For You" reasoning changed from generic budget/distance text to real ones like
+"Matches your interests: history" / "Matches your interests: food", with match scores rising
+accordingly (a strong interest match went from 60% to 72%+) purely because the overlap bonus now
+actually fires.
+
+**A second, separate real bug found in the same pass**: `ExperienceCard`'s save (heart) button had an
+`onToggleSave` prop that **no caller anywhere in the codebase ever actually passed** — every grid/rail
+card's heart button (Discover, every Home rail) flipped local state and called nothing. Saving has
+only ever persisted from the single detail-page `ActionBar`. Fixed by making the card's button call
+`/api/saved` directly, same as `ActionBar`. Known remaining gap, disclosed not silently accepted: the
+heart's *initial* visual state on a fresh page load still doesn't reflect true saved status outside
+of Home (no batch "is this in my saves" check is threaded into Discover's client-side grid) — the
+toggle itself is correct either way (upsert/delete are idempotent), it's cosmetic-only, and it's a
+reasonable follow-up rather than something this pass fully closed out.
+
+**The three-part feature build, once real tags existed to learn from**:
+1. **Saves now denormalize `tags`/`category` onto `saved_experiences`** (new columns, migration
+   applied) instead of `getSavedTagCounts()` joining into `public.experiences` — that table is empty
+   in production, so this positive-learning signal was *also* silently returning nothing for the vast
+   majority of real saves, a second instance of the exact "empty catalog table" trap this project has
+   hit before. `getSavedCategoryCounts()` added alongside it.
+2. **"Not For Me" now sends the rejected experience's tags/category** in `surprise_me_feedback`'s
+   metadata ([surprise-me-button.tsx](src/components/home/surprise-me-button.tsx) already has the
+   full `Experience` object at that moment). New `getRejectedAffinity()`
+   ([events.ts](src/lib/repositories/events.ts)) reads `dismissed_experience` and `surprise_me_feedback`
+   (not_for_me only) events back out into rejected tag/category counts.
+3. **`scoreExperience` applies both as real signals** — positive `savedCategoryCounts` (alongside the
+   now-fixed `savedTagCounts`), negative `rejectedTagCounts`/`rejectedCategoryCounts`, symmetric to
+   each other. And `noveltyBias` (active for `surprise_me`/`hidden_gem` surface contexts) replaces the
+   old hard `hiddenGemsOnly` provider-level filter with a continuous bonus — lower review count and
+   higher rating both help, `isHiddenGem` still nudges, very high review counts get a small penalty,
+   but nothing is excluded outright just for being a little more popular, directly per the
+   mid-request clarification. `getSurpriseMe()`'s fallback chain simplified accordingly (one unified
+   scored pool now, not a separate hidden-gem-pool vs. for-you-pool split).
+
+**Verified live end to end on both local dev and production** — a disposable Premium test account
+(Baltimore profile, same as prior Surprise Me tests): saved a card from a rail (confirmed via direct
+DB query the row now exists with real derived tags, e.g. `["sports","adventure","photography"]` —
+this save would previously never have persisted at all); then simulated 5 "Not For Me" rejections
+tagged sports/fitness via the real feedback endpoint (`fetch` from within the authenticated browser
+session, calling the same code path the UI does) and reloaded Home — **Oriole Park at Camden Yards
+(sports_fitness, previously the #1 match at 70-72%) dropped out of the top results entirely** on both
+environments. Deploy hit a transient `"fetch failed"` build error on the first attempt (new failure
+mode, not the previously-documented "Not authorized" one) — resolved by simply retrying
+`vercel deploy --prod`, consistent with every other transient Vercel error seen this project.
+
 ## Exact next steps (priority order)
 
 **Done since the last update:** deployed to production at `discoverzolo.com` (fixed a Vercel
@@ -970,7 +1037,14 @@ audit** — trust reassurance copy near pricing CTAs, 7 more real Travel Mode de
 backing the "Worldwide" claim plus a related overclaim fixed in FAQ/pricing copy, 3 `/vs` comparison
 pages, and a real-product-UI hero preview replacing the old stock photo grid (see dedicated section
 above). Founder bio/photo and user testimonials from that same audit are flagged below, not done —
-they need the user's real content, not fabricated placeholders.
+they need the user's real content, not fabricated placeholders; **Surprise Me fixed twice more** —
+actually biased toward hidden gems instead of duplicating "For You"'s #1 pick, then made to never
+repeat a spot across sessions (see dedicated sections above); **real taste learning shipped, plus a
+foundational bug fixed** — Google Places experiences had hardcoded empty tags this whole time,
+silently disabling the "strongest signal" interest-match bonus for all real content; fixed alongside
+making "Not For Me" actually teach the engine (not just avoid repeats), fixing the Save button on
+every card outside the detail page (it never persisted anywhere), and blending novelty into Surprise
+Me's scoring instead of a hard rating/review-count gate (see dedicated section above).
 
 1. Legal review of `/privacy` and `/terms` by an actual lawyer — Termly's questionnaire flow is a
    reasonable stand-in for launch, not a substitute for one.
@@ -985,6 +1059,11 @@ they need the user's real content, not fabricated placeholders.
    above for exactly what's needed and where.
 4. heycatch audit D3.2/FIT — collect 3-5 real user testimonials (photo + role/context + an
    outcome-specific quote) once there are paying users to ask. See same section above.
+5. Disclosed follow-up from the taste-learning pass: Discover's grid doesn't know which experiences
+   are already saved (no batch lookup threaded into that client-side page), so a saved item's heart
+   can show unsaved-looking on load there until toggled — Home doesn't have this gap. Cosmetic only
+   (the actual save/unsave call is correct either way); worth fixing once someone notices it in
+   practice, not urgent.
 
 ## PayPal — deliberately deferred, do not pick this up unprompted (2026-09-01)
 
