@@ -13,7 +13,7 @@ export const PRICING_FAQ_ITEMS: FaqItem[] = [
   },
   {
     q: "What do I get with Premium?",
-    a: `Premium ($${pricing.premium.priceMonthly}/month, or $${pricing.premium.priceAnnual}/year) unlocks unlimited personalized discovery and Surprise Me, the AI Weekend Planner and Trip Planner, advanced filters, premium and exclusive experiences, and Travel Mode for 10+ destinations.`,
+    a: `Premium ($${pricing.premium.priceMonthly}/month, or $${pricing.premium.priceAnnual}/year) unlocks unlimited personalized discovery and Surprise Me, more specific categories in Discover (e.g. "Italian Restaurant" instead of "Food & Drink"), the AI Weekend Planner and Trip Planner, advanced filters, premium and exclusive experiences, and Travel Mode for 10+ destinations.`,
   },
   {
     q: "Can I cancel Premium anytime?",

@@ -65,8 +65,8 @@ export function SubscriptionCard({ subscription }: { subscription: Subscription 
         {isPremium
           ? subscription?.cancelAtPeriodEnd
             ? `Cancels at the end of your billing period.`
-            : `You have full access to unlimited discovery, AI planning, and exclusive experiences.`
-          : `Upgrade for unlimited Surprise Me, AI trip planning, and exclusive experiences — $${pricing.premium.priceMonthly}/mo.`}
+            : `You have full access to unlimited discovery, more specific categories in Discover, AI planning, and exclusive experiences.`
+          : `Upgrade for unlimited Surprise Me, more specific categories in Discover, AI trip planning, and exclusive experiences — $${pricing.premium.priceMonthly}/mo.`}
       </p>
       {isPremium ? (
         <Button variant="outline" onClick={handleManage} loading={loading}>

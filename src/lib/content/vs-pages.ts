@@ -66,7 +66,7 @@ export const VS_PAGES: VsPage[] = [
       },
       {
         q: "Is Zolo free like Tripadvisor?",
-        a: `Zolo has a free tier (personalized picks, unlimited saves, one Surprise Me a week). Unlimited discovery, AI planning, and exclusive experiences are part of Premium ($${pricing.premium.priceMonthly}/month).`,
+        a: `Zolo has a free tier (personalized picks, unlimited saves, one Surprise Me a week). Unlimited discovery, more specific categories in Discover, AI planning, and exclusive experiences are part of Premium ($${pricing.premium.priceMonthly}/month).`,
       },
     ],
   },
@@ -111,7 +111,7 @@ export const VS_PAGES: VsPage[] = [
       },
       {
         q: "Is Zolo free like Atlas Obscura?",
-        a: `Yes, Zolo has a free tier. Unlimited discovery, AI trip planning, and exclusive experiences are part of Premium ($${pricing.premium.priceMonthly}/month).`,
+        a: `Yes, Zolo has a free tier. Unlimited discovery, more specific categories in Discover, AI trip planning, and exclusive experiences are part of Premium ($${pricing.premium.priceMonthly}/month).`,
       },
     ],
   },
@@ -156,7 +156,7 @@ export const VS_PAGES: VsPage[] = [
       },
       {
         q: "Is Zolo free like Google Maps?",
-        a: `Zolo has a free tier (personalized picks, unlimited saves, one Surprise Me a week). Unlimited discovery, AI planning, and exclusive experiences are part of Premium ($${pricing.premium.priceMonthly}/month).`,
+        a: `Zolo has a free tier (personalized picks, unlimited saves, one Surprise Me a week). Unlimited discovery, more specific categories in Discover, AI planning, and exclusive experiences are part of Premium ($${pricing.premium.priceMonthly}/month).`,
       },
     ],
   },

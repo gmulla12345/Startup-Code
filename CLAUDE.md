@@ -8,7 +8,7 @@
 >
 > Full setup/architecture docs: [README.md](README.md). Full DB schema: [src/db/schema.sql](src/db/schema.sql).
 
-**Last updated:** 2026-09-05
+**Last updated:** 2026-09-07
 
 ## What this is
 
@@ -1178,6 +1178,75 @@ seeing it empty) since Claude in Chrome wasn't connected in this session to driv
 picker. Test account and both test avatar uploads deleted afterward. Typecheck/lint/all 34 tests
 clean throughout.
 
+## Premium-only specific categories in Discover, across every sector — and a real category bug fixed along the way (2026-09-07)
+
+User: make Discover more specific about *what kind* of place something is ("food places or places
+that are more specific... that type of activity"), Premium-only, and explicitly not just for food —
+"make other sectors more specific too" — then update wherever the site describes what Premium
+includes.
+
+**What "more specific" means here**: `Experience.category` is our own coarse bucket (`food_drink`,
+`arts_culture`, `sports_fitness`, ...) — six or so buckets covering everything. Google Places'
+`types` array on the same place is almost always more granular than that (a museum's `types` might
+include `art_gallery`/`museum`, not just "arts_culture"). New optional `Experience.specificType`
+field ([types/database.ts](src/types/database.ts)) surfaces whatever specific type Google's real
+data actually has for a place — genuinely more specific across *every* category this way (a climbing
+gym shows "Climbing Gym" not "Sports & Fitness", a zoo shows "Zoo" not "Outdoor & Adventure"), with
+no per-category logic to maintain, and it's honest: places where Google's data has nothing more
+specific than our own bucket just show the same label Free already sees, rather than fabricating
+false precision. Only `GooglePlacesExperienceProvider` populates it — deliberately left optional
+(not `| null` like the rest of the interface) rather than required, so curated/mock data, seed data,
+and admin tooling didn't need a schema migration or a placeholder `null` just to satisfy the type.
+
+Premium-gated **only on Discover** ([discover-grid.tsx](src/components/discover/discover-grid.tsx)),
+per the user's explicit scope — Home, Saved, Completed, and "You might also like" all keep showing
+the coarse `category` bucket exactly as before. New `ExperienceCard` prop `showSpecificType` (only
+Discover passes it, set from a real server-verified `premium` boolean) picks
+`experience.specificType` over `formatCategoryLabel(experience.category)` when both the prop and the
+per-experience field are present. Along the way, fixed a latent bug in `DiscoverGrid`: its `premium`
+state used to default to `useState(true)` and only ever got corrected by the "Personalized" sort's
+own API response — meaning a free user who only ever viewed "Popular"/"Hidden Gems"/a filtered
+browse (which hits a different endpoint that doesn't return premium status) would have kept the
+wrong default. Now seeded from a real `getSubscription()`/`isPremium()` check done server-side in
+`DiscoverPage`, passed down as a prop.
+
+**A real, pre-existing categorization bug turned up while building this, and got fixed too**:
+directly queried the Places API to sanity-check the "most specific type" heuristic and found
+Google's `types` array is *not* reliably ordered most-specific-first — "Tacoma Art Museum" (a real,
+well-known art museum) comes back as `["tourist_attraction","cafe","art_gallery","museum","store",
+"food","point_of_interest","establishment"]`, because it also has an on-site café. A first-match
+approach picked "cafe" as the specific type — and worse, `inferCategory()` (which predates this
+change entirely) had the exact same blind spot: `tourist_attraction` maps to `outdoor_adventure` in
+`PLACE_TYPE_TO_CATEGORY`, so this exact museum was *already* silently mislabeled "Outdoor &
+Adventure" for every user, Free included, before today. Fixed both functions with the same
+`CATEGORY_TYPE_PRIORITY` list (in
+[google-places-experience-provider.ts](src/services/providers/google-places-experience-provider.ts)):
+types that reliably signal what a place fundamentally *is* (`museum`, `art_gallery`, `zoo`, ...) are
+checked ahead of ones that are very commonly just a secondary amenity on other kinds of places
+(`cafe`, `restaurant`, `bar`), with `tourist_attraction` checked dead last as the generic
+"some kind of notable place" fallback it actually is. `inferSpecificType` additionally requires its
+pick be consistent with the now-correctly-resolved `category` where our vocabulary covers it
+(falling back to Google's raw order only for a genuinely novel subtype — "italian_restaurant",
+"climbing_gym" — we don't otherwise track), so it can never contradict the coarse label the same way
+"Cafe" contradicted "Arts & Culture" before the fix.
+
+**Premium's feature list updated everywhere it's enumerated** — the canonical
+`pricing.premium.features` array ([lib/config/pricing.ts](src/lib/config/pricing.ts), which drives
+both the `/pricing` page's cards and `/profile/upgrade`'s `PremiumPlanCard` automatically), the
+`/pricing` comparison table's own separate hardcoded rows, the main pricing FAQ answer, the sidebar's
+"Go Premium" upsell blurb, both branches of the profile's `SubscriptionCard` blurb (free-tier teaser
+and premium-tier confirmation), and all three `/vs/*` competitor-comparison-page FAQ answers that
+enumerate what Premium unlocks.
+
+**Verified live end to end** with two disposable test accounts at the identical real coordinates
+(Tacoma, WA — so both hit the same warm Google Places cache) — one Premium, one Free:
+Premium's Discover feed showed genuinely specific, category-diverse labels (Museum, Restaurant, Zoo,
+Spa, Park, Amusement Park, Movie Theater, Cafe — not just food) with Tacoma Art Museum correctly
+showing "Museum"; the Free account, same coordinates, same results, correctly showed only the coarse
+buckets ("Food Drink", "Arts Culture" — Tacoma Art Museum's category itself also now correctly
+"Arts Culture" instead of the old "Outdoor & Adventure" bug, benefiting Free too). Typecheck/lint/all
+34 tests clean throughout; both test accounts deleted afterward.
+
 ## Exact next steps (priority order)
 
 **Done since the last update:** deployed to production at `discoverzolo.com` (fixed a Vercel
@@ -1264,7 +1333,10 @@ the same slowness pattern and fixed three more** (Discover's default sort, exper
 account menu (avatar + dropdown, present on every authenticated page), and working Saved/Completed/
 Trips click-throughs** — including fixing two stats on `/profile` that were silently stuck at 0
 forever (Completed and Trips both read from tables/columns nothing ever wrote to) — see dedicated
-section above.
+section above; **Premium-only specific place types in Discover across every category** (not just
+food), plus a real pre-existing categorization bug fixed along the way (Google's `types` array isn't
+reliably most-specific-first, which had been silently mislabeling some arts/culture places as
+"Outdoor & Adventure" for every user, Free included) — see dedicated section above.
 
 1. Legal review of `/privacy` and `/terms` by an actual lawyer — Termly's questionnaire flow is a
    reasonable stand-in for launch, not a substitute for one.

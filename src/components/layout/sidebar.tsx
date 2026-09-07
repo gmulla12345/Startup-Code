@@ -43,7 +43,7 @@ export function Sidebar({ premium }: { premium: boolean }) {
           <Sparkles className="h-5 w-5 text-forest mb-2" />
           <p className="text-sm font-semibold text-foreground">Go Premium</p>
           <p className="text-xs text-foreground-muted mt-1 mb-3">
-            Unlimited Surprise Me, AI trip planning, and exclusive experiences.
+            Unlimited Surprise Me, more specific categories in Discover, AI trip planning, and exclusive experiences.
           </p>
           <Button asChild size="sm" variant="forest" className="w-full">
             <Link href="/profile/upgrade">Upgrade</Link>

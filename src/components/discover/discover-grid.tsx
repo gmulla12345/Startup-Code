@@ -22,11 +22,13 @@ interface RecommendationLite {
 
 export function DiscoverGrid({
   isAuthenticated,
+  premium: initialPremium,
   initialHiddenGemsOnly,
   latitude,
   longitude,
 }: {
   isAuthenticated: boolean;
+  premium: boolean;
   initialHiddenGemsOnly: boolean;
   latitude?: number | null;
   longitude?: number | null;
@@ -40,7 +42,13 @@ export function DiscoverGrid({
   });
   const [experiences, setExperiences] = useState<Experience[]>([]);
   const [recommendations, setRecommendations] = useState<RecommendationLite[]>([]);
-  const [premium, setPremium] = useState(true);
+  // Seeded from the server-verified subscription (DiscoverPage), not a
+  // hardcoded guess — the "Popular"/"Hidden Gems"/filtered browse path never
+  // hits an endpoint that returns premium status, so a client-only default
+  // would just be wrong for a free user who never happens to view
+  // "Personalized". The personalized-recommendations fetch below still
+  // re-syncs it (e.g. right after an in-session upgrade).
+  const [premium, setPremium] = useState(initialPremium);
   const [loading, setLoading] = useState(true);
 
   const usingPersonalized = filters.sort === "personalized" && isAuthenticated;
@@ -146,6 +154,7 @@ export function DiscoverGrid({
                 matchScore={r.matchScore}
                 reasoning={r.reasoning}
                 distanceLabel={distanceLabelFor(r.experience)}
+                showSpecificType={premium}
               />
             ))}
           </div>
@@ -155,7 +164,7 @@ export function DiscoverGrid({
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {experiences.map((exp) => (
-            <ExperienceCard key={exp.id} experience={exp} distanceLabel={distanceLabelFor(exp)} />
+            <ExperienceCard key={exp.id} experience={exp} distanceLabel={distanceLabelFor(exp)} showSpecificType={premium} />
           ))}
         </div>
       )}

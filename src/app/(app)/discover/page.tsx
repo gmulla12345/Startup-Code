@@ -1,5 +1,6 @@
 import { createClient, getCurrentUser } from "@/lib/supabase/server";
 import { getProfileByUserId } from "@/lib/repositories/profile";
+import { getSubscription, isPremium } from "@/lib/repositories/subscriptions";
 import { DiscoverGrid } from "@/components/discover/discover-grid";
 
 // Falls back to New York when the visitor is logged out or hasn't set a
@@ -12,7 +13,10 @@ export default async function DiscoverPage({ searchParams }: PageProps<"/discove
   const supabase = await createClient();
   const user = await getCurrentUser();
 
-  const profile = user ? await getProfileByUserId(supabase, user.id) : null;
+  const [profile, subscription] = await Promise.all([
+    user ? getProfileByUserId(supabase, user.id) : Promise.resolve(null),
+    user ? getSubscription(supabase, user.id) : Promise.resolve(null),
+  ]);
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
@@ -20,6 +24,7 @@ export default async function DiscoverPage({ searchParams }: PageProps<"/discove
       <p className="text-foreground-muted mb-6">Browse experiences, places, and events — personalized first.</p>
       <DiscoverGrid
         isAuthenticated={Boolean(user)}
+        premium={isPremium(subscription)}
         initialHiddenGemsOnly={params.hiddenGemsOnly === "true"}
         latitude={profile?.latitude ?? DEFAULT_LOCATION.latitude}
         longitude={profile?.longitude ?? DEFAULT_LOCATION.longitude}

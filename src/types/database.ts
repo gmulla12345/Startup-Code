@@ -107,6 +107,16 @@ export interface Experience {
   description: string;
   shortDescription: string;
   category: ExperienceCategory;
+  // A narrower label than `category` when the source data actually supports
+  // one (e.g. "Italian Restaurant" / "Climbing Gym" vs. the coarse "Food &
+  // Drink" / "Sports & Fitness" bucket) — currently only Google Places
+  // populates this (see inferSpecificType() in
+  // google-places-experience-provider.ts); curated/mock data leaves it
+  // undefined rather than guessing. Optional, not `| null` like the rest of
+  // this interface, specifically so every other Experience-constructing site
+  // (seed data, the Supabase-backed catalog, admin tooling, tests) doesn't
+  // need a schema migration or a literal `null` just to satisfy the type.
+  specificType?: string | null;
   tags: InterestTag[];
   images: string[];
   city: string;

@@ -15,6 +15,7 @@ export const metadata: Metadata = {
 const COMPARISON_ROWS: { feature: string; free: ComparisonCell; premium: ComparisonCell }[] = [
   { feature: "Personalized discovery", free: "Top 5 picks / week", premium: "Unlimited" },
   { feature: "AI recommendations", free: "Basic", premium: "Advanced" },
+  { feature: "Category specificity in Discover", free: "General (e.g. \"Food & Drink\")", premium: "Specific (e.g. \"Italian Restaurant\")" },
   { feature: "Surprise Me", free: "1 / week", premium: "Unlimited" },
   { feature: "Saved experiences", free: true, premium: true },
   { feature: "Map", free: true, premium: true },

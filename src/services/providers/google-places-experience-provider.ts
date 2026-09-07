@@ -1,5 +1,6 @@
 import type { Experience, ExperienceCategory, BudgetLevel, InterestTag } from "@/types/database";
 import type { ExperienceProvider, ExperienceQuery } from "./types";
+import { titleCase } from "@/lib/utils/format";
 
 /**
  * Live, worldwide experience data sourced directly from Google Places —
@@ -98,11 +99,89 @@ function priceLevelToBudget(level: number | undefined): BudgetLevel {
   }
 }
 
+// Google's `types` array is NOT reliably ordered "most specific/defining
+// first" — confirmed directly against the Places API while building this:
+// "Tacoma Art Museum" (a real, well-known art museum) comes back as
+// `["tourist_attraction", "cafe", "art_gallery", "museum", "store", "food",
+// "point_of_interest", "establishment"]`, because it also has an on-site
+// café. Trusting raw array order alone picked "cafe" as this place's
+// category *and* its specific type — a real museum mislabeled as food &
+// drink. This priority list is checked instead of raw order, ranking types
+// that reliably signal what a place fundamentally *is* above ones that are
+// very commonly just a secondary amenity on other kinds of places ("cafe",
+// "restaurant", "bar") or Google's own generic "notable place, unclear what
+// kind" catch-all ("tourist_attraction", checked last — only used when
+// nothing more specific matched, same as before this fix). Every entry here
+// must be a key of PLACE_TYPE_TO_CATEGORY.
+const CATEGORY_TYPE_PRIORITY = [
+  "museum",
+  "art_gallery",
+  "zoo",
+  "aquarium",
+  "amusement_park",
+  "stadium",
+  "night_club",
+  "movie_theater",
+  "spa",
+  "gym",
+  "park",
+  "restaurant",
+  "bar",
+  "cafe",
+  "tourist_attraction",
+];
+
 function inferCategory(types: string[] | undefined): ExperienceCategory {
-  for (const t of types ?? []) {
-    if (PLACE_TYPE_TO_CATEGORY[t]) return PLACE_TYPE_TO_CATEGORY[t];
+  const present = new Set(types ?? []);
+  for (const t of CATEGORY_TYPE_PRIORITY) {
+    if (present.has(t)) return PLACE_TYPE_TO_CATEGORY[t];
   }
   return "hidden_gem";
+}
+
+// Types that don't read as "specific" on their own — either pure Google
+// Places bookkeeping ("point_of_interest", "establishment") or Google's
+// generic "notable place, unclear what kind" catch-all
+// ("tourist_attraction" — see CATEGORY_TYPE_PRIORITY above; it's excluded
+// here too so it never becomes the "specific" label itself).
+const GENERIC_PLACE_TYPES = new Set([
+  "point_of_interest",
+  "establishment",
+  "food",
+  "store",
+  "premise",
+  "political",
+  "tourist_attraction",
+]);
+
+// Premium-only, more specific alternative to `category` on the Discover
+// page (see discover-grid.tsx) — e.g. "Italian Restaurant" instead of "Food
+// & Drink". Not restaurant-specific: this reads whatever the real Google
+// Places `types` array actually contains, so a climbing gym shows
+// "Climbing Gym" instead of "Sports & Fitness", a history museum shows
+// "History Museum" instead of "Arts & Culture", and so on across every
+// category — no per-category logic to maintain.
+//
+// Prefers, in order: (1) the highest-priority type (CATEGORY_TYPE_PRIORITY)
+// that's consistent with the already-resolved `category` — this is what
+// keeps a museum-with-a-café from surfacing "Cafe" as its specific type,
+// the same bug fixed in inferCategory above; (2) falling back to Google's
+// raw array order for a genuinely more specific subtype we don't otherwise
+// track ("italian_restaurant", "hiking_area", "wine_bar", ...), so those
+// still surface when Google's data actually has one; (3) null — same label
+// Free sees — rather than fabricating specificity the data doesn't support.
+function inferSpecificType(types: string[] | undefined, category: ExperienceCategory): string | null {
+  const list = types ?? [];
+  const present = new Set(list);
+
+  for (const t of CATEGORY_TYPE_PRIORITY) {
+    if (present.has(t) && !GENERIC_PLACE_TYPES.has(t) && PLACE_TYPE_TO_CATEGORY[t] === category) {
+      return titleCase(t);
+    }
+  }
+
+  const fallback = list.find((t) => !GENERIC_PLACE_TYPES.has(t));
+  return fallback ? titleCase(fallback) : null;
 }
 
 // Every real (Google Places-sourced) experience used to get `tags: []` and
@@ -235,6 +314,7 @@ export class GooglePlacesExperienceProvider implements ExperienceProvider {
         `${place.name} is a real, live-listed place on Google Maps${place.rating ? ` rated ${place.rating}/5` : ""}. Details here are pulled directly from Google — verify hours and availability before you go.`,
       shortDescription: place.editorial_summary?.overview ?? `A real place near ${cityHint ?? "you"}, sourced live from Google Maps.`,
       category,
+      specificType: inferSpecificType(place.types, category),
       tags: inferTags(place.types),
       images,
       city: cityHint ?? cityFromAddress ?? "",

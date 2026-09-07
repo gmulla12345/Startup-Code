@@ -36,6 +36,7 @@ export const pricing = {
     features: [
       "Unlimited personalized discovery",
       "Advanced AI recommendations",
+      "More specific categories in Discover",
       "Unlimited Surprise Me",
       "AI Weekend Planner",
       "AI Trip Planner",

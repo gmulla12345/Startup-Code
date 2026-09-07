@@ -18,6 +18,14 @@ interface ExperienceCardProps {
   distanceLabel?: string;
   saved?: boolean;
   completed?: boolean;
+  /**
+   * Premium-only: shows `experience.specificType` ("Italian Restaurant",
+   * "Climbing Gym", ...) instead of the coarse `category` label
+   * ("Food & Drink", "Sports & Fitness"). Only Discover passes this — see
+   * discover-grid.tsx — so every other surface (Home, Saved, Completed,
+   * "You might also like") keeps showing the category bucket as before.
+   */
+  showSpecificType?: boolean;
   onToggleSave?: (id: string, nextSaved: boolean) => void;
   className?: string;
   priority?: boolean;
@@ -30,6 +38,7 @@ export function ExperienceCard({
   distanceLabel,
   saved = false,
   completed = false,
+  showSpecificType = false,
   onToggleSave,
   className,
   priority = false,
@@ -120,7 +129,9 @@ export function ExperienceCard({
               <Gem className="h-3 w-3" /> Hidden gem
             </span>
           ) : (
-            <span>{formatCategoryLabel(experience.category)}</span>
+            <span>
+              {showSpecificType && experience.specificType ? experience.specificType : formatCategoryLabel(experience.category)}
+            </span>
           )}
         </div>
 
