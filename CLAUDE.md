@@ -1247,6 +1247,48 @@ buckets ("Food Drink", "Arts Culture" — Tacoma Art Museum's category itself al
 "Arts Culture" instead of the old "Outdoor & Adventure" bug, benefiting Free too). Typecheck/lint/all
 34 tests clean throughout; both test accounts deleted afterward.
 
+## Mobile app groundwork: Bearer-token auth added to every API route (2026-09-07)
+
+User is planning a separate React Native/Expo mobile app (built in its own chat — see
+`../zolo-app/kickoff-prompt.md` and `../zolo-app/README.md`, siblings of this repo) that reuses this
+website's own API routes as its backend instead of talking to Supabase/Stripe/Anthropic directly.
+That only works if those routes can authenticate a client that can't send cookies — which, until
+today, none of them could: `requireUser()` only ever checked a cookie-based Supabase session.
+
+Fixed in [src/lib/api/auth.ts](src/lib/api/auth.ts): `requireUser()` now checks for an
+`Authorization: Bearer <access_token>` header first — the same Supabase-issued JWT any `supabase-js`
+client (including the future mobile app's) gets back from sign-in — and only falls through to the
+existing cookie check if there isn't one or it doesn't validate. Two things worth understanding if
+you touch this again:
+
+1. **The token is validated with a real round trip** (`supabase.auth.getUser(token)`), not just
+   decoded client-side, so an expired or revoked token is correctly rejected — confirmed live (see
+   below).
+2. **The returned Supabase client has the Bearer token attached as a default header**
+   (`global: { headers: { Authorization: ... } }`), not just used for the identity check. This
+   matters: without it, the identity check would pass but every subsequent `.from(...)` call made
+   with that same client would run as an *unauthenticated* Postgrest request, and RLS policies
+   (`auth.uid() = user_id`) would silently reject every write and return nothing on every read — the
+   token would look like it worked right up until the first real database operation. Confirmed this
+   specific failure mode doesn't happen (see below).
+
+All 29 call sites across 25 files needed zero changes — `requireUser()`'s signature and behavior for
+the existing (cookie) path are unchanged, this is purely an additional path checked first.
+
+**Verified live end to end**, no mobile app needed to prove it: scripted a disposable test account,
+signed in via Supabase's password grant (`POST /auth/v1/token?grant_type=password` — the exact flow
+`supabase-js` uses on any client, mobile included) to get a real access token, then called the running
+dev server with *only* that Bearer header, zero cookies:
+- `GET /api/profile` → 200, correct user's profile came back.
+- `POST /api/saved` → 200, and confirmed via a direct DB query that the row actually landed under
+  the right `user_id` — proving the RLS-scoping concern above isn't just theoretical, it actually works.
+- Same request with a garbage Bearer token and no cookie → 401, confirming no auth bypass.
+- Separately, logged into the actual website through the browser as normal (cookie-based, no Bearer
+  header at all) and confirmed `/profile` still renders correctly — the original path is provably
+  unaffected.
+
+Typecheck/lint/all 34 tests clean. Test accounts deleted afterward.
+
 ## Exact next steps (priority order)
 
 **Done since the last update:** deployed to production at `discoverzolo.com` (fixed a Vercel
@@ -1336,7 +1378,10 @@ forever (Completed and Trips both read from tables/columns nothing ever wrote to
 section above; **Premium-only specific place types in Discover across every category** (not just
 food), plus a real pre-existing categorization bug fixed along the way (Google's `types` array isn't
 reliably most-specific-first, which had been silently mislabeling some arts/culture places as
-"Outdoor & Adventure" for every user, Free included) — see dedicated section above.
+"Outdoor & Adventure" for every user, Free included) — see dedicated section above; **added
+Bearer-token auth support to every API route** (`requireUser()` in `src/lib/api/auth.ts`) as
+groundwork for a separate mobile app, with zero changes needed at any of the 29 call sites — see
+dedicated section above.
 
 1. Legal review of `/privacy` and `/terms` by an actual lawyer — Termly's questionnaire flow is a
    reasonable stand-in for launch, not a substitute for one.
