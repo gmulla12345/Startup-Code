@@ -1401,6 +1401,19 @@ dedicated section above.
    can show unsaved-looking on load there until toggled — Home doesn't have this gap. Cosmetic only
    (the actual save/unsave call is correct either way); worth fixing once someone notices it in
    practice, not urgent.
+6. **Mobile app push notifications need two things built here, whenever this is prioritized**
+   (flagged 2026-09-10 by the Zolo mobile app session — not started, no rush): (a) a way to
+   register a device's Expo push token against a `user_id` — a new table/column plus something like
+   `POST /api/push-tokens` — the app will call this once it links an EAS project and can actually
+   call `getExpoPushTokenAsync()` (blocked on that alone right now, permission-request UI already
+   exists on the app side); (b) actual send logic — deciding *when* to fire one (new Surprise Me
+   pick ready, weekend/trip plan reminder, re-engagement nudge) and calling Expo's push API
+   (`https://exp.host/--/api/v2/push/send`) with the stored token. The app side already has its
+   receiving/routing logic built and defines the `data` payload contract to match (its own
+   invention, not yet confirmed against anything real here):
+   `{ type?: "surprise_me_ready" | "weekend_plan_reminder" | "trip_plan_reminder" | "re_engagement",
+   itineraryId?: string, experienceId?: string }` — see `zolo-app/CLAUDE.md` for the app-side
+   routing code this maps to (`src/lib/notification-routing.ts`).
 
 ## PayPal — deliberately deferred, do not pick this up unprompted (2026-09-01)
 
