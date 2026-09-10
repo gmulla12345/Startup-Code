@@ -73,7 +73,7 @@ export function PricingCards() {
           <ul className="space-y-3 mb-8">
             {pricing.free.features.map((f) => (
               <li key={f} className="flex items-start gap-2 text-sm text-foreground-muted">
-                <Check className="h-4 w-4 text-forest mt-0.5 shrink-0" />
+                <Check className="h-4 w-4 text-foreground-muted mt-0.5 shrink-0" />
                 {f}
               </li>
             ))}
@@ -94,7 +94,7 @@ export function PricingCards() {
               <span className="font-display text-4xl font-semibold text-foreground">${premiumPrice}</span>
               <span className="text-foreground-muted"> /{isAnnual ? "year" : "month"}</span>
             </div>
-            <p className="text-sm text-forest font-medium mb-5 h-5">
+            <p className="text-sm text-[color:var(--gold)] font-medium mb-5 h-5">
               {isAnnual ? `That's $${(premiumPrice / 12).toFixed(2)}/mo — you save $${annualSavings.toFixed(2)}/year.` : ""}
             </p>
             <ul className="space-y-3 mb-8">
