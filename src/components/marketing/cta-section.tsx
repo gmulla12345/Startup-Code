@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 export function CTASection() {
   return (
     <section className="mx-auto max-w-6xl px-4 sm:px-6 py-20 md:py-28">
-      <div className="rounded-[var(--radius-xl)] bg-[linear-gradient(135deg,var(--ember),var(--ember-strong))] px-8 py-16 sm:py-20 text-center">
+      <div className="rounded-[var(--radius-xl)] bg-ember px-8 py-16 sm:py-20 text-center">
         <h2 className="font-display text-3xl sm:text-5xl font-semibold text-white max-w-2xl mx-auto leading-tight">
           Stop scrolling. Start experiencing.
         </h2>

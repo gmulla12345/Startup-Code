@@ -7,8 +7,6 @@ import type { Experience } from "@/types/database";
 export function Hero({ previewExperiences }: { previewExperiences: Experience[] }) {
   return (
     <section className="relative overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--ember-soft),transparent_60%)]" />
-
       <div className="relative mx-auto max-w-6xl px-4 sm:px-6 pt-16 pb-20 md:pt-24 md:pb-28">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
           <div>

@@ -15,7 +15,7 @@ export function AuthShell({
 }) {
   return (
     <div className="min-h-screen grid md:grid-cols-2">
-      <div className="hidden md:flex flex-col justify-between p-10 bg-[radial-gradient(circle_at_20%_20%,var(--forest-soft),var(--background)_60%)]">
+      <div className="hidden md:flex flex-col justify-between p-10 bg-surface-sunken">
         <Logo />
         <div>
           <h2 className="font-display text-4xl font-semibold leading-tight text-foreground max-w-md">
