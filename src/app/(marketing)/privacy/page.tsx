@@ -1,11 +1,15 @@
 import type { Metadata } from "next";
 import { LegalPage } from "@/components/marketing/legal-page";
 import { brand } from "@/lib/config/brand";
+import { canonical } from "@/lib/seo";
+import { BreadcrumbJsonLd } from "@/components/shared/breadcrumb-jsonld";
 
-export const metadata: Metadata = { title: "Privacy Policy" };
+export const metadata: Metadata = { title: "Privacy Policy", ...canonical("/privacy") };
 
 export default function PrivacyPolicyPage() {
   return (
+    <>
+    <BreadcrumbJsonLd items={[{ name: "Privacy Policy", path: "/privacy" }]} />
     <LegalPage title="Privacy Policy" updated="August 29, 2026">
       <p>
         This Privacy Notice for {brand.name} (&ldquo;we,&rdquo; &ldquo;us,&rdquo; or &ldquo;our&rdquo;) describes how
@@ -580,5 +584,6 @@ export default function PrivacyPolicyPage() {
         This Privacy Policy was created with the help of Termly&apos;s Privacy Policy Generator.
       </p>
     </LegalPage>
+    </>
   );
 }

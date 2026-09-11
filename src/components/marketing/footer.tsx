@@ -9,6 +9,7 @@ const COLUMNS = [
     links: [
       { label: "How it works", href: "/#how-it-works" },
       { label: "Pricing", href: "/pricing" },
+      { label: "Blog", href: "/blog" },
       { label: "FAQ", href: "/faq" },
       ...VS_PAGES.map((p) => ({ label: `${brand.name} vs ${p.competitor}`, href: `/vs/${p.slug}` })),
     ],

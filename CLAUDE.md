@@ -8,7 +8,7 @@
 >
 > Full setup/architecture docs: [README.md](README.md). Full DB schema: [src/db/schema.sql](src/db/schema.sql).
 
-**Last updated:** 2026-09-07
+**Last updated:** 2026-09-11
 
 ## What this is
 
@@ -1289,6 +1289,108 @@ dev server with *only* that Bearer header, zero cookies:
 
 Typecheck/lint/all 34 tests clean. Test accounts deleted afterward.
 
+## SEO push: technical fixes from a third-party audit, blog launched (2026-09-11)
+
+User's goal: get as many signups as possible on the website *before* the mobile app ships, via
+Instagram content (their own effort) plus a heavy SEO push. They ran (or had someone run) a
+third-party "Zolo SEO Action Plan" audit of `discoverzolo.com` and asked to implement everything
+actionable from it. Headline finding from that audit: 0 organic search sessions in a 90-day GA4
+window (60 total sessions, 90% direct/typed-URL traffic) — the site had real technical SEO gaps on
+top of "zolo" being an extremely crowded brand keyword (Zolo.ca, ZoloStays, Zolo.com the toy brand
+w/ Wikipedia page, etc. all outrank discoverzolo.com for bare "zolo").
+
+**Implemented (code-only fixes, no external account access needed):**
+
+- **Canonical tags on every indexable page** — new [src/lib/seo.ts](src/lib/seo.ts) `canonical()`
+  helper, spread into `metadata` on `/`, `/about`, `/careers`, `/contact`, `/faq`, `/pricing`,
+  `/privacy`, `/terms`, `/vs/[slug]`, `/travel/[destination]`, and the new `/blog` + `/blog/[slug]`
+  (see below). Previously zero pages had one, risking duplicate-URL indexing
+  (`discoverzolo.com` vs `.../` vs `https://...`).
+- **`noindex` on `/login`, `/signup`, `/reset-password`** — new
+  [src/app/(auth)/layout.tsx](<src/app/(auth)/layout.tsx>) (that route group had no layout at all
+  before, so these client-component pages couldn't export metadata themselves).
+- **Branded OG image** — generated `public/og-image.png` (1200×630, flat `--background` +
+  wordmark + `icon.png` mark, no gradient — matches the "take the fade away, don't recolor it"
+  design decision from earlier this session) and wired it into root layout's `openGraph.images` /
+  `twitter.images` as the site default. Pages that already set their own `openGraph.images` (real
+  photos on experience/travel pages) are unaffected — Next uses whichever `openGraph` object is
+  closest to the page.
+- **Homepage H1 now contains "Zolo"** without changing the tagline copy: added a small muted
+  "Discover Zolo" kicker line inside the same `<h1>` in
+  [hero.tsx](src/components/marketing/hero.tsx), above "Stop deciding. Start doing." — Google reads
+  the whole H1 element; visually it reads as a brand lockup, not a rewrite.
+- **Alt text fixed on the 3 homepage images that lacked it** — all three were the same
+  `alt=""` in [hero-recommendation-preview.tsx](src/components/marketing/hero-recommendation-preview.tsx)'s
+  `.map()`; now `alt={experience.title}`.
+- **`BreadcrumbList` structured data** added to every non-homepage indexable page — new
+  [breadcrumb-jsonld.tsx](src/components/shared/breadcrumb-jsonld.tsx), used on all the pages listed
+  under canonical tags above.
+- **Sitemap cleaned up** ([sitemap.ts](src/app/sitemap.ts)): removed `/login` + `/signup` (now
+  noindexed, shouldn't be listed); added `/about`, `/contact`, `/careers`, `/privacy`, `/terms`,
+  `/faq`, `/blog` + every blog post (all previously missing entirely).
+- **A real pre-existing categorization bug fixed**, matching the audit's exact complaint: Radio
+  City Music Hall, Rockefeller Center, the Beacon Theatre, Times Square, and Lincoln Center were all
+  showing "Outdoor Adventure" despite being indoor/mixed landmarks. Root cause in
+  [google-places-experience-provider.ts](src/services/providers/google-places-experience-provider.ts):
+  `tourist_attraction` — Google's real "notable place, unclear what kind" catch-all, covering
+  everything from plazas to fully-indoor theaters (the legacy Places API has no
+  `concert_hall`/`performing_arts_theater` type) — was mapped straight to `outdoor_adventure`. Fixed
+  by removing it from `CATEGORY_TYPE_PRIORITY` entirely, so a place with *only* that type now falls
+  through to the same `hidden_gem` default already used when nothing matches at all, instead of
+  asserting a specific, sometimes-false physical category. Verified live: all 5 named venues above
+  now show "Hidden Gem" instead of "Outdoor Adventure". Worth knowing: "Hidden Gem" reads a little
+  oddly on a mega-famous landmark like Rockefeller Center — it's the least-wrong existing bucket
+  given the data, not a perfect label; a real "Landmark"/"Attraction" category is a bigger,
+  separate schema change if this bothers anyone later.
+- **`/experience/[id]` pages set to `noindex, follow`** — this was the audit's own suggested fix
+  for its "thin content" finding (~106 words average, mostly identical to what's already on Google
+  Maps), applied instead of trying to hand-write unique copy for a live, unbounded, constantly-
+  changing Google Places catalog. `follow` so link equity (e.g. from "You might also like") still
+  passes through. **This deliberately removes every experience page from the sitemap and from
+  Google's index** — a real trade-off (loses long-tail per-place search traffic) in exchange for not
+  diluting the whole site's perceived content quality with thousands of near-duplicate thin pages.
+  Revisit once these pages have real unique content — the personalized "why it matches you"
+  reasoning already exists but only renders for logged-in users, invisible to Googlebot.
+- **Blog launched** — new content-as-data module
+  [blog-posts.ts](src/lib/content/blog-posts.ts) (same pattern as `vs-pages.ts`, no MDX pipeline),
+  `/blog` listing + `/blog/[slug]` detail pages, `BlogPosting` + `BreadcrumbList` JSON-LD, linked
+  from the marketing nav and footer. Shipped with 2 of the audit's ~20-post content calendar,
+  chosen deliberately as the lowest fabrication-risk topics (how AI recommendation engines work;
+  Tripadvisor vs Google Maps vs Zolo) — see "Deferred" below for why the rest wasn't written blind.
+- **Also removed the same faded-green radial-gradient banner** (the one already removed from the
+  homepage earlier this session per explicit "take away the fade" feedback) from `/about`, `/faq`,
+  `/pricing`, and `/vs/[slug]` — noticed while editing these exact files for the canonical-tag work,
+  fixed inline rather than leaving it inconsistent.
+
+Typecheck/lint/all 34 tests clean throughout.
+
+**Explicitly NOT done — flagged, not silently skipped:**
+
+- **Google Search Console + Google Business Profile setup** — the audit calls GSC "the single most
+  impactful thing you can do" (it's the only way to see what Google actually indexes/ranks for this
+  site) and it genuinely isn't set up. Needs the user's own Google account and, for the DNS-TXT
+  verification method, domain registrar/DNS access — not something to do without them. Once they
+  create the property, I can add a verification `<meta>` tag or file instantly if that's the chosen
+  method. Same story for a Google Business Profile (needs real business/location info I don't have).
+- **`sameAs` links in the Organization schema** — still deliberately omitted (see
+  [site-jsonld.tsx](src/components/shared/site-jsonld.tsx)'s existing comment: the handles in
+  `brand.ts`, `@zoloapp`/`@zolo`, belong to unrelated third parties). Add real ones once the
+  Instagram account the user is about to start actually exists.
+- **Backlink outreach, Product Hunt/AppSumo/startup-directory submissions** — business development
+  work, not something to send on the user's behalf without explicit per-message confirmation. Happy
+  to draft outreach copy or listing text on request.
+- **Remaining ~18 blog posts from the audit's 90-day content calendar**, and **expanding the 10
+  Travel Mode pages to 800-1,500+ words each** — deferred deliberately, not for lack of time: doing
+  this honestly means either real local/travel knowledge the user provides, or generating it from
+  live data, not freehand-written specifics (best-time-to-visit claims, neighborhood tips, "hidden
+  gem" call-outs) I can't verify. The About page's own promise is "never a fabricated fact" —
+  violating that in the travel content itself would be a real trust problem, not just a style one.
+- **Human-readable experience-page slugs** (audit issue: `/experience/g-ChIJ...` instead of
+  `/experience/radio-city-music-hall-new-york`) — lower priority now that these pages are
+  noindexed (the SEO benefit mostly evaporates), and the redirect/backward-compatibility work to do
+  it safely for already-indexed URLs is real scope. Revisit if/when experience pages come back into
+  the index with real unique content.
+
 ## Exact next steps (priority order)
 
 **Done since the last update:** deployed to production at `discoverzolo.com` (fixed a Vercel
@@ -1381,7 +1483,11 @@ reliably most-specific-first, which had been silently mislabeling some arts/cult
 "Outdoor & Adventure" for every user, Free included) — see dedicated section above; **added
 Bearer-token auth support to every API route** (`requireUser()` in `src/lib/api/auth.ts`) as
 groundwork for a separate mobile app, with zero changes needed at any of the 29 call sites — see
-dedicated section above.
+dedicated section above; **acted on a third-party SEO audit** — canonical tags, noindex on
+login/signup, a real OG image, homepage H1 now containing "Zolo", breadcrumb schema, sitemap
+cleanup, a blog (2 posts live), and the same Radio City Music Hall/Rockefeller Center/Beacon
+Theatre "Outdoor Adventure" mislabeling bug the audit flagged, all fixed and verified live — see
+dedicated section above for exactly what's done vs. deliberately deferred.
 
 1. Legal review of `/privacy` and `/terms` by an actual lawyer — Termly's questionnaire flow is a
    reasonable stand-in for launch, not a substitute for one.
@@ -1414,6 +1520,19 @@ dedicated section above.
    `{ type?: "surprise_me_ready" | "weekend_plan_reminder" | "trip_plan_reminder" | "re_engagement",
    itineraryId?: string, experienceId?: string }` — see `zolo-app/CLAUDE.md` for the app-side
    routing code this maps to (`src/lib/notification-routing.ts`).
+7. **Landing page should eventually drive App Store downloads once the app ships** (flagged
+   2026-09-11 by the user — explicitly not now, do not pick this up unprompted): once the mobile
+   app is actually live on the App Store, add a real download CTA/App Store badge to the marketing
+   site's landing page (likely the hero and/or a dedicated section) so website visitors convert into
+   app installs, not just web signups. Not worth building placeholder badges or a section before
+   there's a real App Store listing to link to — revisit once `zolo-app` has shipped.
+8. **SEO items that need the user, not just code** (see "SEO push" section above for full context):
+   set up Google Search Console (needs their Google account + DNS/domain access — the single most
+   impactful thing left per the audit, since it's the only way to see what Google actually indexes/
+   ranks for this site) and a Google Business Profile; add real `sameAs` social links to the
+   Organization schema once the Instagram account they're about to start actually exists; backlink
+   outreach and Product Hunt/AppSumo/directory submissions (can draft copy on request, but won't
+   send anything on their behalf without being asked).
 
 ## PayPal — deliberately deferred, do not pick this up unprompted (2026-09-01)
 

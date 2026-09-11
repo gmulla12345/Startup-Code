@@ -4,15 +4,17 @@ import Image from "next/image";
 import { ArrowRight, Compass, Sparkles, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { brand } from "@/lib/config/brand";
+import { canonical } from "@/lib/seo";
+import { BreadcrumbJsonLd } from "@/components/shared/breadcrumb-jsonld";
 
-export const metadata: Metadata = { title: "About" };
+export const metadata: Metadata = { title: "About", ...canonical("/about") };
 
 export default function AboutPage() {
   return (
     <div>
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--forest-soft),transparent_60%)]" />
-        <div className="relative mx-auto max-w-4xl px-4 sm:px-6 pt-20 pb-16 text-center">
+      <BreadcrumbJsonLd items={[{ name: "About", path: "/about" }]} />
+      <section>
+        <div className="mx-auto max-w-4xl px-4 sm:px-6 pt-20 pb-16 text-center">
           <p className="text-sm font-medium text-ember mb-4">Our story</p>
           <h1 className="font-display text-4xl sm:text-6xl font-semibold text-foreground leading-tight">
             Life is made of moments.

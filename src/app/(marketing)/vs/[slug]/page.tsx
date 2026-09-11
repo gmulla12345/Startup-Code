@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { ComparisonCellValue } from "@/components/marketing/comparison-cell";
 import { brand } from "@/lib/config/brand";
 import { VS_PAGES, getVsPage } from "@/lib/content/vs-pages";
+import { canonical } from "@/lib/seo";
+import { BreadcrumbJsonLd } from "@/components/shared/breadcrumb-jsonld";
 
 export function generateStaticParams() {
   return VS_PAGES.map((p) => ({ slug: p.slug }));
@@ -18,6 +20,7 @@ export async function generateMetadata({ params }: PageProps<"/vs/[slug]">): Pro
   return {
     title: `${brand.name} vs ${page.competitor}`,
     description: `${page.tagline}. See how ${brand.name} compares to ${page.competitor} for finding things to do.`,
+    ...canonical(`/vs/${slug}`),
   };
 }
 
@@ -39,10 +42,10 @@ export default async function VsPage({ params }: PageProps<"/vs/[slug]">) {
   return (
     <div>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <BreadcrumbJsonLd items={[{ name: `${brand.name} vs ${page.competitor}`, path: `/vs/${slug}` }]} />
 
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--forest-soft),transparent_60%)]" />
-        <div className="relative mx-auto max-w-3xl px-4 sm:px-6 pt-20 pb-14 text-center">
+      <section>
+        <div className="mx-auto max-w-3xl px-4 sm:px-6 pt-20 pb-14 text-center">
           <p className="text-sm font-medium text-ember mb-4">Compare</p>
           <h1 className="font-display text-4xl sm:text-5xl font-semibold text-foreground leading-tight">
             {brand.name} vs {page.competitor}

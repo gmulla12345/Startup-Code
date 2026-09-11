@@ -6,10 +6,13 @@ import { PricingCards } from "@/components/marketing/pricing-cards";
 import { ComparisonCellValue, type ComparisonCell } from "@/components/marketing/comparison-cell";
 import { brand } from "@/lib/config/brand";
 import { PRICING_FAQ_ITEMS } from "@/lib/content/pricing-faq";
+import { canonical } from "@/lib/seo";
+import { BreadcrumbJsonLd } from "@/components/shared/breadcrumb-jsonld";
 
 export const metadata: Metadata = {
   title: "Pricing — Free & Premium Plans",
   description: `See ${brand.name} pricing for personalized discovery, AI trip planning, and things to do near you. Free plan available. Premium from $19.99/month or $190/year — cancel anytime.`,
+  ...canonical("/pricing"),
 };
 
 const COMPARISON_ROWS: { feature: string; free: ComparisonCell; premium: ComparisonCell }[] = [
@@ -41,10 +44,10 @@ export default function PricingPage() {
   return (
     <div>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(PRICING_FAQ_JSON_LD) }} />
+      <BreadcrumbJsonLd items={[{ name: "Pricing", path: "/pricing" }]} />
 
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--forest-soft),transparent_60%)]" />
-        <div className="relative mx-auto max-w-3xl px-4 sm:px-6 pt-20 pb-14 text-center">
+      <section>
+        <div className="mx-auto max-w-3xl px-4 sm:px-6 pt-20 pb-14 text-center">
           <p className="text-sm font-medium text-ember mb-4">Pricing</p>
           <h1 className="font-display text-4xl sm:text-5xl font-semibold text-foreground leading-tight">
             Simple pricing that grows with you

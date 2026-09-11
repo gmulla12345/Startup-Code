@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import { MapPin, Clock, Briefcase } from "lucide-react";
 import { JobApplicationForm } from "@/components/marketing/job-application-form";
 import { brand } from "@/lib/config/brand";
+import { canonical } from "@/lib/seo";
+import { BreadcrumbJsonLd } from "@/components/shared/breadcrumb-jsonld";
 
-export const metadata: Metadata = { title: "Careers" };
+export const metadata: Metadata = { title: "Careers", ...canonical("/careers") };
 
 const ROLE = "Growth & Marketing Specialist";
 
@@ -28,6 +30,7 @@ const REQUIREMENTS = [
 export default function CareersPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 sm:px-6 py-16">
+      <BreadcrumbJsonLd items={[{ name: "Careers", path: "/careers" }]} />
       <p className="text-sm font-medium text-ember mb-3">Careers at {brand.name}</p>
       <h1 className="font-display text-4xl sm:text-5xl font-semibold text-foreground mb-4">Join us early.</h1>
       <p className="text-lg text-foreground-muted mb-12 max-w-xl">

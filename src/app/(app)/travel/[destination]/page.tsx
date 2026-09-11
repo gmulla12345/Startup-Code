@@ -9,6 +9,8 @@ import { createClient, getCurrentUser } from "@/lib/supabase/server";
 import { getSubscription, isPremium } from "@/lib/repositories/subscriptions";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { DestinationInfo } from "@/services/providers/types";
+import { canonical } from "@/lib/seo";
+import { BreadcrumbJsonLd } from "@/components/shared/breadcrumb-jsonld";
 
 export async function generateMetadata({ params }: PageProps<"/travel/[destination]">): Promise<Metadata> {
   const { destination } = await params;
@@ -18,6 +20,7 @@ export async function generateMetadata({ params }: PageProps<"/travel/[destinati
     title: `${dest.city} Travel Guide`,
     description: dest.description,
     openGraph: { title: `${dest.city}, ${dest.country}`, description: dest.description, images: [dest.coverImage] },
+    ...canonical(`/travel/${destination}`),
   };
 }
 
@@ -33,6 +36,7 @@ export default async function TravelDestinationPage({ params }: PageProps<"/trav
 
   return (
     <div>
+      <BreadcrumbJsonLd items={[{ name: dest.city, path: `/travel/${destination}` }]} />
       <div className="relative h-72 sm:h-96 w-full">
         <Image src={dest.coverImage} alt={dest.city} fill priority className="object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />

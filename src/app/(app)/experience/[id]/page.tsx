@@ -34,6 +34,14 @@ export async function generateMetadata({ params }: PageProps<"/experience/[id]">
       description: experience.shortDescription,
       images: experience.images.slice(0, 1),
     },
+    // Google-Places-sourced pages carry ~100 words of largely non-unique
+    // data Google can already find on Maps/Tripadvisor — indexing thousands
+    // of thin, near-duplicate pages like this can drag down how Google
+    // rates the whole site's content quality. `follow` so link equity still
+    // flows to/through these pages. Revisit once pages have real unique
+    // content (the personalized "why it matches you" reasoning is real, but
+    // only renders for logged-in users — invisible to Googlebot).
+    robots: { index: false, follow: true },
   };
 }
 

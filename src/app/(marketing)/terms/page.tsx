@@ -2,11 +2,15 @@ import type { Metadata } from "next";
 import { LegalPage } from "@/components/marketing/legal-page";
 import { brand } from "@/lib/config/brand";
 import { pricing } from "@/lib/config/pricing";
+import { canonical } from "@/lib/seo";
+import { BreadcrumbJsonLd } from "@/components/shared/breadcrumb-jsonld";
 
-export const metadata: Metadata = { title: "Terms of Service" };
+export const metadata: Metadata = { title: "Terms of Service", ...canonical("/terms") };
 
 export default function TermsOfServicePage() {
   return (
+    <>
+    <BreadcrumbJsonLd items={[{ name: "Terms of Service", path: "/terms" }]} />
     <LegalPage title="Terms of Service" updated="August 30, 2026">
       <p>
         These Terms of Service (&ldquo;Terms&rdquo;) form a legally binding agreement between you and{" "}
@@ -290,5 +294,6 @@ export default function TermsOfServicePage() {
         </p>
       </section>
     </LegalPage>
+    </>
   );
 }

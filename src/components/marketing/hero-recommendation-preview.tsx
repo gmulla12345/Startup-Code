@@ -34,7 +34,7 @@ export function HeroRecommendationPreview({ experiences }: { experiences: Experi
           <div key={experience.id} className="flex items-start gap-3 p-4">
             <div className="relative h-16 w-16 shrink-0 rounded-[var(--radius-md)] overflow-hidden bg-surface-sunken">
               {experience.images[0] && (
-                <Image src={experience.images[0]} alt="" fill sizes="64px" className="object-cover" />
+                <Image src={experience.images[0]} alt={experience.title} fill sizes="64px" className="object-cover" />
               )}
             </div>
             <div className="min-w-0 flex-1">

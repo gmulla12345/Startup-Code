@@ -28,16 +28,23 @@ export const metadata: Metadata = {
     template: `%s · ${brand.name}`,
   },
   description: brand.description,
+  alternates: { canonical: "/" },
   openGraph: {
     title: `${brand.name} — ${brand.tagline}`,
     description: brand.description,
     siteName: brand.name,
     type: "website",
+    url: brand.domain,
+    // Default social-preview image for any page that doesn't set its own
+    // openGraph.images (experience/travel pages override this with a real
+    // photo of the place). Generated from icon.png — see CLAUDE.md.
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: `${brand.name} — ${brand.tagline}` }],
   },
   twitter: {
     card: "summary_large_image",
     title: `${brand.name} — ${brand.tagline}`,
     description: brand.description,
+    images: ["/og-image.png"],
   },
   // No explicit `icons` here — favicon.ico, icon.png, and apple-icon.png in
   // this directory are auto-detected by Next's file-convention system and

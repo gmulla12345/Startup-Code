@@ -16,6 +16,7 @@ export function Hero({ previewExperiences }: { previewExperiences: Experience[] 
             </div>
 
             <h1 className="font-display text-5xl sm:text-6xl md:text-7xl font-semibold tracking-tight text-foreground leading-[1.05]">
+              <span className="block text-lg sm:text-xl font-medium text-foreground-muted mb-2">Discover Zolo</span>
               Stop deciding. Start <span className="text-ember">doing</span>.
             </h1>
 

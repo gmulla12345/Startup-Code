@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button";
 import { FaqAccordion, type FaqSection } from "@/components/marketing/faq-accordion";
 import { brand } from "@/lib/config/brand";
 import { PRICING_FAQ_ITEMS } from "@/lib/content/pricing-faq";
+import { canonical } from "@/lib/seo";
+import { BreadcrumbJsonLd } from "@/components/shared/breadcrumb-jsonld";
 
-export const metadata: Metadata = { title: "FAQ" };
+export const metadata: Metadata = { title: "FAQ", ...canonical("/faq") };
 
 export default function FaqPage() {
   const sections: FaqSection[] = [
@@ -99,9 +101,9 @@ export default function FaqPage() {
 
   return (
     <div>
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--forest-soft),transparent_60%)]" />
-        <div className="relative mx-auto max-w-3xl px-4 sm:px-6 pt-20 pb-14 text-center">
+      <BreadcrumbJsonLd items={[{ name: "FAQ", path: "/faq" }]} />
+      <section>
+        <div className="mx-auto max-w-3xl px-4 sm:px-6 pt-20 pb-14 text-center">
           <p className="text-sm font-medium text-ember mb-4">Support</p>
           <h1 className="font-display text-4xl sm:text-5xl font-semibold text-foreground leading-tight">
             Frequently asked questions

@@ -48,7 +48,6 @@ const PLACE_TYPE_TO_CATEGORY: Record<string, ExperienceCategory> = {
   gym: "sports_fitness",
   stadium: "sports_fitness",
   movie_theater: "music_entertainment",
-  tourist_attraction: "outdoor_adventure",
   park: "outdoor_adventure",
   amusement_park: "outdoor_adventure",
   zoo: "outdoor_adventure",
@@ -110,9 +109,19 @@ function priceLevelToBudget(level: number | undefined): BudgetLevel {
 // that reliably signal what a place fundamentally *is* above ones that are
 // very commonly just a secondary amenity on other kinds of places ("cafe",
 // "restaurant", "bar") or Google's own generic "notable place, unclear what
-// kind" catch-all ("tourist_attraction", checked last — only used when
-// nothing more specific matched, same as before this fix). Every entry here
-// must be a key of PLACE_TYPE_TO_CATEGORY.
+// kind" catch-all. Every entry here must be a key of PLACE_TYPE_TO_CATEGORY.
+//
+// Deliberately excludes "tourist_attraction" — it's Google's real
+// "notable place, unclear what kind" catch-all, covering everything from
+// outdoor plazas and monuments to fully indoor theaters and concert halls
+// (the legacy Places API has no "concert_hall"/"performing_arts_theater"
+// type). Mapping it to outdoor_adventure was a real bug: Radio City Music
+// Hall, Rockefeller Center, and the Beacon Theatre — all indoor or mixed —
+// were all mislabeled "Outdoor Adventure" since that was the only type
+// Google returned for them. Since there's no reliable signal to resolve it
+// either way, a place with *only* this type now falls through to the same
+// "hidden_gem" default used when nothing matches at all, rather than
+// asserting a specific, sometimes-false physical category.
 const CATEGORY_TYPE_PRIORITY = [
   "museum",
   "art_gallery",
@@ -128,7 +137,6 @@ const CATEGORY_TYPE_PRIORITY = [
   "restaurant",
   "bar",
   "cafe",
-  "tourist_attraction",
 ];
 
 function inferCategory(types: string[] | undefined): ExperienceCategory {
