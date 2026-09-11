@@ -7,6 +7,7 @@ import { SocialProof } from "@/components/marketing/social-proof";
 import { PricingSection } from "@/components/marketing/pricing-section";
 import { FAQ } from "@/components/marketing/faq";
 import { CTASection } from "@/components/marketing/cta-section";
+import { Reveal } from "@/components/marketing/reveal";
 import { getExperienceProvider } from "@/services/providers";
 
 // `absolute` bypasses the root layout's "%s · Zolo" title template — this
@@ -25,13 +26,13 @@ export default async function LandingPage() {
   return (
     <>
       <Hero previewExperiences={featured.slice(0, 3)} />
-      <FeatureGrid />
-      <ExampleRecommendations experiences={featured.slice(3, 6)} />
-      <HowItWorks />
-      <SocialProof />
-      <PricingSection />
-      <FAQ />
-      <CTASection />
+      <Reveal><FeatureGrid /></Reveal>
+      <Reveal><ExampleRecommendations experiences={featured.slice(3, 6)} /></Reveal>
+      <Reveal><HowItWorks /></Reveal>
+      <Reveal><SocialProof /></Reveal>
+      <Reveal><PricingSection /></Reveal>
+      <Reveal><FAQ /></Reveal>
+      <Reveal><CTASection /></Reveal>
     </>
   );
 }
