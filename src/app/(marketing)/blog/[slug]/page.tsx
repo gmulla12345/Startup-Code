@@ -63,6 +63,13 @@ export default async function BlogPostPage({ params }: PageProps<"/blog/[slug]">
                 {p}
               </p>
             ))}
+            {section.list && (
+              <ul className="list-disc list-outside pl-5 space-y-2">
+                {section.list.map((item, k) => (
+                  <li key={k}>{item}</li>
+                ))}
+              </ul>
+            )}
           </div>
         ))}
       </div>

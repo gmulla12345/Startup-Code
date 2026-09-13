@@ -3,6 +3,8 @@ import { brand } from "@/lib/config/brand";
 export interface BlogSection {
   heading?: string;
   paragraphs: string[];
+  /** Optional bullet list rendered after the section's paragraphs. */
+  list?: string[];
 }
 
 export interface BlogPost {
@@ -29,7 +31,7 @@ export const BLOG_POSTS: BlogPost[] = [
     title: "How AI Is Changing the Way We Discover Things to Do",
     description:
       "Search engines gave us more options than ever. Social feeds gave us envy. Here's how AI-driven personalization is starting to give us an actual plan instead.",
-    publishedAt: "2026-09-11",
+    publishedAt: "2026-09-05",
     readingMinutes: 6,
     sections: [
       {
@@ -72,7 +74,7 @@ export const BLOG_POSTS: BlogPost[] = [
     title: "Tripadvisor vs Google Maps vs Zolo: Which Is Best for Finding Things to Do?",
     description:
       "Three different tools solve three different problems. Here's when each one actually makes sense, and why they're not really competing with each other.",
-    publishedAt: "2026-09-11",
+    publishedAt: "2026-09-12",
     readingMinutes: 7,
     sections: [
       {
@@ -106,6 +108,75 @@ export const BLOG_POSTS: BlogPost[] = [
         paragraphs: [
           "In practice these tools aren't mutually exclusive. A reasonable flow: use Zolo when you don't know what you want yet and want a short, personalized list with a reason attached. Use Google Maps once you've picked something, to check hours and get directions. Use Tripadvisor when you're deep in trip-planning mode and want traveler consensus on the big, famous must-sees in a new city.",
           "Different jobs, different tools. The mistake is expecting a general-purpose map or a traveler review site to do the one thing neither was built for: understanding you specifically.",
+        ],
+      },
+    ],
+  },
+  {
+    slug: "fall-date-ideas-cozy-adventurous-budget-friendly",
+    title: "Fall Date Ideas: Cozy, Adventurous & Budget-Friendly Picks",
+    description:
+      "Real, doable date ideas for every fall mood — cozy nights in, outdoor adventures, and budget-friendly options that don't feel like a compromise.",
+    publishedAt: "2026-09-13",
+    readingMinutes: 7,
+    sections: [
+      {
+        paragraphs: [
+          "Fall has a way of making people want to plan something. The weather turns, the light gets softer earlier in the evening, and there's a built-in excuse for warm drinks, layers, and slower plans. But \"let's do something for fall\" often collapses into the same dinner reservation, because coming up with an actual idea — one that fits your budget, your energy level, and the person you're seeing — takes more thought than it should.",
+          "This isn't a list of the ten best pumpkin patches in America. It's a set of real, repeatable date categories organized by mood, so you can pick based on how you actually want the night to feel, then go find the specific version of it near you.",
+        ],
+      },
+      {
+        heading: "Cozy",
+        paragraphs: [
+          "Cozy dates work best when there's no rush — the point is unhurried conversation, not a packed itinerary. Good cozy dates share a few traits: comfortable seating, low noise, and something small to do with your hands (a mug, a menu, a book) so silences don't feel like a test.",
+        ],
+        list: [
+          "A coffee shop or tea house with actual seating, not a counter-service line — worth checking for one with couches or a window nook.",
+          "A bookstore date: wander separately for ten minutes, then each pick a book for the other and explain why.",
+          "Cooking a new recipe together at home — pick something neither of you has made before, so you're both a little bad at it together.",
+          "A wine or cocktail bar with a fireplace, or just genuinely comfortable indoor seating.",
+          "A matinee movie followed by a walk — matinees are cheaper and less crowded, and the walk after gives you something to talk about.",
+          "Hot chocolate or apple cider, then a slow walk through a neighborhood with good fall color.",
+          "A board game café, or just board games at home with good snacks.",
+        ],
+      },
+      {
+        heading: "Adventurous",
+        paragraphs: [
+          "Adventurous dates work well when you want a shared challenge or activity to anchor the conversation around — especially useful earlier in a relationship, when \"just talking\" for three hours can feel like a lot of pressure. The activity does some of the work for you.",
+        ],
+        list: [
+          "Apple picking or a pumpkin patch — genuinely fun even if you're not the type who'd normally do it.",
+          "A fall hike somewhere with real elevation change or a view — foliage season makes even a familiar trail feel new.",
+          "A corn maze or a local fall festival, if your area has one.",
+          "Kayaking or canoeing before it gets too cold — often quieter and cheaper in fall than peak summer.",
+          "An escape room — built-in teamwork, built-in stakes, over in an hour.",
+          "Indoor rock climbing, especially if neither of you has done it — shared beginner energy is a good icebreaker.",
+          "A scenic overlook or lookout point at sunset, ideally reached by a short drive or walk rather than just pulling up and parking.",
+        ],
+      },
+      {
+        heading: "Budget-Friendly",
+        paragraphs: [
+          "Budget-friendly doesn't have to mean \"the cheap option\" — it means picking something where the shared experience is the actual point, not the price tag. Some of the best fall dates cost almost nothing.",
+        ],
+        list: [
+          "Free museum days — many museums and galleries have a free day or free evening hours once a month; worth checking before you assume admission is required.",
+          "A public park walk timed for peak foliage — free, and genuinely one of the best fall activities regardless of budget.",
+          "A home-cooked picnic — pack food you already have, find a good spot, total cost close to zero.",
+          "Farmers markets — free to browse, and affordable for a shared snack or two while you walk through.",
+          "Free outdoor concerts or fall festivals — a lot of towns run these and they're easy to miss if you're not looking.",
+          "A library or community-center event — often free, often underrated as a date idea.",
+          "A scenic drive — the only real cost is gas, and fall is the best season for it.",
+          "A DIY tasting night at home — cheese, chocolate, cider, whatever you're into — cheap, low-effort to set up, and gives you something to actually discuss.",
+        ],
+      },
+      {
+        heading: "The real bottleneck isn't ideas — it's matching one to tonight",
+        paragraphs: [
+          `Reading a list like this is the easy part. The harder part is picking the right version of "cozy" or "adventurous" for a specific budget, a specific person, and a specific night — and then actually finding a real place nearby that fits, instead of falling back to the same restaurant again. That's the exact gap ${brand.name} is built to close: tell it your budget, your interests, and what kind of night you're going for, and it turns a mood ("something cozy, under $25, nothing we've already done") into a short list of real, specific places near you — with a reason attached for each one, not just a rating.`,
+          "If you'd rather not choose from a list at all, Surprise Me picks something for you directly — useful on the nights where the real obstacle isn't lack of options, it's decision fatigue. Either way, the categories above are a starting point, not the destination — the point is to land on a mood, then let something else handle turning that mood into an actual plan.",
         ],
       },
     ],
