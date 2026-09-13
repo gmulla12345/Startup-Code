@@ -119,9 +119,9 @@ function priceLevelToBudget(level: number | undefined): BudgetLevel {
 // Hall, Rockefeller Center, and the Beacon Theatre — all indoor or mixed —
 // were all mislabeled "Outdoor Adventure" since that was the only type
 // Google returned for them. Since there's no reliable signal to resolve it
-// either way, a place with *only* this type now falls through to the same
-// "hidden_gem" default used when nothing matches at all, rather than
-// asserting a specific, sometimes-false physical category.
+// either way, a place with *only* this type falls through to inferCategory's
+// own fallback below rather than asserting a specific, sometimes-false
+// physical category.
 const CATEGORY_TYPE_PRIORITY = [
   "museum",
   "art_gallery",
@@ -139,12 +139,37 @@ const CATEGORY_TYPE_PRIORITY = [
   "cafe",
 ];
 
-function inferCategory(types: string[] | undefined): ExperienceCategory {
+// Same bar `isHiddenGem` uses below — low review count *and* a high rating.
+// Shared so the "hidden_gem" category (a claim about how well-known a place
+// is) and the `isHiddenGem` flag can never disagree with each other.
+function isLowProfile(rating: number | undefined, reviewCount: number | undefined): boolean {
+  return (reviewCount ?? 0) < 200 && (rating ?? 0) >= 4.5;
+}
+
+// `rating`/`reviewCount` only matter for the fallback case (nothing in
+// CATEGORY_TYPE_PRIORITY matched — see the exclusion note above). First
+// pass at that fallback used "hidden_gem" unconditionally, which was itself
+// a real bug spotted live: Times Square — millions of reviews, about as far
+// from "hidden" as a place gets — showed a "Hidden Gem" badge on the
+// homepage for the same reason Radio City Music Hall used to show "Outdoor
+// Adventure": no more specific Google type to go on. "hidden_gem" is only
+// an honest label here when the place also looks genuinely low-profile by
+// the same signal `isHiddenGem` uses; a well-known landmark with the same
+// generic type instead falls back to "arts_culture" — the least-wrong
+// existing category for "notable sight, unclear specific kind" (fits
+// Rockefeller Center, Lincoln Center, and Radio City Music Hall well; even
+// for something like Times Square it's a soft, non-specific label rather
+// than a checkably false one).
+function inferCategory(
+  types: string[] | undefined,
+  rating: number | undefined,
+  reviewCount: number | undefined
+): ExperienceCategory {
   const present = new Set(types ?? []);
   for (const t of CATEGORY_TYPE_PRIORITY) {
     if (present.has(t)) return PLACE_TYPE_TO_CATEGORY[t];
   }
-  return "hidden_gem";
+  return isLowProfile(rating, reviewCount) ? "hidden_gem" : "arts_culture";
 }
 
 // Types that don't read as "specific" on their own — either pure Google
@@ -277,7 +302,7 @@ export class GooglePlacesExperienceProvider implements ExperienceProvider {
   constructor(private apiKey: string) {}
 
   private toExperience(place: GooglePlace, cityHint?: string): Experience {
-    const category = inferCategory(place.types);
+    const category = inferCategory(place.types, place.rating, place.user_ratings_total);
     const images = (place.photos ?? [])
       .slice(0, 5)
       .map((p) => photoUrl(p.photo_reference, this.apiKey));
@@ -340,7 +365,7 @@ export class GooglePlacesExperienceProvider implements ExperienceProvider {
       bestTimeOfDay: "any",
       rating: place.rating ?? null,
       reviewCount: place.user_ratings_total ?? 0,
-      isHiddenGem: (place.user_ratings_total ?? 0) < 200 && (place.rating ?? 0) >= 4.5,
+      isHiddenGem: isLowProfile(place.rating, place.user_ratings_total),
       isFeatured: false,
       isPremium: false,
       externalBookingUrl: `https://www.google.com/maps/place/?q=place_id:${place.place_id}`,
