@@ -72,9 +72,27 @@ interface GooglePlace {
   price_level?: number;
   types?: string[];
   photos?: { photo_reference: string }[];
-  opening_hours?: { open_now?: boolean };
+  // `weekday_text` (human-readable per-day hours) is only ever present on a
+  // Place Details response (fetchDetails), never on Nearby Search/list
+  // results — Google's Nearby Search doesn't support a field mask and
+  // simply never returns it, regardless of what's requested.
+  opening_hours?: { open_now?: boolean; weekday_text?: string[] };
   editorial_summary?: { overview?: string };
   reviews?: { text: string }[];
+  website?: string;
+  formatted_phone_number?: string;
+}
+
+// Google's weekday_text is a fixed Sunday-first array of 7 strings
+// ("Monday: 9:00 AM – 5:00 PM", ...) regardless of locale-specific week
+// start — JS's own Date#getDay() is 0=Sunday too, so no reindexing needed,
+// but weekday_text actually starts at Monday (index 0) per Google's docs,
+// so Sunday (getDay()===0) maps to the last entry.
+function todaysHours(weekdayText: string[] | undefined): string | null {
+  if (!weekdayText || weekdayText.length !== 7) return null;
+  const day = new Date().getDay();
+  const index = day === 0 ? 6 : day - 1;
+  return weekdayText[index] ?? null;
 }
 
 function addressComponent(components: AddressComponent[] | undefined, type: string): string | null {
@@ -373,6 +391,10 @@ export class GooglePlacesExperienceProvider implements ExperienceProvider {
       sourceId: place.place_id,
       requirements: [],
       availability: place.opening_hours?.open_now === undefined ? null : place.opening_hours.open_now ? "Open now" : "Closed now",
+      isOpenNow: place.opening_hours?.open_now ?? null,
+      hoursToday: todaysHours(place.opening_hours?.weekday_text),
+      website: place.website ?? null,
+      phone: place.formatted_phone_number ?? null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -438,7 +460,7 @@ export class GooglePlacesExperienceProvider implements ExperienceProvider {
     url.searchParams.set("place_id", placeId);
     url.searchParams.set(
       "fields",
-      "place_id,name,formatted_address,address_components,geometry,rating,user_ratings_total,price_level,types,photos,opening_hours,editorial_summary,reviews"
+      "place_id,name,formatted_address,address_components,geometry,rating,user_ratings_total,price_level,types,photos,opening_hours,editorial_summary,reviews,website,formatted_phone_number"
     );
     url.searchParams.set("key", this.apiKey);
 

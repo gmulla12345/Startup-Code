@@ -16,8 +16,12 @@ const FAQS = [
     a: "We combine structured filtering (your location, budget, and preferences), a deterministic scoring model, and AI reasoning to explain why each pick fits you — not just a raw popularity list.",
   },
   {
-    q: `Is booking handled through ${brand.name}?`,
-    a: "For experiences with a booking partner, we link you directly to their site. We never fabricate availability or pricing — if we don't have live data, we say so.",
+    q: `Does ${brand.name} handle booking?`,
+    a: `No. ${brand.name} is a discovery platform, not a booking platform. We help you find the right experience for you, then send you to the official source — the venue's website, Google Maps listing, or ticketing partner — to confirm details or make a reservation.`,
+  },
+  {
+    q: `How accurate is ${brand.name}'s place information?`,
+    a: "We pull venue data from Google's Places database, including ratings, addresses, and descriptions. We show what we know and clearly mark what we don't. Hours, pricing, and availability can change at any time — we always recommend confirming with the venue before heading out.",
   },
   {
     q: "What happens if I don't like a recommendation?",

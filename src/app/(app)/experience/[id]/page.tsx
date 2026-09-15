@@ -8,6 +8,7 @@ import { getSubscription, isPremium } from "@/lib/repositories/subscriptions";
 import { ExperienceGallery } from "@/components/experience/experience-gallery";
 import { MiniMap } from "@/components/experience/mini-map";
 import { ActionBar } from "@/components/experience/action-bar";
+import { BeforeYouGo } from "@/components/experience/before-you-go";
 import { PremiumLock } from "@/components/experience/premium-lock";
 import { ReviewsList } from "@/components/experience/reviews-list";
 import { ExperienceCard } from "@/components/experience/experience-card";
@@ -20,6 +21,7 @@ import { scoreExperience } from "@/services/recommendation/scoring";
 import type { Experience } from "@/types/database";
 import type { Metadata } from "next";
 import { canonical } from "@/lib/seo";
+import { brand } from "@/lib/config/brand";
 
 export async function generateMetadata({ params }: PageProps<"/experience/[id]">): Promise<Metadata> {
   const { id } = await params;
@@ -141,7 +143,8 @@ export default async function ExperienceDetailPage({ params }: PageProps<"/exper
         </span>
         {experience.rating && (
           <span className="inline-flex items-center gap-1">
-            <Star className="h-4 w-4 fill-[var(--gold)] text-[var(--gold)]" /> {experience.rating.toFixed(1)} ({experience.reviewCount})
+            <Star className="h-4 w-4 fill-[var(--gold)] text-[var(--gold)]" /> {experience.rating.toFixed(1)} Google
+            rating ({experience.reviewCount.toLocaleString()})
           </span>
         )}
         {experience.durationMinutes && (
@@ -189,6 +192,12 @@ export default async function ExperienceDetailPage({ params }: PageProps<"/exper
             <p className="text-foreground-muted leading-relaxed whitespace-pre-line">{experience.description}</p>
           </section>
 
+          {!locked && (
+            <section>
+              <BeforeYouGo experience={experience} />
+            </section>
+          )}
+
           {experience.requirements.length > 0 && (
             <section>
               <h2 className="font-display text-xl font-semibold text-foreground mb-3">Good to know</h2>
@@ -206,7 +215,7 @@ export default async function ExperienceDetailPage({ params }: PageProps<"/exper
           )}
 
           <section>
-            <h2 className="font-display text-xl font-semibold text-foreground mb-3">Reviews</h2>
+            <h2 className="font-display text-xl font-semibold text-foreground mb-3">{brand.name} community notes</h2>
             <ReviewsList reviews={reviews} />
           </section>
         </div>

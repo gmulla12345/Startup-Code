@@ -6,6 +6,7 @@ import { HowItWorks } from "@/components/marketing/how-it-works";
 import { ComparisonLinks } from "@/components/marketing/comparison-links";
 import { SocialProof } from "@/components/marketing/social-proof";
 import { PricingSection } from "@/components/marketing/pricing-section";
+import { DiscoveryLayer } from "@/components/marketing/discovery-layer";
 import { FAQ } from "@/components/marketing/faq";
 import { CTASection } from "@/components/marketing/cta-section";
 import { Reveal } from "@/components/marketing/reveal";
@@ -33,6 +34,7 @@ export default async function LandingPage() {
       <Reveal><ComparisonLinks /></Reveal>
       <Reveal><SocialProof /></Reveal>
       <Reveal><PricingSection /></Reveal>
+      <Reveal><DiscoveryLayer /></Reveal>
       <Reveal><FAQ /></Reveal>
       <Reveal><CTASection /></Reveal>
     </>

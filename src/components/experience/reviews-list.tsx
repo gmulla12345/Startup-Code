@@ -1,10 +1,15 @@
 import { Star } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
+import { brand } from "@/lib/config/brand";
 import type { Review } from "@/types/database";
 
 export function ReviewsList({ reviews }: { reviews: Review[] }) {
   if (reviews.length === 0) {
-    return <p className="text-sm text-foreground-muted">No reviews yet — be the first to try this one.</p>;
+    return (
+      <p className="text-sm text-foreground-muted">
+        No {brand.name} community notes yet — be the first to share your experience.
+      </p>
+    );
   }
 
   return (

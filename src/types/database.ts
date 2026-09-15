@@ -142,6 +142,15 @@ export interface Experience {
   sourceId: string | null;
   requirements: string[];
   availability: string | null;
+  // Optional — only Google Places' Place Details lookup (not Nearby
+  // Search/list results) returns these, so they're populated on the
+  // experience detail page's single-item fetch and left undefined
+  // everywhere else rather than guessed. Used by the "Before you go" trust
+  // box (see components/experience/before-you-go.tsx).
+  isOpenNow?: boolean | null;
+  hoursToday?: string | null;
+  website?: string | null;
+  phone?: string | null;
   createdAt: ISODateString;
   updatedAt: ISODateString;
 }

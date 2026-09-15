@@ -108,12 +108,22 @@ export function ActionBar({
     if (isAuthenticated) track("clicked_booking", experienceId);
   }
 
+  // The link is a genuine booking flow only for a real booking partner —
+  // for the overwhelming majority of (Google-Places-sourced) experiences,
+  // it's a Google Maps listing. "Book Now" on a link that just opens Maps
+  // is the exact trust gap an outside review flagged: users expect to book
+  // and instead land on a map. Label honestly based on what the link
+  // actually is instead of assuming every externalBookingUrl is a booking
+  // page.
+  const isGoogleMapsLink = externalBookingUrl?.includes("google.com/maps") ?? false;
+  const bookLabel = isGoogleMapsLink ? "Check on Google Maps" : "Book Now";
+
   return (
     <div className="flex items-center gap-3">
       {externalBookingUrl ? (
         <Button asChild size="lg" className="flex-1" onClick={handleBook}>
           <a href={externalBookingUrl} target="_blank" rel="noopener noreferrer">
-            Book Now
+            {bookLabel}
           </a>
         </Button>
       ) : (
