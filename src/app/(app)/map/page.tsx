@@ -8,6 +8,9 @@ import { getExperienceProvider } from "@/services/providers";
 import { DiscoveryMap } from "@/components/map/discovery-map";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatPrice } from "@/lib/utils/format";
+import { noindexMetadata } from "@/lib/seo";
+
+export const metadata = noindexMetadata;
 
 const DEFAULT_CENTER = { latitude: 39.2904, longitude: -76.6122 }; // Baltimore fallback
 

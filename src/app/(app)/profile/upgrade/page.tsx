@@ -5,6 +5,9 @@ import { createClient } from "@/lib/supabase/server";
 import { getSubscription, isPremium } from "@/lib/repositories/subscriptions";
 import { brand } from "@/lib/config/brand";
 import { PremiumPlanCard } from "@/components/profile/premium-plan-card";
+import { noindexMetadata } from "@/lib/seo";
+
+export const metadata = noindexMetadata;
 
 export default async function UpgradePage() {
   const supabase = await createClient();

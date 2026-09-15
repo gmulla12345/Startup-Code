@@ -19,6 +19,7 @@ import { getProfileByUserId } from "@/lib/repositories/profile";
 import { scoreExperience } from "@/services/recommendation/scoring";
 import type { Experience } from "@/types/database";
 import type { Metadata } from "next";
+import { canonical } from "@/lib/seo";
 
 export async function generateMetadata({ params }: PageProps<"/experience/[id]">): Promise<Metadata> {
   const { id } = await params;
@@ -34,6 +35,12 @@ export async function generateMetadata({ params }: PageProps<"/experience/[id]">
       description: experience.shortDescription,
       images: experience.images.slice(0, 1),
     },
+    // Without this, a page that doesn't set its own `alternates` inherits
+    // the root layout's `alternates.canonical: "/"` — every one of these
+    // pages was silently telling Google its canonical URL was the homepage.
+    // Real bug, worth fixing even though the page is noindexed below: a
+    // wrong canonical is still a wrong signal if this page is ever crawled.
+    ...canonical(`/experience/${experience.slug}`),
     // Google-Places-sourced pages carry ~100 words of largely non-unique
     // data Google can already find on Maps/Tripadvisor — indexing thousands
     // of thin, near-duplicate pages like this can drag down how Google

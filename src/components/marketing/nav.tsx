@@ -44,7 +44,11 @@ export function MarketingNav() {
           </Button>
         </div>
 
-        <button className="md:hidden" onClick={() => setOpen((o) => !o)} aria-label="Toggle menu">
+        <button
+          className="md:hidden p-2.5 -mr-2.5 flex items-center justify-center"
+          onClick={() => setOpen((o) => !o)}
+          aria-label="Toggle menu"
+        >
           {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
         </button>
       </div>

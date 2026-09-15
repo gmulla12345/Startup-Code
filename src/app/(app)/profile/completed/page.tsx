@@ -8,6 +8,9 @@ import { getExperienceProvider } from "@/services/providers";
 import { ExperienceCard } from "@/components/experience/experience-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { noindexMetadata } from "@/lib/seo";
+
+export const metadata = noindexMetadata;
 
 export default async function CompletedPage() {
   const user = await getCurrentUser();

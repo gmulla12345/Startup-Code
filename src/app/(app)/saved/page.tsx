@@ -8,6 +8,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Compass } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { noindexMetadata } from "@/lib/seo";
+
+export const metadata = noindexMetadata;
 
 export default async function SavedPage() {
   const user = await getCurrentUser();

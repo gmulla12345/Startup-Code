@@ -2,9 +2,22 @@ import { brand } from "@/lib/config/brand";
 
 export interface BlogSection {
   heading?: string;
+  /**
+   * Supports light inline markup: `[label](/path)` renders as a real
+   * internal link (parsed in blog/[slug]/page.tsx) — kept as plain strings
+   * rather than JSX so this stays content-as-data, same pattern as
+   * vs-pages.ts.
+   */
   paragraphs: string[];
   /** Optional bullet list rendered after the section's paragraphs. */
   list?: string[];
+  /** Optional comparison table rendered after the section's paragraphs/list. */
+  table?: { headers: string[]; rows: string[][] };
+}
+
+export interface BlogFaqItem {
+  q: string;
+  a: string;
 }
 
 export interface BlogPost {
@@ -15,7 +28,11 @@ export interface BlogPost {
   /** ISO date (YYYY-MM-DD). */
   publishedAt: string;
   readingMinutes: number;
+  /** Rendered near the top of the post and used as its social-share image. */
+  heroImage?: { src: string; alt: string };
   sections: BlogSection[];
+  /** Rendered at the end of the post with FAQPage structured data. */
+  faq?: BlogFaqItem[];
 }
 
 // Content-as-data, same pattern as vs-pages.ts, so posts can be added
@@ -32,7 +49,11 @@ export const BLOG_POSTS: BlogPost[] = [
     description:
       "Search engines gave us more options than ever. Social feeds gave us envy. Here's how AI-driven personalization is starting to give us an actual plan instead.",
     publishedAt: "2026-09-05",
-    readingMinutes: 6,
+    readingMinutes: 8,
+    heroImage: {
+      src: "https://images.unsplash.com/photo-1522199755839-a2bacb67c546?auto=format&fit=crop&w=1600&q=80",
+      alt: "A laptop showing a photo collage next to a warm drink, evoking browsing for something to do",
+    },
     sections: [
       {
         paragraphs: [
@@ -44,7 +65,7 @@ export const BLOG_POSTS: BlogPost[] = [
         heading: "From directories, to search, to feeds",
         paragraphs: [
           "Discovery has moved through a few distinct eras. First came directories — phone books, local guides, word of mouth. Then search engines, which indexed the entire web and let you ask a specific question, but left the ranking and filtering to you. Then review aggregators and social feeds, which added a popularity signal (star ratings, likes) on top of search, but optimized for engagement and consensus rather than fit.",
-          "Each step added more raw material. None of them actually answered the question people are asking, which isn't \"what exists near me\" — it's \"what should I, specifically, do.\"",
+          "Each step added more raw material. None of them actually answered the question people are asking, which isn't \"what exists near me\" — it's \"what should I, specifically, do.\" See [Tripadvisor vs Google Maps vs Zolo](/blog/tripadvisor-vs-google-maps-vs-zolo) for how those two specific tools fit into this history.",
         ],
       },
       {
@@ -55,17 +76,48 @@ export const BLOG_POSTS: BlogPost[] = [
         ],
       },
       {
+        heading: "How to tell if a recommendation engine is actually personalized",
+        paragraphs: [
+          "\"Personalized\" gets slapped on a lot of products that aren't, really — a lot of what's marketed as personalization is just popularity ranking with your city plugged in. A few honest questions can tell the difference:",
+        ],
+        list: [
+          "Does it ask about your budget and interests up front, or just your location? Location alone isn't personalization — it's a filter everyone else gets too.",
+          "If you dismiss a recommendation, does the next one visibly change, or does the list stay basically the same? A system that doesn't react to feedback isn't learning anything.",
+          "Does it explain why it picked something, or just show a star rating? A rating is Google Maps' job. A reason is the personalization layer's job.",
+          "Would two different people in the same city, with different stated interests, actually see different results? If everyone sees the same \"top picks,\" it's a popularity list wearing a personalization label.",
+        ],
+      },
+      {
         heading: "Where this still needs a human",
         paragraphs: [
           "It's worth being honest about the limits here too. AI recommendation engines are good at narrowing a huge field down to a short, relevant list based on patterns — interests, budget, location, past behavior. They are not a substitute for checking real-time details before you actually go: hours change, venues close, availability shifts. A system that fabricates confidence about live details it doesn't actually have is worse than one that says \"we don't know, verify before you go.\"",
-          "The honest version of this technology narrows the field and explains its reasoning — it doesn't pretend to know things it can't.",
+          "The honest version of this technology narrows the field and explains its reasoning — it doesn't pretend to know things it can't. See our [FAQ](/faq) for more on how we handle the line between what we know for certain and what we don't.",
         ],
       },
       {
         heading: "Where personalized discovery is headed",
         paragraphs: [
           `The next step isn't more data — it's better use of the data you already generate just by living your life. Every place you save, skip, or actually go to is a signal. The systems that get this right treat every interaction as an update, not just a click to log, so week two's recommendations are measurably sharper than week one's, and a trip itinerary can be edited conversationally instead of regenerated from scratch. That's the direction ${brand.name} is built around: structured filtering and scoring doing the heavy lifting, AI reasoning explaining the "why," and the whole system getting sharper with actual use — not a longer list, a better one.`,
+          "If you want to see the difference between this and a straightforward map or review site, [see how Zolo compares to Google Maps](/vs/zolo-vs-google-maps), or just [create a free account](/signup) and check your first week of recommendations against your second.",
         ],
+      },
+    ],
+    faq: [
+      {
+        q: "Does AI-based discovery replace using your own judgment?",
+        a: "No — it narrows a huge field down to a short, relevant list and explains its reasoning. Verifying live details (hours, availability, whether it's genuinely a fit tonight) is still on you, and any honest recommendation engine will say so rather than pretend to know things it can't.",
+      },
+      {
+        q: "How is this different from a popularity ranking?",
+        a: "A popularity ranking (star ratings, review counts) shows the same list to everyone. Genuine personalization factors in your specific budget, interests, and past feedback, so two different people can get two different, equally valid short lists.",
+      },
+      {
+        q: "Can I influence what an AI recommendation engine shows me?",
+        a: `Yes, in a well-built one. On ${brand.name}, dismissing a recommendation or tapping "Not for me" adjusts what you see next immediately — the system is meant to react to feedback, not just log it.`,
+      },
+      {
+        q: "Is this the same thing as a chatbot?",
+        a: "No. A chatbot answers questions you type. A recommendation engine like this proactively narrows real options down to a short list based on your profile — you can still ask it things conversationally (like editing a trip plan by chatting), but the core job is filtering and ranking, not conversation.",
       },
     ],
   },
@@ -75,7 +127,11 @@ export const BLOG_POSTS: BlogPost[] = [
     description:
       "Three different tools solve three different problems. Here's when each one actually makes sense, and why they're not really competing with each other.",
     publishedAt: "2026-09-12",
-    readingMinutes: 7,
+    readingMinutes: 9,
+    heroImage: {
+      src: "https://images.unsplash.com/photo-1526779259212-939e64788e3c?auto=format&fit=crop&w=1600&q=80",
+      alt: "A person sitting on a rock overlooking water at sunset, exploring somewhere new",
+    },
     sections: [
       {
         paragraphs: [
@@ -86,14 +142,14 @@ export const BLOG_POSTS: BlogPost[] = [
         heading: "Google Maps: the map of everything",
         paragraphs: [
           "Google Maps' strength is comprehensiveness. It has more places, more reviews, and more real-time data (hours, busy times, live directions) than almost anything else on the internet. If you already know what you're looking for — \"coffee near me,\" \"the address of this restaurant,\" \"is this place open right now\" — nothing beats it.",
-          "Its weakness is the flip side of the same strength: it's a map of literally everything, with no sense of who's looking. Search \"things to do near me\" and you get the same ranked list everyone else gets, sorted mostly by popularity and proximity, with no idea whether you're into quiet museums or loud bars. It answers \"what's there,\" not \"what fits me.\"",
+          "Its weakness is the flip side of the same strength: it's a map of literally everything, with no sense of who's looking. Search \"things to do near me\" and you get the same ranked list everyone else gets, sorted mostly by popularity and proximity, with no idea whether you're into quiet museums or loud bars. It answers \"what's there,\" not \"what fits me.\" [See a fuller comparison](/vs/zolo-vs-google-maps).",
         ],
       },
       {
         heading: "Tripadvisor: the traveler's consensus",
         paragraphs: [
           "Tripadvisor is built for a specific moment: you're traveling somewhere unfamiliar and want a second opinion from people who've already been there. Its review depth and \"Top 10 things to do in [city]\" lists are genuinely useful for orienting yourself in a new place fast.",
-          "The tradeoff is that it optimizes for consensus, which tends to concentrate attention on the same handful of famous attractions in every city — the ones already crowded with other tourists reading the same list. It's also built around trips, not your regular weekend at home, and like Google Maps, it isn't personalizing to your specific interests or budget — everyone sees roughly the same \"best of\" ranking.",
+          "The tradeoff is that it optimizes for consensus, which tends to concentrate attention on the same handful of famous attractions in every city — the ones already crowded with other tourists reading the same list. It's also built around trips, not your regular weekend at home, and like Google Maps, it isn't personalizing to your specific interests or budget — everyone sees roughly the same \"best of\" ranking. [More on how Zolo differs from Tripadvisor specifically](/vs/zolo-vs-tripadvisor).",
         ],
       },
       {
@@ -104,11 +160,48 @@ export const BLOG_POSTS: BlogPost[] = [
         ],
       },
       {
+        heading: "Side by side",
+        paragraphs: ["A quick way to see how the three actually differ in practice:"],
+        table: {
+          headers: ["", "Google Maps", "Tripadvisor", "Zolo"],
+          rows: [
+            ["Best for", "\"I know what I want\"", "Trip research in a new city", "\"I don't know what I want yet\""],
+            ["Personalized to you", "No", "No", "Yes — interests, budget, personality"],
+            ["Explains its reasoning", "No", "No", "Yes, in plain language"],
+            ["Real-time hours & directions", "Yes", "Limited", "Links out to Maps for this"],
+            ["Traveler review depth", "High", "Very high", "Not its focus"],
+            ["Good for a regular weekend at home", "Yes, if you already know where", "Not really — trip-focused", "Yes — this is the core use case"],
+          ],
+        },
+      },
+      {
         heading: "Using them together",
         paragraphs: [
           "In practice these tools aren't mutually exclusive. A reasonable flow: use Zolo when you don't know what you want yet and want a short, personalized list with a reason attached. Use Google Maps once you've picked something, to check hours and get directions. Use Tripadvisor when you're deep in trip-planning mode and want traveler consensus on the big, famous must-sees in a new city.",
-          "Different jobs, different tools. The mistake is expecting a general-purpose map or a traveler review site to do the one thing neither was built for: understanding you specifically.",
+          "Different jobs, different tools. The mistake is expecting a general-purpose map or a traveler review site to do the one thing neither was built for: understanding you specifically. If that's the gap you keep hitting, [see Zolo's pricing](/pricing) or [create a free account](/signup) to try it against your own weekend.",
         ],
+      },
+    ],
+    faq: [
+      {
+        q: "Is Zolo a Tripadvisor alternative?",
+        a: "It solves a different problem more than it competes directly — Tripadvisor is built for researching a trip to an unfamiliar city, while Zolo is built for personalized discovery anywhere, including your own city on a regular weekend. Many people use both.",
+      },
+      {
+        q: "Can I use Zolo and Google Maps together?",
+        a: "Yes, and that's the intended flow — Zolo narrows down what to do, then every recommendation links out to real map data for directions, hours, and live details rather than duplicating what Google Maps already does better.",
+      },
+      {
+        q: "Does Zolo replace Google Maps directions?",
+        a: "No. Zolo doesn't build its own maps or directions product — it links out to Google Maps for that, since that's already the best tool for the job.",
+      },
+      {
+        q: "Is Tripadvisor better for international travel?",
+        a: "For researching a new city's must-see attractions and reading dense traveler reviews before a trip, Tripadvisor's depth is hard to beat. Zolo's Travel Mode covers a growing set of destinations with personalized recommendations and AI-planned itineraries, but it isn't trying to replace Tripadvisor's review archive.",
+      },
+      {
+        q: "Which is better for a local weekend, not a trip?",
+        a: "Zolo — it's built specifically for \"what should I do near me this weekend,\" personalized to your interests and budget, whereas Google Maps and Tripadvisor both work better once you already know roughly what you're looking for.",
       },
     ],
   },
@@ -118,7 +211,11 @@ export const BLOG_POSTS: BlogPost[] = [
     description:
       "Real, doable date ideas for every fall mood — cozy nights in, outdoor adventures, and budget-friendly options that don't feel like a compromise.",
     publishedAt: "2026-09-13",
-    readingMinutes: 7,
+    readingMinutes: 8,
+    heroImage: {
+      src: "https://images.unsplash.com/photo-1476820865390-c52aeebb9891?auto=format&fit=crop&w=1600&q=80",
+      alt: "A quiet road lined with orange and red fall foliage",
+    },
     sections: [
       {
         paragraphs: [
@@ -175,9 +272,27 @@ export const BLOG_POSTS: BlogPost[] = [
       {
         heading: "The real bottleneck isn't ideas — it's matching one to tonight",
         paragraphs: [
-          `Reading a list like this is the easy part. The harder part is picking the right version of "cozy" or "adventurous" for a specific budget, a specific person, and a specific night — and then actually finding a real place nearby that fits, instead of falling back to the same restaurant again. That's the exact gap ${brand.name} is built to close: tell it your budget, your interests, and what kind of night you're going for, and it turns a mood ("something cozy, under $25, nothing we've already done") into a short list of real, specific places near you — with a reason attached for each one, not just a rating.`,
-          "If you'd rather not choose from a list at all, Surprise Me picks something for you directly — useful on the nights where the real obstacle isn't lack of options, it's decision fatigue. Either way, the categories above are a starting point, not the destination — the point is to land on a mood, then let something else handle turning that mood into an actual plan.",
+          `Reading a list like this is the easy part. The harder part is picking the right version of "cozy" or "adventurous" for a specific budget, a specific person, and a specific night — and then actually finding a real place nearby that fits, instead of falling back to the same restaurant again. That's the exact gap ${brand.name} is built to close: tell it your budget, your interests, and what kind of night you're going for, and it turns a mood ("something cozy, under $25, nothing we've already done") into a short list of real, specific places near you — with a reason attached for each one, not just a rating. [See how the matching actually works](/blog/how-ai-is-changing-the-way-we-discover-things-to-do).`,
+          `If you'd rather not choose from a list at all, Surprise Me picks something for you directly — useful on the nights where the real obstacle isn't lack of options, it's decision fatigue. Either way, the categories above are a starting point, not the destination — the point is to land on a mood, then let something else handle turning that mood into an actual plan. [Create a free account](/signup) or [see what's included with Premium](/pricing) if you want unlimited personalized picks all season.`,
         ],
+      },
+    ],
+    faq: [
+      {
+        q: "How much should a fall date actually cost?",
+        a: "Whatever fits your actual budget — several ideas above (park walks, farmers markets, home-cooked picnics, library events) cost close to nothing, and the \"budget-friendly\" category exists specifically because a low price tag doesn't have to mean a lower-effort date.",
+      },
+      {
+        q: "What if the weather ruins an outdoor plan?",
+        a: "Have a cozy-category backup in mind before you go, especially for anything in the adventurous list — a hike or scenic drive can turn into a bookstore visit or a home-cooked recipe night with almost no lost planning.",
+      },
+      {
+        q: "How far in advance should I plan a fall date?",
+        a: "For anything with limited capacity or a specific event (a corn maze, a festival, a popular restaurant), a few days ahead is safer. Most of the ideas here — a park walk, a coffee shop, a scenic drive — work fine decided same-day.",
+      },
+      {
+        q: "What if we've already done everything on this list?",
+        a: "That's the point where a general list stops being useful and you need something matched to your specific interests and city — which is exactly what a personalized discovery tool like Zolo is for, rather than a longer version of the same generic list.",
       },
     ],
   },

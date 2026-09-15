@@ -12,6 +12,9 @@ import { BillingHistory } from "@/components/profile/billing-history";
 import { LogoutButton } from "@/components/profile/logout-button";
 import { INTERESTS } from "@/lib/config/taxonomy";
 import { deriveArchetype } from "@/lib/utils/archetype";
+import { noindexMetadata } from "@/lib/seo";
+
+export const metadata = noindexMetadata;
 
 export default async function ProfilePage() {
   const supabase = await createClient();

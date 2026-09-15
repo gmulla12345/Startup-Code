@@ -8,6 +8,10 @@ import { brand } from "@/lib/config/brand";
 
 const FAQS = [
   {
+    q: `Is Discover Zolo related to Zolo.ca or other companies named "Zolo"?`,
+    a: `No. "Zolo" is used by several unrelated companies, including Zolo.ca (Canadian real estate) and ZoloStays (co-living in India). Discover Zolo, at discoverzolo.com, is an independent personalized discovery platform — not affiliated with any of them.`,
+  },
+  {
     q: `How does ${brand.name} pick recommendations for me?`,
     a: "We combine structured filtering (your location, budget, and preferences), a deterministic scoring model, and AI reasoning to explain why each pick fits you — not just a raw popularity list.",
   },

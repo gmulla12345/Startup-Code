@@ -16,8 +16,12 @@ export default function FaqPage() {
       title: "Getting started",
       items: [
         {
-          q: `What is ${brand.name}?`,
-          a: `${brand.name} is a personalized discovery platform. Tell it your interests, budget, and location, and it recommends real-world experiences, activities, and hidden gems worth actually doing — each with a reason, not just a list.`,
+          q: `What is Discover Zolo?`,
+          a: `Discover Zolo (the app is simply called "${brand.name}") is a personalized discovery platform. Tell it your interests, budget, and location, and it recommends real-world experiences, activities, and hidden gems worth actually doing — each with a reason, not just a list.`,
+        },
+        {
+          q: "Is Discover Zolo the same company as Zolo.ca, ZoloStays, or other companies named \"Zolo\"?",
+          a: "No. \"Zolo\" is used by several unrelated companies — including Zolo.ca (Canadian real estate), ZoloStays (co-living in India), and others. Discover Zolo, at discoverzolo.com, is an independent personalized discovery platform for things to do and travel — not affiliated with any of them.",
         },
         {
           q: "Is it available where I live?",
@@ -99,8 +103,21 @@ export default function FaqPage() {
     },
   ];
 
+  const faqJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: sections.flatMap((section) =>
+      section.items.map((item) => ({
+        "@type": "Question",
+        name: item.q,
+        acceptedAnswer: { "@type": "Answer", text: item.a },
+      }))
+    ),
+  };
+
   return (
     <div>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
       <BreadcrumbJsonLd items={[{ name: "FAQ", path: "/faq" }]} />
       <section>
         <div className="mx-auto max-w-3xl px-4 sm:px-6 pt-20 pb-14 text-center">
@@ -114,6 +131,18 @@ export default function FaqPage() {
               Email us
             </a>
             .
+          </p>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-3xl px-4 sm:px-6">
+        <div className="rounded-[var(--radius-lg)] border border-border bg-surface p-6 mb-12">
+          <h2 className="font-display text-lg font-semibold text-foreground mb-2">What is Discover Zolo?</h2>
+          <p className="text-sm text-foreground-muted leading-relaxed">
+            Discover Zolo is a personalized discovery platform — not a real estate marketplace, not a co-living
+            brand, and not affiliated with any other company that happens to use &quot;Zolo&quot; in its name.
+            We recommend real-world experiences, activities, and hidden gems based on your interests, budget, and
+            personality, with a plain-language reason behind every pick.
           </p>
         </div>
       </section>

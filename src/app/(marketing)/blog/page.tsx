@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { format } from "date-fns";
 import { brand } from "@/lib/config/brand";
 import { canonical } from "@/lib/seo";
@@ -30,13 +31,20 @@ export default function BlogIndexPage() {
           <Link
             key={post.slug}
             href={`/blog/${post.slug}`}
-            className="block rounded-[var(--radius-lg)] border border-border bg-surface p-6 hover:border-border-strong transition-colors"
+            className="flex gap-5 rounded-[var(--radius-lg)] border border-border bg-surface p-6 hover:border-border-strong transition-colors"
           >
-            <p className="text-xs text-foreground-subtle mb-2">
-              {format(new Date(`${post.publishedAt}T12:00:00`), "MMMM d, yyyy")} · {post.readingMinutes} min read
-            </p>
-            <h2 className="font-display text-xl font-semibold text-foreground mb-2">{post.title}</h2>
-            <p className="text-sm text-foreground-muted leading-relaxed">{post.description}</p>
+            {post.heroImage && (
+              <div className="relative hidden sm:block w-32 h-24 shrink-0 rounded-[var(--radius-md)] overflow-hidden">
+                <Image src={post.heroImage.src} alt={post.heroImage.alt} fill className="object-cover" />
+              </div>
+            )}
+            <div>
+              <p className="text-xs text-foreground-subtle mb-2">
+                {format(new Date(`${post.publishedAt}T12:00:00`), "MMMM d, yyyy")} · {post.readingMinutes} min read
+              </p>
+              <h2 className="font-display text-xl font-semibold text-foreground mb-2">{post.title}</h2>
+              <p className="text-sm text-foreground-muted leading-relaxed">{post.description}</p>
+            </div>
           </Link>
         ))}
       </div>

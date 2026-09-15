@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
+import { noindexMetadata } from "@/lib/seo";
 import { createClient, getCurrentUser } from "@/lib/supabase/server";
 import { getProfileByUserId } from "@/lib/repositories/profile";
 import { getRecommendations } from "@/services/recommendation/engine";
@@ -9,6 +10,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistance } from "@/lib/utils/format";
 import { distanceMiles } from "@/lib/utils/geo";
 import type { Profile } from "@/types/database";
+
+export const metadata = noindexMetadata;
 
 function greeting(): string {
   const hour = new Date().getHours();

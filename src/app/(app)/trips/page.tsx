@@ -7,6 +7,9 @@ import { listItineraries } from "@/lib/repositories/itineraries";
 import { getTravelProvider } from "@/services/providers";
 import { WeekendPlanner } from "@/components/trips/weekend-planner";
 import { TravelModeSearch } from "@/components/trips/travel-mode-search";
+import { noindexMetadata } from "@/lib/seo";
+
+export const metadata = noindexMetadata;
 
 export default async function TripsPage() {
   const supabase = await createClient();

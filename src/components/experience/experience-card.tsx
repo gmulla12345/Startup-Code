@@ -116,7 +116,7 @@ export function ExperienceCard({
         <button
           onClick={handleSave}
           aria-label={isSaved ? "Unsave" : "Save"}
-          className="absolute top-3 right-3 h-8 w-8 rounded-full bg-white/90 flex items-center justify-center transition-colors hover:bg-white"
+          className="absolute top-2 right-2 h-11 w-11 rounded-full bg-white/90 flex items-center justify-center transition-colors hover:bg-white"
         >
           <Heart className={cn("h-4 w-4", isSaved ? "fill-ember text-ember" : "text-foreground")} />
         </button>

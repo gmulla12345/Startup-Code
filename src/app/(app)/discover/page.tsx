@@ -2,6 +2,9 @@ import { createClient, getCurrentUser } from "@/lib/supabase/server";
 import { getProfileByUserId } from "@/lib/repositories/profile";
 import { getSubscription, isPremium } from "@/lib/repositories/subscriptions";
 import { DiscoverGrid } from "@/components/discover/discover-grid";
+import { noindexMetadata } from "@/lib/seo";
+
+export const metadata = noindexMetadata;
 
 // Falls back to New York when the visitor is logged out or hasn't set a
 // location yet, so Discover has real (Google Places-sourced) results to

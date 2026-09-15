@@ -41,7 +41,19 @@ export function FaqAccordion({ sections }: { sections: FaqSection[] }) {
                       )}
                     />
                   </button>
-                  {isOpen && <p className="px-5 pb-4 text-sm text-foreground-muted leading-relaxed">{item.a}</p>}
+                  {/*
+                   * Always rendered (not conditionally mounted) so every
+                   * answer is present in the static HTML for search
+                   * engines/AI crawlers — only the CSS grid row height
+                   * collapses to 0 for the visual accordion effect. Same
+                   * fix already applied to the homepage's FAQ component
+                   * (src/components/marketing/faq.tsx) for the same reason.
+                   */}
+                  <div className={cn("grid transition-[grid-template-rows] duration-200", isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]")}>
+                    <div className="overflow-hidden">
+                      <p className="px-5 pb-4 text-sm text-foreground-muted leading-relaxed">{item.a}</p>
+                    </div>
+                  </div>
                 </div>
               );
             })}

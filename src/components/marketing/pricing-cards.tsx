@@ -37,7 +37,7 @@ export function PricingCards() {
           <button
             onClick={() => choose("monthly")}
             className={cn(
-              "px-4 py-1.5 rounded-full text-sm font-medium transition-colors",
+              "px-4 py-3 rounded-full text-sm font-medium transition-colors",
               !isAnnual ? "bg-ember text-white" : "text-foreground-muted"
             )}
           >
@@ -46,7 +46,7 @@ export function PricingCards() {
           <button
             onClick={() => choose("annual")}
             className={cn(
-              "px-4 py-1.5 rounded-full text-sm font-medium transition-colors inline-flex items-center gap-1.5",
+              "px-4 py-3 rounded-full text-sm font-medium transition-colors inline-flex items-center gap-1.5",
               isAnnual ? "bg-ember text-white" : "text-foreground-muted"
             )}
           >

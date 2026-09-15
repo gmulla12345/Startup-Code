@@ -3,6 +3,9 @@ import { createClient, getCurrentUser } from "@/lib/supabase/server";
 import { getItineraryWithItems } from "@/lib/repositories/itineraries";
 import { ItineraryDetail } from "@/components/trips/itinerary-detail";
 import { ShareItineraryButton } from "@/components/trips/share-itinerary-button";
+import { noindexMetadata } from "@/lib/seo";
+
+export const metadata = noindexMetadata;
 
 export default async function ItineraryPage({ params }: PageProps<"/trips/[id]">) {
   const { id } = await params;
