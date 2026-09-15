@@ -4,7 +4,14 @@ import { brand } from "@/lib/config/brand";
 import { canonical } from "@/lib/seo";
 import { BreadcrumbJsonLd } from "@/components/shared/breadcrumb-jsonld";
 
-export const metadata: Metadata = { title: "Privacy Policy", ...canonical("/privacy") };
+const DESCRIPTION = "How Zolo collects, uses, and protects your personal data — read our full privacy policy.";
+
+export const metadata: Metadata = {
+  title: "Privacy Policy",
+  description: DESCRIPTION,
+  openGraph: { title: `Privacy Policy · ${brand.name}`, description: DESCRIPTION },
+  ...canonical("/privacy"),
+};
 
 export default function PrivacyPolicyPage() {
   return (

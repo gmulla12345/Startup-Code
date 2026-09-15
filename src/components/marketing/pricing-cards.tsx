@@ -112,11 +112,34 @@ export function PricingCards() {
               7-day free trial — cancel before it ends and you won&apos;t be charged
             </p>
           </div>
-
-          <p className="mt-4 text-center text-sm text-foreground-muted px-2">
-            Less than one guided tour per month — and you&apos;ll never waste a weekend scrolling again.
-          </p>
         </div>
+      </div>
+
+      <div className="mt-10 max-w-2xl mx-auto rounded-[var(--radius-lg)] border border-border bg-surface p-6">
+        <p className="font-medium text-foreground text-sm mb-3">Why pay for Zolo when so much is free?</p>
+        <ul className="space-y-2 text-sm text-foreground-muted">
+          <li>
+            <Link href="/vs/zolo-vs-google-maps" className="hover:text-foreground">
+              <span className="font-medium text-foreground">vs Google Maps:</span> personalized picks with reasoning,
+              not 10,000 unranked results.
+            </Link>
+          </li>
+          <li>
+            <Link href="/vs/zolo-vs-tripadvisor" className="hover:text-foreground">
+              <span className="font-medium text-foreground">vs Tripadvisor:</span> a short curated list, not hours of
+              review scrolling.
+            </Link>
+          </li>
+          <li>
+            <Link href="/vs/zolo-vs-atlas-obscura" className="hover:text-foreground">
+              <span className="font-medium text-foreground">vs Atlas Obscura:</span> matched to your interests and
+              budget, not editorial picks.
+            </Link>
+          </li>
+        </ul>
+        <p className="mt-3 text-sm text-foreground-muted">
+          Less than one guided tour per month — and you&apos;ll never waste a weekend scrolling again.
+        </p>
       </div>
 
       <p className="mt-8 flex items-center justify-center gap-1.5 text-xs text-foreground-subtle">

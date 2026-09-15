@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { Heart, Gem } from "lucide-react";
-import { formatCategoryLabel } from "@/lib/utils/format";
+import { formatCategoryLabel, withMaxWidth } from "@/lib/utils/format";
 import type { Experience } from "@/types/database";
 
 // Illustrative only — real places, real photos, but the match % and
@@ -34,7 +34,13 @@ export function HeroRecommendationPreview({ experiences }: { experiences: Experi
           <div key={experience.id} className="flex items-start gap-3 p-4">
             <div className="relative h-16 w-16 shrink-0 rounded-[var(--radius-md)] overflow-hidden bg-surface-sunken">
               {experience.images[0] && (
-                <Image src={experience.images[0]} alt={experience.title} fill sizes="64px" className="object-cover" />
+                <Image
+                  src={withMaxWidth(experience.images[0], 400)}
+                  alt={`Zolo recommendation card for ${experience.title} showing a ${match}% match score with reasoning: ${reason}`}
+                  fill
+                  sizes="64px"
+                  className="object-cover"
+                />
               )}
             </div>
             <div className="min-w-0 flex-1">

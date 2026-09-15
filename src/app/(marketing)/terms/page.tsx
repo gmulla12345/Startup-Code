@@ -5,7 +5,14 @@ import { pricing } from "@/lib/config/pricing";
 import { canonical } from "@/lib/seo";
 import { BreadcrumbJsonLd } from "@/components/shared/breadcrumb-jsonld";
 
-export const metadata: Metadata = { title: "Terms of Service", ...canonical("/terms") };
+const DESCRIPTION = "The terms governing your use of Zolo's website and app — read our full terms of service.";
+
+export const metadata: Metadata = {
+  title: "Terms of Service",
+  description: DESCRIPTION,
+  openGraph: { title: `Terms of Service · ${brand.name}`, description: DESCRIPTION },
+  ...canonical("/terms"),
+};
 
 export default function TermsOfServicePage() {
   return (

@@ -8,7 +8,14 @@ import { PRICING_FAQ_ITEMS } from "@/lib/content/pricing-faq";
 import { canonical } from "@/lib/seo";
 import { BreadcrumbJsonLd } from "@/components/shared/breadcrumb-jsonld";
 
-export const metadata: Metadata = { title: "FAQ", ...canonical("/faq") };
+const DESCRIPTION = "Answers to common questions about Zolo's personalized discovery, pricing, privacy, and travel features.";
+
+export const metadata: Metadata = {
+  title: "FAQ",
+  description: DESCRIPTION,
+  openGraph: { title: `FAQ · ${brand.name}`, description: DESCRIPTION },
+  ...canonical("/faq"),
+};
 
 export default function FaqPage() {
   const sections: FaqSection[] = [

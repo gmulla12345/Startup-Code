@@ -7,7 +7,14 @@ import { brand } from "@/lib/config/brand";
 import { canonical } from "@/lib/seo";
 import { BreadcrumbJsonLd } from "@/components/shared/breadcrumb-jsonld";
 
-export const metadata: Metadata = { title: "About", ...canonical("/about") };
+const DESCRIPTION = "Why Zolo exists: fixing decision fatigue with personalized, reasoned experience recommendations.";
+
+export const metadata: Metadata = {
+  title: "About",
+  description: DESCRIPTION,
+  openGraph: { title: `About · ${brand.name}`, description: DESCRIPTION },
+  ...canonical("/about"),
+};
 
 export default function AboutPage() {
   return (

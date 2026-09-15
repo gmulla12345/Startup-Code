@@ -4,7 +4,14 @@ import { brand } from "@/lib/config/brand";
 import { canonical } from "@/lib/seo";
 import { BreadcrumbJsonLd } from "@/components/shared/breadcrumb-jsonld";
 
-export const metadata: Metadata = { title: "Contact", ...canonical("/contact") };
+const DESCRIPTION = "Get in touch with the Zolo team - questions, feedback, or partnership inquiries.";
+
+export const metadata: Metadata = {
+  title: "Contact",
+  description: DESCRIPTION,
+  openGraph: { title: `Contact · ${brand.name}`, description: DESCRIPTION },
+  ...canonical("/contact"),
+};
 
 export default function ContactPage() {
   return (

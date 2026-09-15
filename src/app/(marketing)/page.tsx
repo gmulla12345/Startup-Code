@@ -3,6 +3,7 @@ import { Hero } from "@/components/marketing/hero";
 import { FeatureGrid } from "@/components/marketing/feature-grid";
 import { ExampleRecommendations } from "@/components/marketing/example-recommendations";
 import { HowItWorks } from "@/components/marketing/how-it-works";
+import { ComparisonLinks } from "@/components/marketing/comparison-links";
 import { SocialProof } from "@/components/marketing/social-proof";
 import { PricingSection } from "@/components/marketing/pricing-section";
 import { FAQ } from "@/components/marketing/faq";
@@ -29,6 +30,7 @@ export default async function LandingPage() {
       <Reveal><FeatureGrid /></Reveal>
       <Reveal><ExampleRecommendations experiences={featured.slice(3, 6)} /></Reveal>
       <Reveal><HowItWorks /></Reveal>
+      <Reveal><ComparisonLinks /></Reveal>
       <Reveal><SocialProof /></Reveal>
       <Reveal><PricingSection /></Reveal>
       <Reveal><FAQ /></Reveal>

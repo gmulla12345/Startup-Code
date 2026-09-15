@@ -5,7 +5,14 @@ import { brand } from "@/lib/config/brand";
 import { canonical } from "@/lib/seo";
 import { BreadcrumbJsonLd } from "@/components/shared/breadcrumb-jsonld";
 
-export const metadata: Metadata = { title: "Careers", ...canonical("/careers") };
+const DESCRIPTION = "Open roles at Zolo — join a small team building personalized discovery from the ground up, with direct access to the founding team.";
+
+export const metadata: Metadata = {
+  title: "Careers",
+  description: DESCRIPTION,
+  openGraph: { title: `Careers · ${brand.name}`, description: DESCRIPTION },
+  ...canonical("/careers"),
+};
 
 const ROLE = "Growth & Marketing Specialist";
 
