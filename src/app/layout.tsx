@@ -65,6 +65,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${inter.variable} ${fraunces.variable} h-full antialiased`} suppressHydrationWarning>
       <body className="min-h-full flex flex-col bg-background text-foreground">
+        <noscript>
+          <div className="bg-ember px-4 py-3 text-center text-sm font-medium text-white">
+            {brand.name} works best with JavaScript enabled. Please enable it in your browser for the full
+            experience.
+          </div>
+        </noscript>
         <SiteJsonLd />
         {children}
         <GoogleAttribution />

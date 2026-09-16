@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SoftwareApplicationJsonLd } from "@/components/shared/software-application-jsonld";
 import { Hero } from "@/components/marketing/hero";
 import { FeatureGrid } from "@/components/marketing/feature-grid";
 import { ExampleRecommendations } from "@/components/marketing/example-recommendations";
@@ -27,6 +28,7 @@ export default async function LandingPage() {
 
   return (
     <>
+      <SoftwareApplicationJsonLd />
       <Hero previewExperiences={featured.slice(0, 3)} />
       <Reveal><FeatureGrid /></Reveal>
       <Reveal><ExampleRecommendations experiences={featured.slice(3, 6)} /></Reveal>
