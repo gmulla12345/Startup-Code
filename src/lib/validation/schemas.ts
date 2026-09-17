@@ -2,6 +2,10 @@ import { z } from "zod";
 
 export const checkoutRequestSchema = z.object({
   billingInterval: z.enum(["monthly", "annual"]).default("monthly"),
+  // Endorsely's affiliate-referral id (see src/lib/analytics/endorsely.ts) —
+  // a UUID in practice, capped well above that so a malformed value can't
+  // bloat the Stripe metadata field it gets passed into.
+  endorselyReferral: z.string().max(200).optional(),
 });
 
 export const contactMessageSchema = z.object({

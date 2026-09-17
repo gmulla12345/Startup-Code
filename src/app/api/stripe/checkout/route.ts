@@ -16,7 +16,9 @@ export async function POST(request: Request) {
     // Body is optional (older cached clients may POST with none) — an
     // empty/missing body just falls through to the "monthly" default.
     const rawBody = await request.text();
-    const { billingInterval } = checkoutRequestSchema.parse(rawBody ? JSON.parse(rawBody) : {});
+    const { billingInterval, endorselyReferral } = checkoutRequestSchema.parse(
+      rawBody ? JSON.parse(rawBody) : {}
+    );
 
     const origin = new URL(request.url).origin;
     const url = await createCheckoutSession({
@@ -25,6 +27,7 @@ export async function POST(request: Request) {
       successUrl: `${origin}/profile?checkout=success`,
       cancelUrl: `${origin}/profile?checkout=cancelled`,
       billingInterval,
+      endorselyReferral,
     });
 
     return NextResponse.json({ url });

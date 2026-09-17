@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { pricing } from "@/lib/config/pricing";
 import { brand } from "@/lib/config/brand";
 import { getBillingPreference } from "@/lib/utils/billing-preference";
+import { getEndorselyReferral } from "@/lib/analytics/endorsely";
 import type { Subscription } from "@/types/database";
 
 export function SubscriptionCard({ subscription }: { subscription: Subscription | null }) {
@@ -27,7 +28,10 @@ export function SubscriptionCard({ subscription }: { subscription: Subscription 
       const res = await fetch("/api/stripe/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ billingInterval: getBillingPreference() }),
+        body: JSON.stringify({
+          billingInterval: getBillingPreference(),
+          endorselyReferral: getEndorselyReferral(),
+        }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Checkout unavailable.");

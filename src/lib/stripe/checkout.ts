@@ -33,6 +33,7 @@ export async function createCheckoutSession(params: {
   successUrl: string;
   cancelUrl: string;
   billingInterval?: BillingInterval;
+  endorselyReferral?: string;
 }): Promise<string> {
   const interval = params.billingInterval ?? "monthly";
   const priceId = premiumPriceId(interval);
@@ -47,6 +48,16 @@ export async function createCheckoutSession(params: {
   const stripe = getStripeClient();
   const customerId = await getOrCreateStripeCustomer(params.userId, params.email);
 
+  // Endorsely (affiliate-click tracking, see src/components/shared/endorsely.tsx)
+  // asks for its referral id in the session's metadata so it can attribute
+  // this sale. Also duplicated onto subscription_data.metadata, same as
+  // userId already is below — Stripe invoices for renewals inherit the
+  // subscription's metadata, not the checkout session's, so only setting it
+  // on the session would lose attribution after the first payment.
+  const endorselyMetadata: Record<string, string> = params.endorselyReferral
+    ? { endorsely_referral: params.endorselyReferral }
+    : {};
+
   const session = await stripe.checkout.sessions.create(
     {
       customer: customerId,
@@ -54,8 +65,11 @@ export async function createCheckoutSession(params: {
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: params.successUrl,
       cancel_url: params.cancelUrl,
-      subscription_data: { trial_period_days: 7, metadata: { userId: params.userId } },
-      metadata: { userId: params.userId },
+      subscription_data: {
+        trial_period_days: 7,
+        metadata: { userId: params.userId, ...endorselyMetadata },
+      },
+      metadata: { userId: params.userId, ...endorselyMetadata },
       allow_promotion_codes: true,
       // Stripe Tax: calculates and collects the right tax for the
       // customer's location automatically. Requires Stripe Tax to be
