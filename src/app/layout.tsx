@@ -4,6 +4,7 @@ import { Toaster } from "sonner";
 import { brand } from "@/lib/config/brand";
 import { GoogleAttribution } from "@/components/shared/google-attribution";
 import { GoogleAnalytics } from "@/components/shared/google-analytics";
+import { Endorsely } from "@/components/shared/endorsely";
 import { SiteJsonLd } from "@/components/shared/site-jsonld";
 import "./globals.css";
 
@@ -76,6 +77,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <GoogleAttribution />
         <Toaster position="top-center" richColors closeButton />
         <GoogleAnalytics />
+        <Endorsely />
       </body>
     </html>
   );
