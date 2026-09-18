@@ -45,7 +45,11 @@ export default function AboutPage() {
             give you envy. Neither gives you a plan. We think discovery should feel like a trusted friend making
             a suggestion, not a chore. So we built a platform that actually gets to know you — your interests,
             your budget, your personality, your patterns — and does the deciding with you, not for you to do
-            alone.
+            alone. Read more about{" "}
+            <Link href="/blog/how-ai-is-changing-the-way-we-discover-things-to-do" className="text-ember hover:underline">
+              how that actually works
+            </Link>
+            .
           </p>
         </div>
 

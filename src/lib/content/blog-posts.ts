@@ -155,7 +155,7 @@ export const BLOG_POSTS: BlogPost[] = [
       {
         heading: `Zolo: personalization, not just more listings`,
         paragraphs: [
-          `${brand.name} isn't trying to out-list Google Maps or out-review Tripadvisor — it starts from a different question: given everything that exists nearby, what's actually worth doing for this specific person, right now? It combines your stated interests, budget, and personality with a scoring model and AI reasoning that explains each pick, so you get a short list instead of an overwhelming one, plus surfacing genuine hidden gems that a pure popularity ranking would bury.`,
+          `${brand.name} isn't trying to out-list Google Maps or out-review Tripadvisor — it starts from a different question: given everything that exists nearby, what's actually worth doing for this specific person, right now? It combines your stated interests, budget, and personality with a scoring model and AI reasoning that explains each pick — [more on how that reasoning actually works](/blog/how-ai-is-changing-the-way-we-discover-things-to-do) — so you get a short list instead of an overwhelming one, plus surfacing genuine hidden gems that a pure popularity ranking would bury.`,
           "It's also honest about where it can't help: for real-time specifics like exact hours or live availability, or for deep destination research while traveling, Google Maps and Tripadvisor are still the right tool — which is exactly why every recommendation links out to real booking or map data rather than trying to fake it.",
         ],
       },
@@ -177,7 +177,7 @@ export const BLOG_POSTS: BlogPost[] = [
       {
         heading: "Using them together",
         paragraphs: [
-          "In practice these tools aren't mutually exclusive. A reasonable flow: use Zolo when you don't know what you want yet and want a short, personalized list with a reason attached. Use Google Maps once you've picked something, to check hours and get directions. Use Tripadvisor when you're deep in trip-planning mode and want traveler consensus on the big, famous must-sees in a new city.",
+          "In practice these tools aren't mutually exclusive. A reasonable flow: use Zolo when you don't know what you want yet and want a short, personalized list with a reason attached. Use Google Maps once you've picked something, to check hours and get directions. Use Tripadvisor when you're deep in trip-planning mode and want traveler consensus on the big, famous must-sees in a new city. For a concrete, non-travel example of the first case, see [our fall date ideas roundup](/blog/fall-date-ideas-cozy-adventurous-budget-friendly).",
           "Different jobs, different tools. The mistake is expecting a general-purpose map or a traveler review site to do the one thing neither was built for: understanding you specifically. If that's the gap you keep hitting, [see Zolo's pricing](/pricing) or [create a free account](/signup) to try it against your own weekend.",
         ],
       },
@@ -273,7 +273,7 @@ export const BLOG_POSTS: BlogPost[] = [
         heading: "The real bottleneck isn't ideas — it's matching one to tonight",
         paragraphs: [
           `Reading a list like this is the easy part. The harder part is picking the right version of "cozy" or "adventurous" for a specific budget, a specific person, and a specific night — and then actually finding a real place nearby that fits, instead of falling back to the same restaurant again. That's the exact gap ${brand.name} is built to close: tell it your budget, your interests, and what kind of night you're going for, and it turns a mood ("something cozy, under $25, nothing we've already done") into a short list of real, specific places near you — with a reason attached for each one, not just a rating. [See how the matching actually works](/blog/how-ai-is-changing-the-way-we-discover-things-to-do).`,
-          `If you'd rather not choose from a list at all, Surprise Me picks something for you directly — useful on the nights where the real obstacle isn't lack of options, it's decision fatigue. Either way, the categories above are a starting point, not the destination — the point is to land on a mood, then let something else handle turning that mood into an actual plan. [Create a free account](/signup) or [see what's included with Premium](/pricing) if you want unlimited personalized picks all season.`,
+          `If you'd rather not choose from a list at all, Surprise Me picks something for you directly — useful on the nights where the real obstacle isn't lack of options, it's decision fatigue. Either way, the categories above are a starting point, not the destination — the point is to land on a mood, then let something else handle turning that mood into an actual plan. [Create a free account](/signup) or [see what's included with Premium](/pricing) if you want unlimited personalized picks all season. If you're weighing this against other tools for finding things to do, see [how Zolo, Google Maps, and Tripadvisor actually differ](/blog/tripadvisor-vs-google-maps-vs-zolo).`,
         ],
       },
     ],
