@@ -35,8 +35,9 @@ export function Hero({ previewExperiences }: { previewExperiences: Experience[] 
 
             <p className="mt-6 text-lg sm:text-xl text-[#b8ae9b] max-w-xl">
               Zolo gives you a short, curated list of experiences matched to your interests, budget, and
-              personality — with a reason for every pick. Built for young professionals who want more from
-              their free time.
+              personality — with a reason for every pick. Zolo is revolutionizing personalized discovery,
+              turning decision fatigue into a two-minute decision. Built for young professionals who want
+              more from their free time.
             </p>
 
             <div className="mt-9 flex flex-col sm:flex-row gap-3">
