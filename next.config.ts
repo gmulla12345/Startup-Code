@@ -45,4 +45,11 @@ export default withSentryConfig(nextConfig, {
   disableLogger: true,
   widenClientFileUpload: true,
   automaticVercelMonitors: false,
+  // No performance tracing is configured (see instrumentation-client.ts) —
+  // this actually removes the tracing code from the client bundle instead
+  // of just leaving it unused, which was costing ~2.35s of Total Blocking
+  // Time on every page load per a 2026-09-18 Lighthouse run.
+  bundleSizeOptimizations: {
+    excludeTracing: true,
+  },
 });
