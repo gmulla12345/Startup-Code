@@ -27,6 +27,22 @@ export async function handleDigistore24Event(ipn: Ipn): Promise<void> {
   const orderId = ipn.order_id;
   if (!orderId) return;
 
+  // Defense in depth: the DS24 dashboard's IPN connection is itself scoped
+  // to just the Zolo Premium product, but if this account ever sells
+  // something else through DS24 later and that scoping isn't (re)configured
+  // carefully, this stops an unrelated product's sale from granting Zolo
+  // Premium. Only enforced when configured, so this stays a no-op until
+  // DIGISTORE24_PRODUCT_ID is actually set.
+  const expectedProductId = process.env.DIGISTORE24_PRODUCT_ID;
+  if (expectedProductId && ipn.product_id && ipn.product_id !== expectedProductId) {
+    console.error("[digistore24] ignoring IPN for unexpected product", {
+      order_id: orderId,
+      product_id: ipn.product_id,
+      expected: expectedProductId,
+    });
+    return;
+  }
+
   const admin = createAdminClient();
 
   // Prefer the order's already-recorded owner (set the first time we saw
