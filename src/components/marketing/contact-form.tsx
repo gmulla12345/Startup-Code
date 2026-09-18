@@ -35,7 +35,7 @@ export function ContactForm() {
   if (submitted) {
     return (
       <div className="rounded-[var(--radius-lg)] border border-border bg-[var(--forest-soft)]/50 p-8 text-center">
-        <h3 className="font-display text-xl font-semibold text-foreground mb-2">Message sent</h3>
+        <h2 className="font-display text-xl font-semibold text-foreground mb-2">Message sent</h2>
         <p className="text-sm text-foreground-muted">Thanks for reaching out — we read every message and reply as soon as we can.</p>
       </div>
     );

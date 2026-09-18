@@ -34,7 +34,7 @@ const COLUMNS = [
 export function Footer() {
   return (
     <footer className="border-t border-border bg-surface-sunken">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 py-14">
+      <nav aria-label="Footer" className="mx-auto max-w-6xl px-4 sm:px-6 pt-14">
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-10">
           <div>
             <Logo />
@@ -42,7 +42,12 @@ export function Footer() {
           </div>
           {COLUMNS.map((col) => (
             <div key={col.title}>
-              <h4 className="text-sm font-semibold text-foreground mb-3">{col.title}</h4>
+              {/* Not a heading on purpose — this sits inside a labeled <nav>
+                  landmark, and a real <h*> here would insert itself into
+                  every page's document outline regardless of that page's
+                  own content, risking a skipped level (e.g. straight from
+                  h1 to this) on pages with a shallow heading structure. */}
+              <p className="text-sm font-semibold text-foreground mb-3">{col.title}</p>
               <ul className="space-y-2">
                 {col.links.map((link) => (
                   <li key={link.label}>
@@ -61,6 +66,8 @@ export function Footer() {
             </div>
           ))}
         </div>
+      </nav>
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 pb-14">
         <div className="mt-10 pt-6 border-t border-border text-xs text-foreground-subtle">
           © {new Date().getFullYear()} {brand.name}. All rights reserved.
         </div>
