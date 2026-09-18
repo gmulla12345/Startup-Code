@@ -13,6 +13,8 @@ function makeSubscription(overrides: Partial<Subscription>): Subscription {
     planId: "free",
     currentPeriodEnd: null,
     cancelAtPeriodEnd: false,
+    digistore24OrderId: null,
+    digistore24ManageUrl: null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     ...overrides,

@@ -401,6 +401,35 @@ begin
   end if;
 end $$;
 
+-- Digistore24 (affiliate-sold Premium, alongside direct Stripe checkout) —
+-- added 2026-09-18. digistore24_order_id is the stable anchor a webhook
+-- upserts against across an order's whole lifecycle (payment, missed
+-- payment, cancellation, last paid day); digistore24_manage_url is DS24's
+-- own buyer-support URL (there's no Stripe customer for these subscriptions,
+-- so /api/stripe/portal doesn't apply — see subscription-card.tsx).
+do $$
+begin
+  if not exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'subscriptions' and column_name = 'digistore24_order_id'
+  ) then
+    alter table public.subscriptions add column digistore24_order_id text;
+    alter table public.subscriptions add column digistore24_manage_url text;
+    alter table public.subscriptions add constraint subscriptions_digistore24_order_id_key unique (digistore24_order_id);
+  end if;
+end $$;
+
+do $$
+begin
+  if not exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'payments' and column_name = 'digistore24_transaction_id'
+  ) then
+    alter table public.payments add column digistore24_transaction_id text;
+    alter table public.payments add constraint payments_digistore24_transaction_id_key unique (digistore24_transaction_id);
+  end if;
+end $$;
+
 -- -------------------------------------------------------------------------
 -- social — profiles, follows, shares
 -- -------------------------------------------------------------------------

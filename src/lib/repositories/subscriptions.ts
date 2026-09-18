@@ -13,6 +13,8 @@ function rowToSubscription(row: Record<string, unknown>): Subscription {
     planId: row.plan_id as Subscription["planId"],
     currentPeriodEnd: row.current_period_end as string | null,
     cancelAtPeriodEnd: Boolean(row.cancel_at_period_end),
+    digistore24OrderId: row.digistore24_order_id as string | null,
+    digistore24ManageUrl: row.digistore24_manage_url as string | null,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
   };

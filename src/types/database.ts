@@ -277,6 +277,10 @@ export interface Subscription {
   planId: "free" | "premium";
   currentPeriodEnd: ISODateString | null;
   cancelAtPeriodEnd: boolean;
+  /** Set only for Premium sold via a Digistore24 affiliate, never alongside Stripe fields. */
+  digistore24OrderId: string | null;
+  /** DS24's own buyer-support URL — there's no Stripe customer for these, so no billing portal. */
+  digistore24ManageUrl: string | null;
   createdAt: ISODateString;
   updatedAt: ISODateString;
 }
@@ -285,6 +289,7 @@ export interface Payment {
   id: UUID;
   userId: UUID;
   stripeInvoiceId: string | null;
+  digistore24TransactionId: string | null;
   amount: number;
   currency: string;
   status: "paid" | "failed" | "pending" | "refunded";

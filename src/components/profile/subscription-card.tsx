@@ -43,6 +43,14 @@ export function SubscriptionCard({ subscription }: { subscription: Subscription 
   }
 
   async function handleManage() {
+    // Premium sold via a Digistore24 affiliate has no Stripe customer
+    // behind it — DS24's own buyer-support page (cancel, refund, update
+    // payment method) is the only place that can actually manage it.
+    if (subscription?.digistore24ManageUrl) {
+      window.location.href = subscription.digistore24ManageUrl;
+      return;
+    }
+
     setLoading(true);
     try {
       const res = await fetch("/api/stripe/portal", { method: "POST" });
