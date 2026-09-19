@@ -41,11 +41,7 @@ export function Hero({ previewExperiences }: { previewExperiences: Experience[] 
             </p>
 
             <div className="mt-9 flex flex-col sm:flex-row gap-3">
-              <Button
-                asChild
-                size="lg"
-                className="bg-gradient-to-r from-[#ff6a45] to-[#f0bc4e] text-[#14120f] hover:opacity-90"
-              >
+              <Button asChild size="lg">
                 <Link href="/signup">
                   Start Discovering <ArrowRight className="h-4 w-4" />
                 </Link>
