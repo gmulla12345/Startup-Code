@@ -1,4 +1,9 @@
 import { z } from "zod";
+import { INTERESTS, LIFESTYLE_GOALS } from "@/lib/config/taxonomy";
+import type { InterestTag, LifestyleGoal } from "@/types/database";
+
+const interestTagValues = INTERESTS.map((i) => i.value) as [InterestTag, ...InterestTag[]];
+const lifestyleGoalValues = LIFESTYLE_GOALS.map((g) => g.value) as [LifestyleGoal, ...LifestyleGoal[]];
 
 export const checkoutRequestSchema = z.object({
   billingInterval: z.enum(["monthly", "annual"]).default("monthly"),
@@ -61,6 +66,56 @@ export const onboardingPreferencesSchema = z.object({
 
 export const onboardingGoalsSchema = z.object({
   lifestyleGoals: z.array(z.string()).max(10),
+});
+
+/**
+ * Covers every field PATCH /api/profile accepts (ProfileUpdateInput) --
+ * used by both onboarding's step-by-step saves and /profile/edit. Was
+ * previously unvalidated (the route passed request.json() straight through
+ * to updateProfile()); updateProfile()'s own explicit field allowlist
+ * already stopped mass-assignment onto arbitrary DB columns, but nothing
+ * enforced field types/ranges, so a malformed or out-of-range value (e.g. a
+ * personality slider outside 0-100, an unrecognized interest tag) could
+ * reach the DB and silently break the recommendation scorer that assumes
+ * these ranges. All fields optional since PATCH only sends what changed.
+ */
+export const profileUpdateSchema = z.object({
+  firstName: z.string().min(1).max(50).optional(),
+  lastName: z.string().max(50).nullable().optional(),
+  ageRange: z.enum(["18-20", "21-24", "25-27", "28-30", "31-35", "36+"]).nullable().optional(),
+  city: z.string().max(100).nullable().optional(),
+  region: z.string().max(100).nullable().optional(),
+  country: z.string().max(100).nullable().optional(),
+  latitude: z.number().min(-90).max(90).nullable().optional(),
+  longitude: z.number().min(-180).max(180).nullable().optional(),
+  avatarUrl: z.string().url().nullable().optional(),
+  bio: z.string().max(1000).nullable().optional(),
+  interests: z.array(z.enum(interestTagValues)).max(20).optional(),
+  lifestyleGoals: z.array(z.enum(lifestyleGoalValues)).max(10).optional(),
+  personality: z
+    .object({
+      spontaneousVsPlanned: z.number().min(0).max(100),
+      quietVsSocial: z.number().min(0).max(100),
+      adventurousVsComfortable: z.number().min(0).max(100),
+      budgetVsLuxury: z.number().min(0).max(100),
+      familiarVsNovel: z.number().min(0).max(100),
+    })
+    .partial()
+    .optional(),
+  preferences: z
+    .object({
+      budgetLevel: z.enum(["free", "low", "medium", "high", "luxury"]),
+      travelFrequency: z.enum(["rarely", "sometimes", "often", "constantly"]),
+      maxDistanceMiles: z.number().min(1).max(500),
+      preferredDurationMinutes: z.number().min(15).max(1440),
+      indoorOutdoor: z.enum(["indoor", "outdoor", "either"]),
+      socialMode: z.enum(["solo", "group", "either"]),
+      timeOfDay: z.enum(["morning", "afternoon", "evening", "night", "any"]),
+    })
+    .partial()
+    .optional(),
+  onboardingCompleted: z.boolean().optional(),
+  onboardingStep: z.number().int().min(0).max(10).optional(),
 });
 
 export const saveExperienceSchema = z.object({

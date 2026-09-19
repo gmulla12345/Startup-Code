@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireUser, withErrorHandling, ApiError } from "@/lib/api/auth";
 import { getProfileByUserId, updateProfile } from "@/lib/repositories/profile";
 import { getSubscription } from "@/lib/repositories/subscriptions";
+import { profileUpdateSchema } from "@/lib/validation/schemas";
 
 export async function GET() {
   return withErrorHandling(async () => {
@@ -17,7 +18,7 @@ export async function GET() {
 export async function PATCH(request: Request) {
   return withErrorHandling(async () => {
     const { user, supabase } = await requireUser();
-    const body = await request.json();
+    const body = profileUpdateSchema.parse(await request.json());
     const profile = await updateProfile(supabase, user.id, body);
     return NextResponse.json({ profile });
   });

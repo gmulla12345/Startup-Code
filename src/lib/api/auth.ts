@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { ZodError } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@/lib/supabase/env";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
@@ -67,6 +68,13 @@ export function withErrorHandling(handler: () => Promise<NextResponse>): Promise
   return handler().catch((err) => {
     if (err instanceof ApiError) {
       return NextResponse.json({ error: err.message }, { status: err.status });
+    }
+    // Every route that validates its body with schema.parse() (not
+    // safeParse) throws this on bad input -- was previously falling through
+    // to the generic 500 below, which is both the wrong status code for a
+    // client error and hides which field(s) actually failed.
+    if (err instanceof ZodError) {
+      return NextResponse.json({ error: "Invalid request.", issues: err.issues }, { status: 400 });
     }
     console.error("[api] unhandled error:", err);
     return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
