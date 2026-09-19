@@ -1533,6 +1533,26 @@ dedicated section above for exactly what's done vs. deliberately deferred.
    Organization schema once the Instagram account they're about to start actually exists; backlink
    outreach and Product Hunt/AppSumo/directory submissions (can draft copy on request, but won't
    send anything on their behalf without being asked).
+9. **Digistore24 IPN connection: confirm DS24's dashboard actually reports the connection as
+   healthy — flagged 2026-09-19, not yet confirmed.** Full context: the webhook itself
+   (`src/app/api/digistore24/webhook/route.ts`, `src/lib/digistore24/`) is built, deployed, and
+   independently verified working end to end on production — signature verification, a full signed
+   `on_payment` happy path (subscription grant + payment record), `on_refund` revocation, and DS24's
+   unsigned "Test connection" ping (fixed 2026-09-19: it used to 400 since that specific ping carries
+   no `sha_sign` at all, unlike real order IPNs — now returns `200 OK`, confirmed via direct `curl`
+   with the identical blank payload). What's still open is confirming this from DS24's own side: the
+   user clicked "Test connection" once during initial setup (that's the call that originally failed
+   and got diagnosed/fixed), but the button doesn't appear to persist as a visible, re-clickable
+   option in the dashboard afterward — the user couldn't find it on a follow-up attempt. The
+   documented DS24-side path to manually resend that exact failed call is Reports → Integrations
+   (IPN) → search for the failed entry → magnifying glass icon → "Restart IPN notification" in the
+   Repeat section (see DS24's own "Common IPN errors" help article) — not yet tried. Pick this back
+   up by walking the user through that path, or asking what they actually see under Reports →
+   Integrations (IPN) if it's not there either. Also still standing from the original DS24 build:
+   confirm the DS24 dashboard's connection is scoped to include Zolo Premium (734776) under "For
+   products" (this actually WAS set correctly per the screenshots the user shared while setting up
+   the connection — `734776 - Zolo Premium` was selected under "My products" — so this specific
+   sub-item is likely already fine, just noting it was never independently re-confirmed after saving).
 
 ## PayPal — deliberately deferred, do not pick this up unprompted (2026-09-01)
 
