@@ -1,5 +1,5 @@
 import { isDigistore24Configured } from "@/lib/digistore24/client";
-import { computeDigistore24Signature, verifyDigistore24Signature } from "@/lib/digistore24/signature";
+import { verifyDigistore24Signature } from "@/lib/digistore24/signature";
 import { handleDigistore24Event } from "@/lib/digistore24/webhook-handlers";
 
 /**
@@ -28,19 +28,22 @@ export async function POST(request: Request) {
     return new Response("OK", { status: 200 });
   }
 
+  // The dashboard's own "Test connection" button sends a *different* kind
+  // of ping than the connection_test event above: every configured field
+  // name present but blank, and critically no sha_sign at all — a real
+  // order-related IPN always carries one (per DS24's dev docs: "These
+  // parameters are included in the SHA512 signature"). Treat a completely
+  // unsigned payload as this same kind of benign connectivity check rather
+  // than a signature failure, so the dashboard shows the connection as
+  // healthy instead of erroring. This can't be used to skip verification
+  // for a real order — handleDigistore24Event is still only ever called
+  // below, after a *present* signature has actually been verified.
+  if (!params.sha_sign && !params.SHASIGN) {
+    return new Response("OK", { status: 200 });
+  }
+
   if (!verifyDigistore24Signature(passphrase, params)) {
-    // Temporary diagnostic logging (2026-09-19) while confirming DS24's IPN
-    // connection is configured correctly — remove once a real signed IPN has
-    // been confirmed working. Logs field *names* DS24 actually sent (to
-    // confirm which fields their real payload includes) and both signatures
-    // (safe to log — SHA-512 hex digests, not the passphrase itself).
-    console.error("[digistore24 webhook] signature verification failed", {
-      order_id: params.order_id,
-      event: params.event,
-      received_keys: Object.keys(params),
-      received_sig: params.sha_sign,
-      expected_sig: computeDigistore24Signature(passphrase, params),
-    });
+    console.error("[digistore24 webhook] signature verification failed", { order_id: params.order_id });
     return new Response("ERROR: invalid signature", { status: 400 });
   }
 
