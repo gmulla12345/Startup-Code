@@ -1,5 +1,5 @@
 import { isDigistore24Configured } from "@/lib/digistore24/client";
-import { verifyDigistore24Signature } from "@/lib/digistore24/signature";
+import { computeDigistore24Signature, verifyDigistore24Signature } from "@/lib/digistore24/signature";
 import { handleDigistore24Event } from "@/lib/digistore24/webhook-handlers";
 
 /**
@@ -29,7 +29,18 @@ export async function POST(request: Request) {
   }
 
   if (!verifyDigistore24Signature(passphrase, params)) {
-    console.error("[digistore24 webhook] signature verification failed", { order_id: params.order_id });
+    // Temporary diagnostic logging (2026-09-19) while confirming DS24's IPN
+    // connection is configured correctly — remove once a real signed IPN has
+    // been confirmed working. Logs field *names* DS24 actually sent (to
+    // confirm which fields their real payload includes) and both signatures
+    // (safe to log — SHA-512 hex digests, not the passphrase itself).
+    console.error("[digistore24 webhook] signature verification failed", {
+      order_id: params.order_id,
+      event: params.event,
+      received_keys: Object.keys(params),
+      received_sig: params.sha_sign,
+      expected_sig: computeDigistore24Signature(passphrase, params),
+    });
     return new Response("ERROR: invalid signature", { status: 400 });
   }
 
