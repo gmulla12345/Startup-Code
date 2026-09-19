@@ -28,7 +28,17 @@ export function PricingCards() {
 
   const isAnnual = interval === "annual";
   const premiumPrice = isAnnual ? pricing.premium.priceAnnual : pricing.premium.priceMonthly;
-  const annualSavings = pricing.premium.priceMonthly * 12 - pricing.premium.priceAnnual;
+  // Real math against the site's own live prices (12 months at the monthly
+  // rate vs. the actual annual Stripe price), not an invented reference
+  // price -- see pricing.ts's own comment on why annualPriceId is a real,
+  // separate Stripe Price rather than a client-side calculation.
+  const monthlyPaidYearly = pricing.premium.priceMonthly * 12;
+  const annualSavings = monthlyPaidYearly - pricing.premium.priceAnnual;
+  // Floored, not rounded, to match the "Save 20%" figure already used
+  // elsewhere on the site (pricing FAQ, the toggle badge below) -- the real
+  // number is ~20.8%, and floor keeps every "Save X%" claim on the page
+  // consistent with each other rather than one place saying 21%.
+  const annualSavingsPercent = Math.floor((annualSavings / monthlyPaidYearly) * 100);
 
   return (
     <div>
@@ -90,12 +100,24 @@ export function PricingCards() {
               Most popular
             </span>
             <h3 className="font-display text-xl font-semibold text-foreground">{pricing.premium.name}</h3>
-            <div className="mt-2 mb-1">
+            <div className="mt-2 mb-1 flex items-baseline gap-2 flex-wrap">
+              {isAnnual && (
+                <span className="text-lg text-foreground-subtle line-through decoration-2">
+                  ${monthlyPaidYearly.toFixed(2)}
+                </span>
+              )}
               <span className="font-display text-4xl font-semibold text-foreground">${premiumPrice}</span>
-              <span className="text-foreground-muted"> /{isAnnual ? "year" : "month"}</span>
+              <span className="text-foreground-muted">/{isAnnual ? "year" : "month"}</span>
+              {isAnnual && (
+                <span className="text-xs font-semibold px-2 py-1 rounded-full bg-[var(--gold-soft)] text-[color:var(--gold)]">
+                  Save {annualSavingsPercent}%
+                </span>
+              )}
             </div>
-            <p className="text-sm text-[color:var(--gold)] font-medium mb-5 h-5">
-              {isAnnual ? `That's $${(premiumPrice / 12).toFixed(2)}/mo — you save $${annualSavings.toFixed(2)}/year.` : ""}
+            <p className="text-sm text-[color:var(--gold)] font-medium mb-5 min-h-5">
+              {isAnnual
+                ? `That's $${(premiumPrice / 12).toFixed(2)}/mo — $${annualSavings.toFixed(2)} less per year than paying monthly.`
+                : "Switch to annual and save 20% — try it above."}
             </p>
             <ul className="space-y-3 mb-8">
               {pricing.premium.features.map((f) => (
