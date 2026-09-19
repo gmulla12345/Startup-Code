@@ -1,4 +1,5 @@
 import { brand } from "@/lib/config/brand";
+import { safeJsonLd } from "@/lib/seo";
 
 /**
  * Organization structured data, present on every page (mounted in the root
@@ -30,5 +31,5 @@ export function SiteJsonLd() {
     description: brand.description,
   };
 
-  return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organization) }} />;
+  return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(organization) }} />;
 }

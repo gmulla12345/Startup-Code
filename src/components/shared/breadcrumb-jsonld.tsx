@@ -1,4 +1,5 @@
 import { brand } from "@/lib/config/brand";
+import { safeJsonLd } from "@/lib/seo";
 
 /**
  * BreadcrumbList structured data for non-homepage pages. `items` excludes
@@ -17,5 +18,5 @@ export function BreadcrumbJsonLd({ items }: { items: { name: string; path: strin
       item: `${brand.domain}${item.path}`,
     })),
   };
-  return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />;
+  return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />;
 }

@@ -1,7 +1,72 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
+// Derived from env at build time rather than hardcoded, so this can't drift
+// out of sync with the real Supabase project or Sentry DSN. Both hosts are
+// already public (NEXT_PUBLIC_SUPABASE_URL ships to the browser regardless;
+// a Sentry DSN identifies an endpoint, not a secret) — safe to read here.
+function hostOf(url: string | undefined): string | null {
+  if (!url) return null;
+  try {
+    return new URL(url).host;
+  } catch {
+    return null;
+  }
+}
+const supabaseHost = hostOf(process.env.NEXT_PUBLIC_SUPABASE_URL);
+const sentryHost = hostOf(process.env.NEXT_PUBLIC_SENTRY_DSN?.replace(/^https?:\/\/[^@]+@/, "https://"));
+
+// React's dev build uses eval() for debugging (stack trace reconstruction
+// across Fast Refresh boundaries) -- "React will never use eval() in
+// production mode" per its own warning, so this is scoped to development
+// only rather than weakening the real production policy.
+const isDev = process.env.NODE_ENV === "development";
+
+const CSP = [
+  "default-src 'self'",
+  // 'unsafe-inline' is needed for Next's own hydration/RSC payload scripts
+  // and the small inline GA4 shim (google-analytics.tsx) -- a nonce-based
+  // CSP would remove this but needs real end-to-end testing of Next's script
+  // injection paths first; this is a deliberate, documented trade-off, not
+  // an oversight.
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://www.googletagmanager.com https://assets.endorsely.com`,
+  "style-src 'self' 'unsafe-inline'",
+  // Images come from many real hosts (Google Places photos, Unsplash,
+  // Supabase storage) with unbounded/rotating URLs -- scoping this to https:
+  // broadly is standard practice since img-src has far less XSS blast radius
+  // than script-src.
+  "img-src 'self' data: https:",
+  "font-src 'self' data:",
+  [
+    "connect-src 'self'",
+    supabaseHost ? `https://${supabaseHost}` : "",
+    "https://www.google-analytics.com",
+    sentryHost ? `https://${sentryHost}` : "",
+    "https://assets.endorsely.com",
+  ]
+    .filter(Boolean)
+    .join(" "),
+  "frame-ancestors 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+].join("; ");
+
 const nextConfig: NextConfig = {
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: [
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+          { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
+          { key: "Content-Security-Policy", value: CSP },
+        ],
+      },
+    ];
+  },
   experimental: {
     // Default is 0s for dynamic segments, meaning every client-side
     // navigation to an already-visited page re-runs its full server data

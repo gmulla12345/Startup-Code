@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ComparisonCellValue } from "@/components/marketing/comparison-cell";
 import { brand } from "@/lib/config/brand";
 import { VS_PAGES, getVsPage } from "@/lib/content/vs-pages";
-import { canonical } from "@/lib/seo";
+import { canonical, safeJsonLd } from "@/lib/seo";
 import { BreadcrumbJsonLd } from "@/components/shared/breadcrumb-jsonld";
 
 export function generateStaticParams() {
@@ -41,7 +41,7 @@ export default async function VsPage({ params }: PageProps<"/vs/[slug]">) {
 
   return (
     <div>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
       <BreadcrumbJsonLd items={[{ name: `${brand.name} vs ${page.competitor}`, path: `/vs/${slug}` }]} />
 
       <section>

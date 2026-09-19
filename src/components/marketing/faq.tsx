@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { brand } from "@/lib/config/brand";
+import { safeJsonLd } from "@/lib/seo";
 
 const FAQS = [
   {
@@ -52,7 +53,7 @@ export function FAQ() {
 
   return (
     <section id="faq" className="mx-auto max-w-3xl px-4 sm:px-6 py-20 md:py-28 border-t border-border">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(FAQ_JSON_LD) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(FAQ_JSON_LD) }} />
 
       <h2 className="font-display text-3xl sm:text-4xl font-semibold text-foreground mb-10 text-center">
         Frequently asked questions

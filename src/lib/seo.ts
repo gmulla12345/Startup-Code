@@ -25,3 +25,18 @@ export function canonical(path: string): { alternates: { canonical: string } } {
  * acting on) the noindex tag on a URL it already knows about.
  */
 export const noindexMetadata: Metadata = { robots: { index: false, follow: true } };
+
+/**
+ * Every JSON-LD block in this app is rendered via
+ * `<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ... }} />`.
+ * Plain `JSON.stringify()` is unsafe there: if any field ever contains a
+ * literal `</script>` substring (most of this data is hardcoded content, but
+ * experience/blog JSON-LD includes real names/descriptions sourced from
+ * Google Places or third parties), it closes the script tag early and lets
+ * whatever follows execute as real HTML/JS. Escaping `<` as `<` is the
+ * standard fix — it round-trips through JSON.parse unchanged, so it only
+ * affects how the raw HTML is parsed, not the data itself.
+ */
+export function safeJsonLd(data: unknown): string {
+  return JSON.stringify(data).replace(/</g, "\\u003c");
+}

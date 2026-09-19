@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { Clock, MapPin, Sparkles, Star, Users } from "lucide-react";
 import { createClient, getCurrentUser } from "@/lib/supabase/server";
+import { safeJsonLd } from "@/lib/seo";
 import { getExperienceProvider } from "@/services/providers";
 import { getReviewsForExperience } from "@/lib/repositories/reviews";
 import { getSubscription, isPremium } from "@/lib/repositories/subscriptions";
@@ -114,7 +115,7 @@ export default async function ExperienceDetailPage({ params }: PageProps<"/exper
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
       {locked ? (
         <PremiumLock title={experience.title} image={experience.images[0]} />
       ) : (

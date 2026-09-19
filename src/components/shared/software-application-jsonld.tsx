@@ -1,5 +1,6 @@
 import { brand } from "@/lib/config/brand";
 import { pricing } from "@/lib/config/pricing";
+import { safeJsonLd } from "@/lib/seo";
 
 /**
  * SoftwareApplication structured data — homepage only (mounted in
@@ -45,6 +46,6 @@ export function SoftwareApplicationJsonLd() {
   };
 
   return (
-    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareApplication) }} />
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(softwareApplication) }} />
   );
 }

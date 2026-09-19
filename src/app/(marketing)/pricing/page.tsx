@@ -6,7 +6,7 @@ import { PricingCards } from "@/components/marketing/pricing-cards";
 import { ComparisonCellValue, type ComparisonCell } from "@/components/marketing/comparison-cell";
 import { brand } from "@/lib/config/brand";
 import { PRICING_FAQ_ITEMS } from "@/lib/content/pricing-faq";
-import { canonical } from "@/lib/seo";
+import { canonical, safeJsonLd } from "@/lib/seo";
 import { BreadcrumbJsonLd } from "@/components/shared/breadcrumb-jsonld";
 
 export const metadata: Metadata = {
@@ -43,7 +43,7 @@ const PRICING_FAQ_JSON_LD = {
 export default function PricingPage() {
   return (
     <div>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(PRICING_FAQ_JSON_LD) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(PRICING_FAQ_JSON_LD) }} />
       <BreadcrumbJsonLd items={[{ name: "Pricing", path: "/pricing" }]} />
 
       <section>

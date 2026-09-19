@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { FaqAccordion, type FaqSection } from "@/components/marketing/faq-accordion";
 import { brand } from "@/lib/config/brand";
 import { PRICING_FAQ_ITEMS } from "@/lib/content/pricing-faq";
-import { canonical } from "@/lib/seo";
+import { canonical, safeJsonLd } from "@/lib/seo";
 import { BreadcrumbJsonLd } from "@/components/shared/breadcrumb-jsonld";
 
 const DESCRIPTION = "Answers to common questions about Zolo's personalized discovery, pricing, privacy, and travel features.";
@@ -140,7 +140,7 @@ export default function FaqPage() {
 
   return (
     <div>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(faqJsonLd) }} />
       <BreadcrumbJsonLd items={[{ name: "FAQ", path: "/faq" }]} />
       <section>
         <div className="mx-auto max-w-3xl px-4 sm:px-6 pt-20 pb-14 text-center">

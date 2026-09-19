@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import { format } from "date-fns";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { safeJsonLd } from "@/lib/seo";
 import { brand } from "@/lib/config/brand";
 import { canonical } from "@/lib/seo";
 import { BreadcrumbJsonLd } from "@/components/shared/breadcrumb-jsonld";
@@ -89,8 +90,8 @@ export default async function BlogPostPage({ params }: PageProps<"/blog/[slug]">
 
   return (
     <div className="mx-auto max-w-2xl px-4 sm:px-6 py-16">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      {faqJsonLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
+      {faqJsonLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(faqJsonLd) }} />}
       <BreadcrumbJsonLd items={[{ name: "Blog", path: "/blog" }, { name: post.title, path: `/blog/${slug}` }]} />
 
       <p className="text-xs text-foreground-subtle mb-3">
