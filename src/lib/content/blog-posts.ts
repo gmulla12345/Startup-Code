@@ -296,6 +296,99 @@ export const BLOG_POSTS: BlogPost[] = [
       },
     ],
   },
+  {
+    slug: "things-to-do-this-weekend-near-new-york",
+    title: "Things to Do This Weekend Near New York: A No-Planning Guide",
+    description:
+      "Not sure what to do this weekend in New York? Get spontaneous, no-planning weekend ideas — free activities, food spots, and things to do near you, organized by vibe.",
+    publishedAt: "2026-09-19",
+    readingMinutes: 7,
+    heroImage: {
+      src: "https://images.unsplash.com/photo-1673296633888-6fa24514d256?auto=format&fit=crop&w=1600&q=80",
+      alt: "People walking the High Line in New York City",
+    },
+    sections: [
+      {
+        paragraphs: [
+          "If you're searching \"things to do this weekend near me\" for the third weekend in a row with zero results, you're not alone — and you don't need another 47-tab research session to fix it. Whether you're in Manhattan, Brooklyn, Queens, or just outside the city, here's a no-planning guide to spontaneous weekend plans in New York, organized by vibe so you can pick one and go.",
+        ],
+      },
+      {
+        heading: "Cozy & Low-Key Weekend Plans",
+        paragraphs: ["Sometimes the best weekend plans near you don't require leaving your neighborhood."],
+        list: [
+          "Coffee shop hopping — pick two or three cafés in a neighborhood you don't usually visit (the West Village, Williamsburg, or Astoria all work well) and turn it into a mini crawl.",
+          "Bookstore browsing — The Strand, McNally Jackson, or a local indie shop make for an easy, free way to spend an afternoon.",
+          "Rooftop or park picnic — grab takeout and head to Domino Park, Fort Greene Park, or the Brooklyn Heights Promenade for skyline views without the ticket price.",
+          "Museum member hours or free days — several major NYC museums offer pay-what-you-wish evenings, worth checking before you commit to a full-price ticket.",
+        ],
+      },
+      {
+        heading: "Active & Outdoorsy Ideas",
+        paragraphs: ["If you want a weekend activity that gets you moving:"],
+        list: [
+          "Walk the High Line — start to finish, it's one of the most reliable free things to do in NYC any time of year.",
+          "Bike the Hudson River Greenway — rent a Citi Bike and ride from Battery Park up to the GWB, or as far as you feel like going.",
+          "Kayaking on the Hudson — free public kayaking is available seasonally at a few Manhattan and Brooklyn boathouses.",
+          "Explore a new park entirely — Prospect Park, Governors Island, or Van Cortlandt Park all feel like a day trip without leaving city limits.",
+        ],
+      },
+      {
+        heading: "Culture & Indoor Plans (Good for Any Weather)",
+        paragraphs: ["A good backup list for when the weather doesn't cooperate:"],
+        list: [
+          "A neighborhood you've never explored — Jackson Heights, Sunset Park, and the East Village all reward wandering with no agenda.",
+          "A small, offbeat museum — the Tenement Museum, the Merchant's House Museum, or the Morbid Anatomy space offer a different experience than the big-name institutions.",
+          "Live jazz or an open mic — Manhattan and Brooklyn have no shortage of low-cover venues for a spontaneous night out.",
+          "A matinee show — same-day rush and lottery tickets make Broadway more accessible than people assume.",
+        ],
+      },
+      {
+        heading: "Food-Focused Weekend Ideas",
+        paragraphs: ["Sometimes the plan should just be built around eating well:"],
+        list: [
+          "Try a cuisine you've never had — Flushing, Jackson Heights, and Sunset Park are some of the best food-exploration neighborhoods in the country.",
+          "Weekend food markets — Smorgasburg (seasonal), Chelsea Market, or DeKalb Market Hall are built for wandering and grazing.",
+          "Brunch somewhere new — instead of your usual spot, pick a neighborhood at random and find whatever's busiest.",
+        ],
+      },
+      {
+        heading: "Free & Budget-Friendly Options",
+        paragraphs: ["A weekend in New York doesn't have to cost anything:"],
+        list: [
+          "Staten Island Ferry — free, and one of the best skyline views in the city.",
+          "Free museum days and pay-what-you-wish hours.",
+          "Central Park or Prospect Park — always free, always different depending on the season.",
+          "Public art installations and open studios, which rotate throughout the city.",
+        ],
+      },
+      {
+        heading: "The Real Problem: Too Many Options, No Time to Sort Them",
+        paragraphs: [
+          "The hardest part of a New York weekend usually isn't a lack of things to do — it's the opposite. Deciding what fits your mood, budget, and location right now is what eats the time you meant to spend actually doing something.",
+          `That's the exact problem ${brand.name}'s Surprise Me feature solves: tell it your vibe, and it gives you a personalized plan nearby in seconds — no scrolling, no fifteen open tabs, no group chat debate. [Here's how that matching actually works](/blog/how-ai-is-changing-the-way-we-discover-things-to-do). If you'd rather have next weekend already planned, the Weekend Planner does that automatically based on what you actually like — [create a free account](/signup) to try either, or [see what's included with Premium](/pricing). And if a New York weekend has you in more of a date-night mood than a solo-wander one, [our fall date ideas roundup](/blog/fall-date-ideas-cozy-adventurous-budget-friendly) covers that ground too.`,
+        ],
+      },
+    ],
+    faq: [
+      {
+        q: "What's a good last-minute weekend plan in New York?",
+        a: "Pick a vibe first — cozy, active, cultural, or food-focused — then a specific idea from that category, rather than starting from scratch. A High Line walk, a new-to-you neighborhood, or a food market all work well with zero advance planning.",
+      },
+      {
+        q: "What are the best free things to do in NYC?",
+        a: "The Staten Island Ferry, the High Line, Central Park and Prospect Park, and most museums' pay-what-you-wish hours are all genuinely free and repeatable — not one-time novelties.",
+      },
+      {
+        q: "What's a good backup plan if the weather's bad?",
+        a: "Keep an indoor option in your back pocket from the Culture & Indoor Plans list above — a small museum, a matinee show, or live jazz all work regardless of weather, so an outdoor plan can flip to an indoor one without losing the day.",
+      },
+      {
+        q: "How is this different from just Googling \"things to do near me\"?",
+        a: `A search engine gives you an unsorted list and leaves the deciding to you — which is exactly the problem when you're short on planning time. ${brand.name} narrows that same universe of real places down to a short list matched to your budget, interests, and mood, with a reason attached to each pick.`,
+      },
+    ],
+  },
 ];
 
 export function getBlogPost(slug: string): BlogPost | undefined {
