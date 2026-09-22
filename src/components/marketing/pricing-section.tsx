@@ -1,15 +1,26 @@
 import { PricingCards } from "./pricing-cards";
+import { SectionHeading } from "@/components/marketing/section-heading";
+import { SectionGlow } from "@/components/marketing/section-glow";
+import { Reveal } from "@/components/marketing/reveal";
 
 export function PricingSection() {
   return (
-    <section id="pricing" className="bg-surface-sunken">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 py-20 md:py-28">
-        <div className="max-w-2xl mb-10 mx-auto text-center">
-          <h2 className="font-display text-3xl sm:text-4xl font-semibold text-foreground">Simple pricing</h2>
-          <p className="mt-4 text-foreground-muted text-lg">Start free. Upgrade when you want more.</p>
-        </div>
+    <section id="pricing" className="relative overflow-hidden bg-surface-sunken">
+      <SectionGlow tone="gold" side="top-left" />
+      <div className="relative mx-auto max-w-6xl px-4 sm:px-6 py-20 md:py-28">
+        <Reveal>
+          <SectionHeading
+            eyebrow="Pricing"
+            title="Simple pricing"
+            subtitle="Start free. Upgrade when you want more."
+            align="center"
+            className="mb-10 mx-auto"
+          />
+        </Reveal>
 
-        <PricingCards />
+        <Reveal delay={0.1}>
+          <PricingCards />
+        </Reveal>
       </div>
     </section>
   );

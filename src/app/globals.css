@@ -156,3 +156,19 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Slow ambient drift for decorative section-background glows (see
+   marketing/section-glow.tsx) -- a small, purely-CSS animation so it costs
+   nothing in JS and keeps running smoothly even during scroll/input. */
+@keyframes glow-drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(3%, -4%) scale(1.06); }
+}
+.animate-glow-drift {
+  animation: glow-drift 22s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-glow-drift {
+    animation: none;
+  }
+}

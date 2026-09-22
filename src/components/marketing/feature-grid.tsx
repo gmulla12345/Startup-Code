@@ -1,5 +1,9 @@
 import { Compass, MapPinned, Sparkles, Plane, TrendingUp } from "lucide-react";
 import { brand } from "@/lib/config/brand";
+import { SectionHeading } from "@/components/marketing/section-heading";
+import { SectionGlow } from "@/components/marketing/section-glow";
+import { Reveal } from "@/components/marketing/reveal";
+import { FeatureCard } from "@/components/marketing/feature-card";
 
 // The two real differentiators — reasoning per pick, and a system that
 // gets sharper with use — get larger, ember-bordered cards and top billing
@@ -42,35 +46,37 @@ const SECONDARY = [
 
 export function FeatureGrid() {
   return (
-    <section className="bg-surface-sunken">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 py-20 md:py-28">
-        <div className="max-w-2xl mb-14">
-          <h2 className="font-display text-3xl sm:text-4xl font-semibold text-foreground">
-            Discovery that actually knows you
-          </h2>
-          <p className="mt-4 text-foreground-muted text-lg">
-            Not another search engine. A recommendation engine built around who you are.
-          </p>
-        </div>
+    <section className="relative overflow-hidden bg-background">
+      <SectionGlow tone="ember" side="top-right" />
+      <div className="relative mx-auto max-w-6xl px-4 sm:px-6 py-20 md:py-28">
+        <Reveal>
+          <SectionHeading
+            eyebrow="Why Zolo"
+            title="Discovery that actually knows you"
+            subtitle="Not another search engine. A recommendation engine built around who you are."
+            className="mb-14"
+          />
+        </Reveal>
 
-        <div className="grid sm:grid-cols-2 gap-6 mb-6">
-          {HIGHLIGHTED.map((f) => (
-            <div key={f.title} className="rounded-[var(--radius-lg)] border-2 border-ember bg-surface p-6 sm:p-8">
-              <f.icon className="h-8 w-8 text-ember mb-4" strokeWidth={1.75} />
-              <h3 className="font-display text-xl font-semibold text-foreground mb-2">{f.title}</h3>
-              <p className="text-foreground-muted leading-relaxed">{f.description}</p>
-              <p className="text-sm text-ember font-medium mt-3">{f.subtext}</p>
-            </div>
+        <div className="grid sm:grid-cols-2 gap-5 mb-5">
+          {HIGHLIGHTED.map((f, i) => (
+            <Reveal key={f.title} delay={i * 0.08}>
+              <FeatureCard
+                icon={<f.icon strokeWidth={1.75} />}
+                title={f.title}
+                description={f.description}
+                subtext={f.subtext}
+                highlighted
+              />
+            </Reveal>
           ))}
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-10">
-          {SECONDARY.map((f) => (
-            <div key={f.title}>
-              <f.icon className="h-6 w-6 text-foreground-muted mb-4" strokeWidth={1.75} />
-              <h3 className="font-display text-lg font-semibold text-foreground mb-1.5">{f.title}</h3>
-              <p className="text-foreground-muted text-sm leading-relaxed">{f.description}</p>
-            </div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {SECONDARY.map((f, i) => (
+            <Reveal key={f.title} delay={0.16 + i * 0.08}>
+              <FeatureCard icon={<f.icon strokeWidth={1.75} />} title={f.title} description={f.description} />
+            </Reveal>
           ))}
         </div>
       </div>

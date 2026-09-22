@@ -8,7 +8,7 @@
 >
 > Full setup/architecture docs: [README.md](README.md). Full DB schema: [src/db/schema.sql](src/db/schema.sql).
 
-**Last updated:** 2026-09-11
+**Last updated:** 2026-09-22
 
 ## What this is
 
@@ -1391,6 +1391,122 @@ Typecheck/lint/all 34 tests clean throughout.
   it safely for already-indexed URLs is real scope. Revisit if/when experience pages come back into
   the index with real unique content.
 
+## Homepage hero rebuilt as a full-bleed photo + full landing-page redesign (2026-09-22)
+
+Two rounds of user feedback, same day, both about the pre-login site's visual quality.
+
+**Round 1 — the hero.** User: the hero "doesn't look clean," wants it to match the mobile app's
+own look (a real photo behind the headline, dark scrim, Fraunces/ember treatment — see the app's
+store-screenshot mockups) using their own supplied "urban night stroll" reference photo (a
+pedestrian mid-crossing a lit city street at night). Rebuilt [hero.tsx](src/components/marketing/hero.tsx):
+full-bleed photo background (the user's own image — confirmed free to use/download, sourced via
+"Godly AI" — copied into `public/hero/urban-night-stroll.webp`) with a single calibrated
+top-to-bottom scrim (explicit percentage stops, not Tailwind's 3-point from/via/to) tuned to the
+actual bottom-anchored position of the badge/headline/subhead/CTAs, so every line stays legible
+regardless of what's under it. Headline/subhead copy itself stayed unchanged (still inside the
+hero A/B measurement window). The small photo collage that used to live inside the hero moved out
+to its own section, [photo-strip.tsx](src/components/marketing/photo-strip.tsx) (renamed from
+`hero-photo-collage.tsx`), directly below it on the same dark background.
+
+**A real, separate bug was fixed along the way, not just a style tweak**: the sticky marketing nav
+([nav.tsx](src/components/marketing/nav.tsx)) was semi-transparent (`bg-surface/90 backdrop-blur-sm`),
+so scrolling let whatever was underneath bleed through at the boundary — harmless on a plain page,
+but it made the dark hero's headline look glitchy where the nav overlapped it. Nav is now fully
+opaque everywhere, unconditionally.
+
+A first hero-photo candidate (a real, properly-licensed Unsplash Times Square shot) was tried and
+discarded before landing on the user's own photo — it had legible third-party billboards (movie/
+brand ads) sitting directly behind the headline, which read as cluttered rather than clean. Worth
+remembering if a background photo is ever swapped again: busy real-world signage in a hero image
+is a real legibility/brand-cleanliness risk, not just an aesthetic nitpick.
+
+**Round 2 — everything below the hero.** Same day, immediately after: user asked for the *rest* of
+the landing page to be rebuilt to match — explicitly referencing linear.app, stripe.com, and
+lusion.co as inspiration ("really try to implement things from [lusion]"), raycast.com for its
+prominent OS-aware download CTA (see item 7 below — explicitly deferred, not built), wanted human-
+psychology-informed text placement (not everything centered), mobile to be equally polished, and
+above all "completely professional... not vibecoded." Researched all three reference sites live
+(WebFetch/browser) before writing any code rather than guessing from memory.
+
+**Key decision, stated explicitly to the user rather than silently under-delivered**: Lusion is a
+real-time WebGL/Three.js 3D physics scene (draggable 3D objects, custom cursor) — genuinely
+replicating that is a large, separate engineering investment (new deps, custom models, mobile
+performance/fallback work) disproportionate to a marketing-page task, and a custom cursor
+specifically was cut on purpose per the "not vibecoded" instruction (Linear and Stripe, the other
+two references, don't use one either — it reads as a flashy demo trick more than product polish
+when not pixel-perfect). What was actually built instead: Lusion's *restraint and interaction
+language* (generous whitespace, magnetic-hover CTAs, big bold type, bold statement typography) —
+not literal 3D.
+
+**The single highest-leverage technical move**: the app already had a complete light/dark CSS
+custom-property theme system ([globals.css](src/app/globals.css), `:root[data-theme="dark"]`) that
+marketing pages only picked up conditionally via `prefers-color-scheme`. Setting
+`data-theme="dark"` once on [(marketing)/layout.tsx](<src/app/(marketing)/layout.tsx>) made the
+*entire* pre-login site dark and consistent with the hero in one line, for free — every existing
+marketing/shared component (including [ExperienceCard](src/components/experience/experience-card.tsx),
+reused as-is from the logged-in app) already read color through semantic tokens (`bg-surface`,
+`text-foreground`, `border-border`, ...) rather than hardcoded hex, so this was activation, not a
+hand-recolor of a dozen files. Scoped to the `(marketing)` route group only — the logged-in app and
+auth pages are untouched and keep following the visitor's own preference.
+
+New shared primitives, all in `src/components/marketing/`:
+- **`reveal.tsx`** — rebuilt on framer-motion (`whileInView`, spring-eased fade+rise, optional
+  `delay` for staggering siblings) instead of a hand-rolled IntersectionObserver; same
+  `<Reveal>children</Reveal>` API so every existing call site kept working.
+- **`section-heading.tsx`** — the small uppercase eyebrow-label + heading + subhead pattern every
+  reference site uses, missing before. Left-aligned by default (per the human-psychology note —
+  reserve `align="center"` for short, punchy standalone statements like the pricing intro, FAQ
+  heading, and the "positioning" pull-quote, not every section).
+- **`section-glow.tsx`** — a soft blurred radial-gradient "aurora" behind section content (Stripe's
+  signature technique), tuned to Zolo's own ember/gold/forest palette, slow pure-CSS drift
+  (`animate-glow-drift` in globals.css) so it costs nothing in JS.
+- **`magnetic.tsx`** — a deliberately restrained magnetic-hover pull (~8-10px peak, spring-damped)
+  for primary CTAs only (hero, final CTA, pricing's Premium button) — the kind of detail that reads
+  as "someone cared" at low strength and "gimmick" the moment it's exaggerated, so it's used
+  sparingly, not on every button (the persistent nav CTA deliberately does NOT get it — a small,
+  always-on-screen button wobbling near the cursor during normal scrolling would feel jittery, not
+  premium).
+- **`grain-overlay.tsx`** — a single static (not per-frame-animated), 2.5%-opacity tiled SVG noise
+  texture over the whole site, `mix-blend-overlay`. The one thing that separates a flat CSS
+  gradient from something that looks shot on film — subtle enough to be almost subliminal.
+- **`feature-card.tsx`** — hit and fixed a real RSC constraint while building this: a Server
+  Component (`feature-grid.tsx`) can't pass a raw icon *component reference* as a prop into a
+  Client Component (framer-motion needs `"use client"`) — props crossing that boundary must be
+  serializable, and a function isn't. Fixed by rendering the icon element server-side
+  (`<f.icon strokeWidth={1.75} />`) and passing the already-rendered node instead; the icon's hover
+  color still works via plain CSS `currentColor` inheritance from a wrapping div, since lucide icons
+  stroke with `currentColor` by default. Worth remembering for any future client component that
+  takes an icon prop from a server-component caller.
+
+Every section below the hero was rebuilt (not just re-skinned) with this system: `feature-grid.tsx`
+is now a Linear-style bento grid with hover-lift cards; `how-it-works.tsx` got a connecting-line
+step sequence; `comparison-links.tsx` and `social-proof.tsx` got real hover/motion polish;
+`pricing-cards.tsx` got a hover-lift Premium card + magnetic CTA; `discovery-layer.tsx` became a
+pull-quote statement section; `faq.tsx` kept its existing crawlable-accordion mechanism (unchanged,
+still correct) with a visual re-skin; `cta-section.tsx` was fully rebuilt to echo the hero itself
+(dark panel, Fraunces headline, ember/gold gradient word, soft glow) instead of the old flat solid-
+ember box, as the page's closing bookend.
+
+Added `framer-motion` as a new dependency (industry-standard, SSR-safe with Next.js, already used
+by sites like Linear's own marketing site for this exact kind of motion) — a real `npm audit`
+finding surfaced during install (`js-yaml`, transitive via `eslint`'s config loader, dev-only, never
+reachable by any runtime/user input) was fixed cleanly via `npm audit fix`, zero vulnerabilities
+after.
+
+**Verified thoroughly given the size of this change**: `npm run typecheck`/`lint`/`test` (34/34)
+all clean; a full local **production build** (`next build --webpack`, the same command Vercel's
+deploy uses) succeeded cleanly with the homepage still statically prerendered (framer-motion client
+components didn't break static generation); scrolled the entire live page top to bottom on both
+desktop and mobile viewports checking every rebuilt section; spot-checked several *other*
+`(marketing)`-group pages that inherited the new forced-dark theme automatically (`/pricing`,
+`/about`, `/blog`, `/vs/zolo-vs-google-maps`) to confirm no contrast/regression issues from the
+theme-wide flip; confirmed the mobile nav menu, FAQ accordion, and pricing toggle all still work
+correctly after the nav opacity fix and PricingCards edits. Deployed and confirmed live on
+`discoverzolo.com`.
+
+**Not done — flagged to the user, not silently skipped**: a literal Lusion-style WebGL 3D scene
+(see the "key decision" note above) and a custom cursor (cut per the "not vibecoded" instruction).
+
 ## Exact next steps (priority order)
 
 **Done since the last update:** deployed to production at `discoverzolo.com` (fixed a Vercel
@@ -1521,11 +1637,15 @@ dedicated section above for exactly what's done vs. deliberately deferred.
    itineraryId?: string, experienceId?: string }` — see `zolo-app/CLAUDE.md` for the app-side
    routing code this maps to (`src/lib/notification-routing.ts`).
 7. **Landing page should eventually drive App Store downloads once the app ships** (flagged
-   2026-09-11 by the user — explicitly not now, do not pick this up unprompted): once the mobile
-   app is actually live on the App Store, add a real download CTA/App Store badge to the marketing
-   site's landing page (likely the hero and/or a dedicated section) so website visitors convert into
-   app installs, not just web signups. Not worth building placeholder badges or a section before
-   there's a real App Store listing to link to — revisit once `zolo-app` has shipped.
+   2026-09-11 by the user, re-flagged 2026-09-22 with a concrete reference — explicitly not now, do
+   not pick this up unprompted): once the mobile app is actually live on the App Store, add a real
+   download CTA/App Store badge to the marketing site's landing page (likely the hero and/or a
+   dedicated section) so website visitors convert into app installs, not just web signups. The
+   2026-09-22 landing-page redesign (see dedicated section below) named raycast.com as the specific
+   reference for how to do this — a prominent, primary "Download" CTA (Raycast's is OS-aware and
+   front-and-center in the hero) rather than a small badge buried in the footer. Not worth building
+   placeholder badges or a section before there's a real App Store listing to link to — revisit once
+   `zolo-app` has shipped.
 8. **SEO items that need the user, not just code** (see "SEO push" section above for full context):
    set up Google Search Console (needs their Google account + DNS/domain access — the single most
    impactful thing left per the audit, since it's the only way to see what Google actually indexes/

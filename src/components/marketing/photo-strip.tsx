@@ -3,6 +3,7 @@ import { Star } from "lucide-react";
 import type { ReactNode } from "react";
 import { formatCategoryLabel, withMaxWidth } from "@/lib/utils/format";
 import type { Experience } from "@/types/database";
+import { Reveal } from "@/components/marketing/reveal";
 
 function Badge({ children }: { children: ReactNode }) {
   return (
@@ -30,14 +31,14 @@ function Photo({
   large?: boolean;
 }) {
   return (
-    <div className={`relative overflow-hidden rounded-2xl ring-1 ring-white/10 ${className}`}>
+    <div className={`group relative overflow-hidden rounded-2xl ring-1 ring-white/10 transition-shadow duration-300 hover:ring-white/25 ${className}`}>
       <Image
         src={withMaxWidth(experience.images[0], 800)}
         alt={experience.title}
         fill
         priority={priority}
         sizes="(max-width: 640px) 50vw, 25vw"
-        className="object-cover"
+        className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
       <div className="absolute inset-0 p-2.5 flex flex-col justify-between items-start">
@@ -79,13 +80,15 @@ export function PhotoStrip({ experiences }: { experiences: Experience[] }) {
   return (
     <section className="bg-[#14120f]">
       <div className="mx-auto max-w-5xl px-4 sm:px-6 py-14 md:py-20">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-          <Photo experience={big} priority large className="col-span-2 sm:row-span-2 aspect-[4/3] sm:aspect-auto" />
-          <Photo experience={small1} className="aspect-square" />
-          <Photo experience={small2} className="aspect-square" />
-          {small3 && <Photo experience={small3} className="hidden sm:block aspect-square" />}
-          {small4 && <Photo experience={small4} className="hidden sm:block aspect-square" />}
-        </div>
+        <Reveal>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+            <Photo experience={big} priority large className="col-span-2 sm:row-span-2 aspect-[4/3] sm:aspect-auto" />
+            <Photo experience={small1} className="aspect-square" />
+            <Photo experience={small2} className="aspect-square" />
+            {small3 && <Photo experience={small3} className="hidden sm:block aspect-square" />}
+            {small4 && <Photo experience={small4} className="hidden sm:block aspect-square" />}
+          </div>
+        </Reveal>
       </div>
     </section>
   );

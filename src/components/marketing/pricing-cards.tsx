@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { Check, Lock } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { Button } from "@/components/ui/button";
+import { Magnetic } from "@/components/marketing/magnetic";
 import { pricing, type BillingInterval } from "@/lib/config/pricing";
 import { getBillingPreference, setBillingPreference } from "@/lib/utils/billing-preference";
 
@@ -94,8 +96,8 @@ export function PricingCards() {
           <p className="mt-3 text-center text-xs text-foreground-subtle">No credit card required</p>
         </div>
 
-        <div>
-          <div className="rounded-[var(--radius-lg)] border-2 border-ember bg-surface p-8 relative">
+        <motion.div whileHover={{ y: -4 }} transition={{ duration: 0.25, ease: "easeOut" }}>
+          <div className="rounded-[var(--radius-lg)] border-2 border-ember bg-surface p-8 relative shadow-[0_0_0_1px_rgba(255,106,69,0.08),var(--shadow-raised)]">
             <span className="absolute -top-3 left-8 bg-ember text-white text-xs font-semibold px-3 py-1 rounded-full">
               Most popular
             </span>
@@ -127,14 +129,16 @@ export function PricingCards() {
                 </li>
               ))}
             </ul>
-            <Button asChild size="lg" className="w-full">
-              <Link href="/signup">Start Premium</Link>
-            </Button>
+            <Magnetic>
+              <Button asChild size="lg" className="w-full">
+                <Link href="/signup">Start Premium</Link>
+              </Button>
+            </Magnetic>
             <p className="mt-3 text-center text-xs text-foreground-subtle">
               7-day free trial — cancel before it ends and you won&apos;t be charged
             </p>
           </div>
-        </div>
+        </motion.div>
       </div>
 
       <div className="mt-10 max-w-2xl mx-auto rounded-[var(--radius-lg)] border border-border bg-surface p-6">

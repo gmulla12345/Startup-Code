@@ -1,47 +1,41 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import type { ReactNode } from "react";
-import { cn } from "@/lib/utils/cn";
 
 /**
  * Fades + rises its children into place the first time they scroll into
- * view. A client-only wrapper around otherwise-static server-rendered
- * marketing sections — no new dependency, just IntersectionObserver, and
- * the wrapped content still renders fully in the initial HTML (this only
- * toggles a class, never conditionally mounts anything), so there's no SEO
- * or no-JS regression.
+ * view, via framer-motion's viewport-triggered animation (real spring-eased
+ * motion, not just a CSS class toggle). The wrapped content still renders
+ * fully in the initial HTML -- this only animates opacity/transform, never
+ * conditionally mounts anything -- so there's no SEO or no-JS regression.
+ * `delay` lets callers stagger a run of siblings (e.g. grid cards) without
+ * each one needing its own bespoke transition config.
  */
-export function Reveal({ children, className }: { children: ReactNode; className?: string }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
+export function Reveal({
+  children,
+  className,
+  delay = 0,
+}: {
+  children: ReactNode;
+  className?: string;
+  delay?: number;
+}) {
+  const reduceMotion = useReducedMotion();
 
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setVisible(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.15, rootMargin: "0px 0px -80px 0px" }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
+  if (reduceMotion) {
+    return <div className={className}>{children}</div>;
+  }
 
   return (
-    <div
-      ref={ref}
-      className={cn(
-        "transition-all duration-700 ease-out",
-        visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6",
-        className
-      )}
+    <motion.div
+      className={className}
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-10% 0px -10% 0px" }}
+      transition={{ duration: 0.6, delay, ease: [0.16, 1, 0.3, 1] }}
     >
       {children}
-    </div>
+    </motion.div>
   );
 }

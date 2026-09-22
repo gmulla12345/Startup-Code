@@ -6,6 +6,8 @@ import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { brand } from "@/lib/config/brand";
 import { safeJsonLd } from "@/lib/seo";
+import { SectionHeading } from "@/components/marketing/section-heading";
+import { Reveal } from "@/components/marketing/reveal";
 
 const FAQS = [
   {
@@ -55,37 +57,49 @@ export function FAQ() {
     <section id="faq" className="mx-auto max-w-3xl px-4 sm:px-6 py-20 md:py-28 border-t border-border">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(FAQ_JSON_LD) }} />
 
-      <h2 className="font-display text-3xl sm:text-4xl font-semibold text-foreground mb-10 text-center">
-        Frequently asked questions
-      </h2>
+      <Reveal>
+        <SectionHeading eyebrow="Support" title="Frequently asked questions" align="center" className="mb-10 mx-auto" />
+      </Reveal>
 
-      <div className="space-y-3">
+      <div className="space-y-2.5">
         {FAQS.map((item, i) => {
           const isOpen = open === i;
           return (
-            <div key={item.q} className="rounded-[var(--radius-md)] border border-border bg-surface overflow-hidden">
-              <button
-                className="w-full flex items-center justify-between px-5 py-4 text-left"
-                onClick={() => setOpen(isOpen ? null : i)}
-                aria-expanded={isOpen}
+            <Reveal key={item.q} delay={Math.min(i, 4) * 0.05}>
+              <div
+                className={cn(
+                  "rounded-[var(--radius-md)] border bg-surface overflow-hidden transition-colors duration-200",
+                  isOpen ? "border-ember/40" : "border-border hover:border-border-strong"
+                )}
               >
-                <span className="font-medium text-foreground">{item.q}</span>
-                <ChevronDown className={cn("h-4 w-4 text-foreground-muted transition-transform shrink-0", isOpen && "rotate-180")} />
-              </button>
-              {/*
-               * Always rendered (not conditionally mounted) so every answer
-               * is present in the static HTML for search engines and AI
-               * crawlers — only the CSS grid row height collapses to 0 for
-               * the visual accordion effect. Google explicitly allows
-               * accordion-hidden content for FAQPage rich results as long
-               * as it's actually in the page HTML, which this guarantees.
-               */}
-              <div className={cn("grid transition-[grid-template-rows] duration-200", isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]")}>
-                <div className="overflow-hidden">
-                  <p className="px-5 pb-4 text-sm text-foreground-muted leading-relaxed">{item.a}</p>
+                <button
+                  className="w-full flex items-center justify-between gap-4 px-5 py-4 text-left cursor-pointer"
+                  onClick={() => setOpen(isOpen ? null : i)}
+                  aria-expanded={isOpen}
+                >
+                  <span className="font-medium text-foreground">{item.q}</span>
+                  <ChevronDown
+                    className={cn(
+                      "h-4 w-4 shrink-0 transition-all duration-200",
+                      isOpen ? "rotate-180 text-ember" : "text-foreground-muted"
+                    )}
+                  />
+                </button>
+                {/*
+                 * Always rendered (not conditionally mounted) so every answer
+                 * is present in the static HTML for search engines and AI
+                 * crawlers — only the CSS grid row height collapses to 0 for
+                 * the visual accordion effect. Google explicitly allows
+                 * accordion-hidden content for FAQPage rich results as long
+                 * as it's actually in the page HTML, which this guarantees.
+                 */}
+                <div className={cn("grid transition-[grid-template-rows] duration-200", isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]")}>
+                  <div className="overflow-hidden">
+                    <p className="px-5 pb-4 text-sm text-foreground-muted leading-relaxed">{item.a}</p>
+                  </div>
                 </div>
               </div>
-            </div>
+            </Reveal>
           );
         })}
       </div>
