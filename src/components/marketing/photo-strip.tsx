@@ -60,26 +60,33 @@ function Photo({
 }
 
 /**
- * A real-photo collage in the hero, styled after the "real data on real
- * photos" pattern mixed with an uneven bento grid. Replaces the old
- * vertical "Discover panel" list treatment. Every field shown (title,
- * category, rating) is read directly off the real Experience objects from
- * the same live catalog query powering the rest of the homepage — nothing
- * fabricated, and no illustrative/example figures.
+ * A quick real-photo proof strip directly beneath the hero, on the hero's
+ * same dark panel background so the two read as one continuous dark
+ * opening before the page cuts to its normal light sections. Used to live
+ * inside the hero itself, but that crowded a full-bleed photo hero with a
+ * competing grid of thumbnails — moved out per explicit feedback that the
+ * hero should be one clean image. Every field shown (title, category,
+ * rating) is read directly off the real Experience objects from the same
+ * live catalog query powering the rest of the homepage — nothing
+ * fabricated, no illustrative/example figures.
  */
-export function HeroPhotoCollage({ experiences }: { experiences: Experience[] }) {
+export function PhotoStrip({ experiences }: { experiences: Experience[] }) {
   const photos = experiences.filter((e) => e.images[0]).slice(0, 5);
   if (photos.length < 3) return null;
 
   const [big, small1, small2, small3, small4] = photos;
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-      <Photo experience={big} priority large className="col-span-2 sm:row-span-2 aspect-[4/3] sm:aspect-auto" />
-      <Photo experience={small1} className="aspect-square" />
-      <Photo experience={small2} className="aspect-square" />
-      {small3 && <Photo experience={small3} className="hidden sm:block aspect-square" />}
-      {small4 && <Photo experience={small4} className="hidden sm:block aspect-square" />}
-    </div>
+    <section className="bg-[#14120f]">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 py-14 md:py-20">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+          <Photo experience={big} priority large className="col-span-2 sm:row-span-2 aspect-[4/3] sm:aspect-auto" />
+          <Photo experience={small1} className="aspect-square" />
+          <Photo experience={small2} className="aspect-square" />
+          {small3 && <Photo experience={small3} className="hidden sm:block aspect-square" />}
+          {small4 && <Photo experience={small4} className="hidden sm:block aspect-square" />}
+        </div>
+      </div>
+    </section>
   );
 }

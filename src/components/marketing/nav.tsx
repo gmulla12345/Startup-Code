@@ -16,8 +16,12 @@ const LINKS = [
 export function MarketingNav() {
   const [open, setOpen] = useState(false);
 
+  // Fully opaque, not translucent -- a semi-transparent sticky nav lets
+  // whatever scrolls underneath (e.g. the homepage's dark full-bleed hero
+  // photo) show/bleed through at the boundary, which reads as a rendering
+  // glitch rather than a deliberate glass effect.
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-surface/90 backdrop-blur-sm">
+    <header className="sticky top-0 z-50 border-b border-border bg-surface">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 h-16 flex items-center justify-between">
         <Logo />
 

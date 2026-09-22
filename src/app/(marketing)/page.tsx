@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { SoftwareApplicationJsonLd } from "@/components/shared/software-application-jsonld";
 import { Hero } from "@/components/marketing/hero";
+import { PhotoStrip } from "@/components/marketing/photo-strip";
 import { FeatureGrid } from "@/components/marketing/feature-grid";
 import { ExampleRecommendations } from "@/components/marketing/example-recommendations";
 import { HowItWorks } from "@/components/marketing/how-it-works";
@@ -29,7 +30,8 @@ export default async function LandingPage() {
   return (
     <>
       <SoftwareApplicationJsonLd />
-      <Hero previewExperiences={featured.slice(0, 5)} />
+      <Hero />
+      <PhotoStrip experiences={featured.slice(0, 5)} />
       <Reveal><FeatureGrid /></Reveal>
       <Reveal><ExampleRecommendations experiences={featured.slice(5, 8)} /></Reveal>
       <Reveal><HowItWorks /></Reveal>
