@@ -48,6 +48,10 @@ export interface GeocodeResult {
 
 export interface PlacesProvider {
   geocode(query: string): Promise<GeocodeResult | null>;
+  // Powers "use my current location" -- turns raw device coordinates into a
+  // human-readable city so they can be stored/displayed the same way a
+  // manually-searched city is, not just used as opaque numbers.
+  reverseGeocode(latitude: number, longitude: number): Promise<GeocodeResult | null>;
   isLive(): boolean;
 }
 

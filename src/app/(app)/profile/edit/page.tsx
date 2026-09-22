@@ -9,11 +9,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { UseLocationButton } from "@/components/shared/use-location-button";
 import { StepInterests } from "@/components/onboarding/step-interests";
 import { StepPersonality } from "@/components/onboarding/step-personality";
 import { StepPreferences } from "@/components/onboarding/step-preferences";
 import { StepGoals } from "@/components/onboarding/step-goals";
 import { emptyPersonality, defaultPreferences } from "@/lib/repositories/profile";
+import type { GeocodeResult } from "@/services/providers/types";
 import type { InterestTag, LifestyleGoal, PersonalitySliders, Profile, UserPreferences } from "@/types/database";
 
 type Tab = "basics" | "interests" | "personality" | "preferences" | "goals";
@@ -26,6 +28,10 @@ export default function EditProfilePage() {
 
   const [firstName, setFirstName] = useState("");
   const [city, setCity] = useState("");
+  const [region, setRegion] = useState<string | null>(null);
+  const [country, setCountry] = useState<string | null>(null);
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
   const [interests, setInterests] = useState<InterestTag[]>([]);
   const [personality, setPersonality] = useState<PersonalitySliders>(emptyPersonality());
   const [preferences, setPreferences] = useState<UserPreferences>(defaultPreferences());
@@ -37,6 +43,10 @@ export default function EditProfilePage() {
       .then(({ profile }: { profile: Profile }) => {
         setFirstName(profile.firstName);
         setCity(profile.city ?? "");
+        setRegion(profile.region);
+        setCountry(profile.country);
+        setLatitude(profile.latitude);
+        setLongitude(profile.longitude);
         setInterests(profile.interests);
         setPersonality(profile.personality);
         setPreferences(profile.preferences);
@@ -51,7 +61,18 @@ export default function EditProfilePage() {
       const res = await fetch("/api/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ firstName, city, interests, personality, preferences, lifestyleGoals: goals }),
+        body: JSON.stringify({
+          firstName,
+          city,
+          region,
+          country,
+          latitude,
+          longitude,
+          interests,
+          personality,
+          preferences,
+          lifestyleGoals: goals,
+        }),
       });
       if (!res.ok) throw new Error("Failed to save.");
       toast.success("Profile updated.");
@@ -62,6 +83,14 @@ export default function EditProfilePage() {
     } finally {
       setSaving(false);
     }
+  }
+
+  function handleLocated(result: GeocodeResult) {
+    setCity(result.city);
+    setRegion(result.region);
+    setCountry(result.country);
+    setLatitude(result.latitude);
+    setLongitude(result.longitude);
   }
 
   if (loading) {
@@ -105,7 +134,20 @@ export default function EditProfilePage() {
             </div>
             <div>
               <label className="text-sm font-medium text-foreground mb-1.5 block">City</label>
-              <Input value={city} onChange={(e) => setCity(e.target.value)} />
+              <Input
+                value={city}
+                onChange={(e) => {
+                  setCity(e.target.value);
+                  // Typing a new city by hand means we no longer know its
+                  // real coordinates -- clear them rather than silently
+                  // keep matching recommendations to the old location.
+                  setRegion(null);
+                  setCountry(null);
+                  setLatitude(null);
+                  setLongitude(null);
+                }}
+              />
+              <UseLocationButton onLocated={handleLocated} className="mt-2" />
             </div>
           </div>
         )}

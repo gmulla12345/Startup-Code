@@ -23,6 +23,16 @@ const CITIES: GeocodeResult[] = [
   { city: "Barcelona", region: null, country: "Spain", latitude: 41.3874, longitude: 2.1686, formattedAddress: "Barcelona, Spain", source: "mock" },
 ];
 
+function haversineMiles(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const earthRadiusMiles = 3958.8;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+  return earthRadiusMiles * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 export class MockPlacesProvider implements PlacesProvider {
   isLive() {
     return false;
@@ -35,6 +45,23 @@ export class MockPlacesProvider implements PlacesProvider {
     if (exact) return exact;
     const partial = CITIES.find((c) => c.city.toLowerCase().includes(q) || q.includes(c.city.toLowerCase()));
     return partial ?? null;
+  }
+
+  // No real reverse-geocoding API available without MAPS_API_KEY, so this
+  // falls back to whichever gazetteer city is geographically closest --
+  // good enough for "use my location" to work end to end in zero-credential
+  // local dev, not meant to be accurate for real device coordinates.
+  async reverseGeocode(latitude: number, longitude: number): Promise<GeocodeResult | null> {
+    let nearest = CITIES[0];
+    let nearestDistance = Infinity;
+    for (const city of CITIES) {
+      const distance = haversineMiles(latitude, longitude, city.latitude, city.longitude);
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearest = city;
+      }
+    }
+    return { ...nearest, latitude, longitude };
   }
 }
 

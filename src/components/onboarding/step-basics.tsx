@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { MapPin } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { UseLocationButton } from "@/components/shared/use-location-button";
 import { AGE_RANGES } from "@/lib/config/taxonomy";
 import { cn } from "@/lib/utils/cn";
 import type { GeocodeResult } from "@/services/providers/types";
@@ -102,6 +103,7 @@ export function StepBasics({ data, onChange }: { data: BasicsData; onChange: (da
             onFocus={() => setShowResults(true)}
           />
         </div>
+        <UseLocationButton onLocated={selectCity} className="mt-2" />
         {showResults && results.length > 0 && (
           <div className="absolute z-10 mt-1 w-full rounded-[var(--radius-md)] border border-border bg-surface shadow-[var(--shadow-raised)] overflow-hidden">
             {results.map((r) => (
