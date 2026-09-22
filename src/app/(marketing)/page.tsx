@@ -24,14 +24,14 @@ export const metadata: Metadata = {
 
 export default async function LandingPage() {
   const provider = await getExperienceProvider();
-  const featured = await provider.list({ city: "New York", latitude: 40.7128, longitude: -74.006, radiusMiles: 15, limit: 6 });
+  const featured = await provider.list({ city: "New York", latitude: 40.7128, longitude: -74.006, radiusMiles: 15, limit: 8 });
 
   return (
     <>
       <SoftwareApplicationJsonLd />
-      <Hero previewExperiences={featured.slice(0, 3)} />
+      <Hero previewExperiences={featured.slice(0, 5)} />
       <Reveal><FeatureGrid /></Reveal>
-      <Reveal><ExampleRecommendations experiences={featured.slice(3, 6)} /></Reveal>
+      <Reveal><ExampleRecommendations experiences={featured.slice(5, 8)} /></Reveal>
       <Reveal><HowItWorks /></Reveal>
       <Reveal><ComparisonLinks /></Reveal>
       <Reveal><SocialProof /></Reveal>
