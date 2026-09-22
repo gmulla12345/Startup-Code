@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Map, { Marker, Popup, NavigationControl, GeolocateControl } from "react-map-gl/maplibre";
+import { setWorkerUrl } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import Link from "next/link";
 import { MapPin, Star } from "lucide-react";
@@ -9,6 +10,21 @@ import { formatPrice } from "@/lib/utils/format";
 import type { Experience } from "@/types/database";
 
 const MAP_STYLE = process.env.NEXT_PUBLIC_MAP_STYLE_URL || "https://tiles.openfreemap.org/styles/liberty";
+
+// maplibre-gl 6's worker resolves itself at runtime via
+// `new URL('./maplibre-gl-worker.mjs', import.meta.url)`, a pattern no
+// bundler (webpack included -- this app's production build uses
+// `next build --webpack`, see AGENTS.md) detects statically. Left
+// unset, the worker request silently fails with no thrown error: the
+// map's flat background layer still paints (it needs no vector data),
+// but every road/label/POI layer stays permanently unrendered since
+// they're parsed in that worker. The worker also does its own relative
+// import of maplibre-gl-shared.mjs, so both files have to be served
+// from the same directory -- copied into public/maplibre/ by the
+// "postinstall" script in package.json (kept in sync with whatever
+// maplibre-gl version is actually installed, not a one-time manual
+// copy that can drift).
+setWorkerUrl("/maplibre/maplibre-gl-worker.mjs");
 
 export function DiscoveryMap({
   experiences,

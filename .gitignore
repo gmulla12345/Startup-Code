@@ -20,6 +20,10 @@
 # production
 /build
 
+# generated at install time by scripts/copy-maplibre-worker.js -- see the
+# comment in src/components/map/discovery-map.tsx for why
+/public/maplibre/
+
 # misc
 .DS_Store
 *.pem

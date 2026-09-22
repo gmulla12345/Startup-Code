@@ -15,6 +15,13 @@ function hostOf(url: string | undefined): string | null {
 }
 const supabaseHost = hostOf(process.env.NEXT_PUBLIC_SUPABASE_URL);
 const sentryHost = hostOf(process.env.NEXT_PUBLIC_SENTRY_DSN?.replace(/^https?:\/\/[^@]+@/, "https://"));
+// Same fallback discovery-map.tsx uses -- MapLibre fetches the style JSON,
+// vector tiles, sprites, and glyphs all via fetch/XHR (connect-src, not
+// img-src, since none of it loads through an <img> tag), all from this one
+// host. Missing this when the CSP first shipped silently blocked every
+// tile request -- pins/markers still rendered (plain DOM, positioned by
+// JS) while the actual basemap stayed a blank black rectangle underneath.
+const mapTilesHost = hostOf(process.env.NEXT_PUBLIC_MAP_STYLE_URL || "https://tiles.openfreemap.org/styles/liberty");
 
 // React's dev build uses eval() for debugging (stack trace reconstruction
 // across Fast Refresh boundaries) -- "React will never use eval() in
@@ -31,6 +38,17 @@ const CSP = [
   // an oversight.
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://www.googletagmanager.com https://assets.endorsely.com`,
   "style-src 'self' 'unsafe-inline'",
+  // MapLibre GL parses vector tiles off the main thread via a Web Worker it
+  // constructs from a blob: URL. worker-src has no fallback to connect-src
+  // -- CSP falls it back to script-src, which doesn't list blob: -- so
+  // without this explicit directive the worker's own construction was
+  // silently blocked (CSP worker failures report almost no detail: a bare
+  // ErrorEvent with no message). That stalled MapLibre before it ever
+  // issued a single vector tile request: the style JSON/sprite/glyphs load
+  // fine on the main thread, so the basemap's flat land-color background
+  // painted correctly, but roads/labels/POIs never rendered because the
+  // worker that parses that data never started.
+  "worker-src 'self' blob:",
   // Images come from many real hosts (Google Places photos, Unsplash,
   // Supabase storage) with unbounded/rotating URLs -- scoping this to https:
   // broadly is standard practice since img-src has far less XSS blast radius
@@ -43,6 +61,7 @@ const CSP = [
     "https://www.google-analytics.com",
     sentryHost ? `https://${sentryHost}` : "",
     "https://assets.endorsely.com",
+    mapTilesHost ? `https://${mapTilesHost}` : "",
   ]
     .filter(Boolean)
     .join(" "),
