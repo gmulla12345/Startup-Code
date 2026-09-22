@@ -162,7 +162,12 @@ export function SurpriseMeButton() {
                 <X className="h-4 w-4 text-white" />
               </button>
               <div className="absolute bottom-3 left-3">
-                <Badge variant="ember" className="bg-white/95 font-semibold">
+                {/* Hardcoded color, not the ember variant's CSS-var text
+                    color -- this chip is always white regardless of theme
+                    (it sits on a photo), but the variant's color flips in
+                    dark mode and loses contrast against a fixed-white
+                    chip. Same fix as experience-card.tsx's match badge. */}
+                <Badge className="bg-white/95 text-[#e63f1d] font-semibold">
                   {Math.round(result.recommendation.matchScore)}% match
                 </Badge>
               </div>

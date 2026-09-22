@@ -18,22 +18,30 @@ export function FeatureCard({
   description,
   subtext,
   highlighted = false,
+  preview,
+  className,
 }: {
   icon: ReactNode;
   title: string;
   description: string;
   subtext?: string;
   highlighted?: boolean;
+  /** Optional real-UI snippet rendered below the copy -- gives the card's
+   * primary differentiator actual visual weight instead of icon+text
+   * repeated at every size, without needing a second full mockup. */
+  preview?: ReactNode;
+  className?: string;
 }) {
   return (
     <motion.div
       whileHover={{ y: -3 }}
       transition={{ duration: 0.25, ease: "easeOut" }}
       className={cn(
-        "group relative rounded-[var(--radius-lg)] border bg-surface p-6 sm:p-8 transition-colors duration-300",
+        "group relative flex h-full flex-col rounded-[var(--radius-lg)] border bg-surface p-6 sm:p-8 transition-colors duration-300",
         highlighted
           ? "border-ember/40 hover:border-ember"
-          : "border-border hover:border-border-strong"
+          : "border-border hover:border-border-strong",
+        className
       )}
     >
       <div
@@ -47,6 +55,7 @@ export function FeatureCard({
       <h3 className="font-display text-lg font-semibold text-foreground mb-2">{title}</h3>
       <p className={cn("text-foreground-muted leading-relaxed", highlighted ? "" : "text-sm")}>{description}</p>
       {subtext && <p className="text-sm text-ember font-medium mt-3">{subtext}</p>}
+      {preview && <div className="mt-auto pt-6">{preview}</div>}
     </motion.div>
   );
 }

@@ -1507,6 +1507,88 @@ correctly after the nav opacity fix and PricingCards edits. Deployed and confirm
 **Not done — flagged to the user, not silently skipped**: a literal Lusion-style WebGL 3D scene
 (see the "key decision" note above) and a custom cursor (cut per the "not vibecoded" instruction).
 
+## Landing page, round 2: real bugs fixed, a real product mockup replaces a stale example (2026-09-22)
+
+Direct pushback on round 1 above, same day: user said the changes "were not as drastic" as wanted,
+the site still "looks very vibecoded," the human-psychology text-placement note from round 1 hadn't
+visibly landed, flagged a concrete visual bug (blank white circles in a screenshot), flagged a
+factual error in example copy, and asked for real redevelopment closer to the reference sites with
+more effort, not incremental polish.
+
+**Two real, previously-unnoticed bugs, not style opinions — found and fixed first:**
+1. **The "blank circles" were invisible icons, not decoration.** `ExperienceCard`'s save-heart
+   button, the match-score badge, and the "Completed" badge all sit on a fixed white chip (they
+   overlay a photo, not a themed surface) but colored their icon/text via theme CSS variables
+   (`text-foreground`, the `Badge` ember/forest variants) — variables that flip to near-white in
+   dark mode. Once round 1 force-enabled dark mode site-wide, the heart icon became literally
+   white-on-white. Fixed in
+   [experience-card.tsx](src/components/experience/experience-card.tsx),
+   [premium-lock.tsx](src/components/experience/premium-lock.tsx) (an "Upgrade to Premium" button
+   with the identical bug), and
+   [surprise-me-button.tsx](src/components/home/surprise-me-button.tsx) (the same match-score
+   badge) — all three switched from theme-variable colors to hardcoded hex, since a fixed-white
+   chip's contrast requirements don't change with the app's theme. **This was latent in the actual
+   logged-in app too, for any user with system dark mode on, before round 1 ever touched marketing
+   pages** — worth remembering as a real bug class (icon-on-a-fixed-white-chip using a theme
+   variable) if it turns up again elsewhere.
+2. **The "How a recommendation gets made" diagram's example was flatly false**: "Times Square...
+   because you love outdoor adventure" — Times Square was never outdoor-adventure-categorized, and
+   its real category was independently corrected to "Hidden Gem" earlier in this project (see the
+   2026-09-11 SEO section above) without anyone updating this static illustrative example to match.
+   Rather than patch the copy, the whole diagram was replaced (see below) with something that reads
+   real data and can't go stale the same way a hand-written example can.
+
+**The real redevelopment, not just a re-skin**: [how-it-works.tsx](src/components/marketing/how-it-works.tsx)
+is now a genuinely asymmetric two-column section (numbered steps left, a live product mockup right)
+— the first real deviation from "centered heading over a grid" repeated at every section, directly
+answering the human-psychology/placement feedback with something visible rather than just left-
+aligned text. The mockup itself,
+[product-preview.tsx](src/components/marketing/product-preview.tsx) wrapped in a
+[browser-frame.tsx](src/components/marketing/browser-frame.tsx) (macOS-style traffic-light chrome +
+address bar reading "discoverzolo.com/discover"), is the floating-screenshot pattern Linear's own
+site leads with — real experience photos/titles/ratings from the same live catalog query powering
+the rest of the homepage, with the real "For You / Popular / Hidden Gems" tabs and filter-pill
+chrome from the actual Discover page. Match %s and "matches your interests" phrasing are
+illustrative (not a live result for whoever's viewing), but the language is the *real* language —
+`scoreExperience()` in [scoring.ts](src/services/recommendation/scoring.ts) genuinely produces
+"Matches your interests: X, Y" as a real reason — same honesty rule the old hero mockup used
+(real places/photos, illustrative-but-representative reasoning, never dressed up as a personal
+result). Not a static image: it's live-rendered from real components/tokens, so it can't drift out
+of sync with the real UI the way a screenshot or hand-written example can — directly addressing how
+the Times Square bug happened in the first place.
+
+**`feature-grid.tsx` rebuilt as a genuinely uneven bento**, not the previous "2 equal + 3 equal"
+grid: one wide/tall anchor card (`lg:col-span-3 lg:row-span-2`) next to a narrower one
+(`lg:col-span-2`), real varied spans below it — matches how the reference sites actually vary bento
+cell size for visual rhythm rather than tiling equal boxes with different text in them. The anchor
+card ("Intelligent Recommendations") also gained a real UI-snippet preview
+(`ReasoningPreview` in the same file) instead of just icon+text, giving the page's stated #1
+differentiator actual visual weight.
+
+**Also added `tilt.tsx`** — a restrained (~4°, spring-damped) mouse-driven 3D tilt on the new
+product mockup, wrapping it in real interactivity rather than a flat static panel, at the same
+"barely-there" strength as round 1's `magnetic.tsx` for the identical reason (subtle reads as
+polish, exaggerated reads as gimmick).
+
+**A real JSX/TypeScript gotcha hit while building the bento**: `<SECONDARY[0].icon />` is not valid
+JSX — a tag name must be a plain identifier or a simple dotted-identifier chain, not a computed
+member expression. Fixed by giving each feature its own named const (`DISCOVERY`, `REAL_WORLD`,
+`TRAVEL`) instead of an array, so `<DISCOVERY.icon />` is a valid JSX tag position.
+
+**What was deliberately NOT changed again**: still no literal WebGL/Three.js 3D scene or custom
+cursor — same reasoning as round 1 (disproportionate engineering risk for a marketing page; a
+custom cursor reads as a demo gimmick, conflicting with "not vibecoded"). If this comes up a third
+time, that trade-off itself may need to be revisited with the user directly rather than assumed.
+
+**Verified**: `typecheck`/`lint`/`test` (34/34) clean, a full local production build (`next build
+--webpack`) succeeded, the whole page scrolled top to bottom on both a ~800px pane width and an
+emulated 1440px real-desktop width specifically to confirm the new `lg:` two-column/bento layouts
+actually activate (the pane's own default width never reaches the `lg` breakpoint, so this needed
+an explicit wider emulation to check — worth remembering for any future `lg:`-gated layout work in
+this project), and on mobile (375px) to confirm both the two-column section and the bento collapse
+cleanly to single-column with the mockup and reasoning-preview chip both legible. Deployed and
+confirmed live on `discoverzolo.com`.
+
 ## Exact next steps (priority order)
 
 **Done since the last update:** deployed to production at `discoverzolo.com` (fixed a Vercel

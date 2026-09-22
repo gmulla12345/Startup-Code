@@ -25,7 +25,7 @@ export const metadata: Metadata = {
 
 export default async function LandingPage() {
   const provider = await getExperienceProvider();
-  const featured = await provider.list({ city: "New York", latitude: 40.7128, longitude: -74.006, radiusMiles: 15, limit: 8 });
+  const featured = await provider.list({ city: "New York", latitude: 40.7128, longitude: -74.006, radiusMiles: 15, limit: 12 });
 
   return (
     <>
@@ -34,7 +34,7 @@ export default async function LandingPage() {
       <PhotoStrip experiences={featured.slice(0, 5)} />
       <Reveal><FeatureGrid /></Reveal>
       <Reveal><ExampleRecommendations experiences={featured.slice(5, 8)} /></Reveal>
-      <Reveal><HowItWorks /></Reveal>
+      <Reveal><HowItWorks experiences={featured.slice(8, 12)} /></Reveal>
       <Reveal><ComparisonLinks /></Reveal>
       <Reveal><SocialProof /></Reveal>
       <Reveal><PricingSection /></Reveal>

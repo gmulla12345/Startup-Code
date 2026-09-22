@@ -97,9 +97,22 @@ export function ExperienceCard({
           />
         )}
 
+        {/*
+         * Every badge/button in this photo overlay sits on its own fixed
+         * white chip, not a themed surface -- so its colors are hardcoded
+         * hex, not the theme-variable classes (text-foreground, the Badge
+         * variants' CSS-var colors, etc.) used everywhere else in this
+         * file. Those variables flip in dark mode (e.g. --foreground goes
+         * near-white), which made this row invisible or low-contrast
+         * against its always-white chip once dark mode was force-enabled
+         * on the marketing pages -- the save heart was rendering
+         * literally white-on-white. A white chip's required contrast
+         * doesn't change with the app's theme, so its colors shouldn't
+         * either.
+         */}
         {matchScore != null && (
           <div className="absolute top-3 left-3">
-            <Badge variant="ember" className="bg-white/95 font-semibold shadow-sm">
+            <Badge className="bg-white/95 text-[#e63f1d] font-semibold shadow-sm">
               {Math.round(matchScore)}% match
             </Badge>
           </div>
@@ -107,7 +120,7 @@ export function ExperienceCard({
 
         {matchScore == null && completed && (
           <div className="absolute top-3 left-3">
-            <Badge variant="forest" className="bg-white/95 font-semibold shadow-sm">
+            <Badge className="bg-white/95 text-[#0a4438] font-semibold shadow-sm">
               <CheckCircle2 className="h-3 w-3" /> Completed
             </Badge>
           </div>
@@ -118,7 +131,7 @@ export function ExperienceCard({
           aria-label={isSaved ? "Unsave" : "Save"}
           className="absolute top-2 right-2 h-11 w-11 rounded-full bg-white/90 flex items-center justify-center transition-colors hover:bg-white"
         >
-          <Heart className={cn("h-4 w-4", isSaved ? "fill-ember text-ember" : "text-foreground")} />
+          <Heart className={cn("h-4 w-4", isSaved ? "fill-[#ff4e2b] text-[#ff4e2b]" : "text-[#1b1712]")} />
         </button>
       </div>
 

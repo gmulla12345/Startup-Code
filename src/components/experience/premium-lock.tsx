@@ -18,7 +18,12 @@ export function PremiumLock({ title, image }: { title: string; image?: string })
           <p className="text-white/80 text-sm mb-5 max-w-sm">
             Upgrade to {brand.name} Premium (${pricing.premium.priceMonthly}/mo) to unlock exclusive experiences like this one.
           </p>
-          <Button asChild size="lg" className="bg-white text-foreground hover:bg-white/90">
+          {/* Hardcoded dark text, not text-foreground -- this button's
+              white background is fixed regardless of theme (it sits on a
+              blurred photo, not a themed surface), but text-foreground
+              flips to near-white in dark mode and would render invisible
+              on it. Same bug class as experience-card.tsx's save button. */}
+          <Button asChild size="lg" className="bg-white text-[#1b1712] hover:bg-white/90">
             <Link href="/profile/upgrade">Upgrade to Premium</Link>
           </Button>
         </div>
