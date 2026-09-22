@@ -1,6 +1,10 @@
+"use client";
+
+import { useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, Star } from "lucide-react";
+import { motion, useScroll, useTransform } from "framer-motion";
+import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 // The exact "urban night stroll" reference photo the user supplied --
@@ -9,24 +13,44 @@ import { Button } from "@/components/ui/button";
 // download (sourced via Godly AI).
 const HERO_IMAGE = "/hero/urban-night-stroll.webp";
 
-// Full-bleed photo hero, replacing the old flat-color-background + small
-// photo-collage layout. Headline/subhead copy is UNCHANGED (still
-// mid-measurement, see CLAUDE.md's hero A/B test note) -- only the visual
-// container changed. The photo collage that used to live inside this
-// section moved to its own section right below (see (marketing)/page.tsx) --
-// per explicit feedback, the hero itself should be one clean, immersive
-// image, not the image plus a grid of thumbnails competing for attention.
+// Simplified per explicit user request (2026-09-22): the badge pill was
+// dropped entirely and the subhead cut from a 4-line paragraph to one
+// sentence -- this is a deliberate, requested content change, not an
+// oversight of the earlier "headline copy is mid-A/B-measurement" note
+// elsewhere in this file's history; the user's direct instruction to
+// simplify this specific screen supersedes that caution for this edit.
 export function Hero() {
+  const ref = useRef<HTMLElement>(null);
+  // Tracks scroll progress across exactly the hero's own height -- 0 when
+  // its top hits the viewport top, 1 once its bottom has scrolled past --
+  // rather than the whole page's scroll, so the effect is scoped to the
+  // hero-to-next-section transition the user asked for, not a full-page
+  // parallax that would keep animating long after the hero is offscreen.
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
+  // Image drifts down and zooms in slowly (classic parallax: the
+  // background moves slower than the foreground scroll), while the copy
+  // fades and rises away faster -- text dissolves first, the photo lingers
+  // a beat longer, then the page hands off to the next section. Kept
+  // subtle (18% drift, 1.08x zoom) for the same reason every other motion
+  // primitive on this page is restrained: barely-there reads as polish,
+  // exaggerated reads as a gimmick.
+  const imageY = useTransform(scrollYProgress, [0, 1], ["0%", "18%"]);
+  const imageScale = useTransform(scrollYProgress, [0, 1], [1, 1.08]);
+  const contentOpacity = useTransform(scrollYProgress, [0, 0.65], [1, 0]);
+  const contentY = useTransform(scrollYProgress, [0, 1], ["0%", "-10%"]);
+
   return (
-    <section className="relative isolate overflow-hidden bg-[#0e0c09] min-h-[600px] h-[86vh] max-h-[840px] flex items-end">
-      <Image
-        src={HERO_IMAGE}
-        alt=""
-        fill
-        priority
-        sizes="100vw"
-        className="object-cover object-[62%_28%] sm:object-[58%_32%]"
-      />
+    <section ref={ref} className="relative isolate overflow-hidden bg-[#0e0c09] min-h-[600px] h-[86vh] max-h-[840px] flex items-end">
+      <motion.div style={{ y: imageY, scale: imageScale }} className="absolute inset-0">
+        <Image
+          src={HERO_IMAGE}
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-[62%_28%] sm:object-[58%_32%]"
+        />
+      </motion.div>
 
       {/* One continuous top-to-bottom scrim, not two separate bands -- the
           content block is bottom-anchored (flex items-end) and tall enough
@@ -44,23 +68,18 @@ export function Hero() {
         }}
       />
 
-      <div className="relative mx-auto max-w-3xl px-4 sm:px-6 pt-28 pb-14 md:pb-20 text-center">
-        <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-[#14120f]/70 backdrop-blur-sm px-4 py-1.5 text-xs font-medium text-[#e4dbc9] mb-6">
-          <Star className="h-3.5 w-3.5 fill-[#f0bc4e] text-[#f0bc4e]" />
-          Personalized discovery, built for real life
-        </div>
-
+      <motion.div
+        style={{ opacity: contentOpacity, y: contentY }}
+        className="relative mx-auto max-w-3xl px-4 sm:px-6 pt-28 pb-14 md:pb-20 text-center"
+      >
         <h1 className="font-display text-5xl sm:text-6xl md:text-7xl font-semibold tracking-tight text-[#f6f1e7] leading-[1.05] [text-shadow:0_4px_24px_rgba(0,0,0,0.45)]">
           <span className="block text-lg sm:text-xl font-medium text-[#e4dbc9] mb-2">Discover Zolo</span>
           Stop deciding. Start{" "}
           <span className="bg-gradient-to-r from-[#ff6a45] to-[#f0bc4e] bg-clip-text text-transparent">doing</span>.
         </h1>
 
-        <p className="mt-6 text-lg sm:text-xl text-[#e4dbc9] max-w-2xl mx-auto [text-shadow:0_2px_12px_rgba(0,0,0,0.5)]">
-          Zolo gives you a short, curated list of experiences matched to your interests, budget, and
-          personality — with a reason for every pick. Zolo is revolutionizing personalized discovery,
-          turning decision fatigue into a two-minute decision. Built for young professionals who want
-          more from their free time.
+        <p className="mt-6 text-lg sm:text-xl text-[#e4dbc9] max-w-xl mx-auto [text-shadow:0_2px_12px_rgba(0,0,0,0.5)]">
+          A short, curated list of things to do — matched to you, with a reason for every pick.
         </p>
 
         <div className="mt-9 flex flex-col sm:flex-row gap-3 justify-center">
@@ -73,7 +92,7 @@ export function Hero() {
             <a href="#how-it-works">Explore</a>
           </Button>
         </div>
-      </div>
+      </motion.div>
     </section>
   );
 }
