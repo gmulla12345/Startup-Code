@@ -1391,6 +1391,53 @@ Typecheck/lint/all 34 tests clean throughout.
   it safely for already-indexed URLs is real scope. Revisit if/when experience pages come back into
   the index with real unique content.
 
+## Security checklist pass + "use my current location" (2026-09-19/22) — flagged for the mobile app session
+
+Two rounds of work, undocumented until now (found missing while answering the user's question about
+whether the mobile app session had been kept in sync — it hadn't been, this entry is that catch-up).
+**Read this before touching `/api/profile`, `/api/geocode`, or `withErrorHandling` — both routes are
+also called directly by `zolo-app` as its backend (see "Mobile app groundwork" above), and neither
+change was ever flagged there.**
+
+**Security checklist pass (2026-09-19)** — user shared a generic security checklist and asked for
+everything on it to be done. Real, concrete gaps found and fixed, not a rubber-stamp:
+- `next`/`maplibre-gl`/`eslint-config-next` bumped to clear 2 critical + 1 high `npm audit` CVEs.
+- **`PATCH /api/profile` had zero input validation** despite a schema (`profileUpdateSchema`) that
+  already existed unwired in [src/lib/validation/schemas.ts](src/lib/validation/schemas.ts) — now
+  actually parses the request body before it reaches `updateProfile()`.
+- **`withErrorHandling()`** ([src/lib/api/auth.ts](src/lib/api/auth.ts)) never special-cased
+  `ZodError`, so *every* validation failure app-wide (not just profile) silently downgraded to a
+  generic 500 instead of a 400 with issue details. This is the one with the widest blast radius —
+  it changes response shape/status for any route with a schema, mobile included.
+- `GET /api/geocode` (unauthenticated, hits billed Google Geocoding API) got real rate limiting —
+  30 requests/min per IP via the existing `checkRateLimit()` helper.
+- JSON-LD `<script>` XSS-escaping (`safeJsonLd()`), real security headers + CSP added to
+  `next.config.ts` (irrelevant to the app — response headers on a page the app doesn't render).
+
+**"Use my current location" (2026-09-22)** — new, additive capability, not a breaking change:
+`PlacesProvider` gained `reverseGeocode(lat, lng)`, and `GET /api/geocode` now accepts
+`?lat=&lng=` as an alternative to `?q=` (same route, same rate limit, returns the same
+`GeocodeResult` shape either way). Built a `UseLocationButton` that calls the browser Geolocation
+API and this new endpoint, wired into onboarding and profile edit. Nothing here requires app-side
+action — flagging only because it's a capability the app could adopt (a native "use my location"
+button calling the same endpoint) if that's ever wanted; it doesn't need it to keep working as-is.
+
+**What this means for the mobile app session, concretely:**
+1. If the app sends a malformed `PATCH /api/profile` body (wrong type, out-of-range value, etc.), it
+   used to get a 500 and now gets a 400 with a real `issues` array — likely a *better* failure mode
+   to handle, but worth checking the app's error handling actually distinguishes 400 from 500 rather
+   than treating both as "something broke."
+2. If the app calls `/api/geocode` (city search during onboarding, per "Mobile app groundwork" above
+   — same endpoint) more than 30 times/min from one IP (e.g. rapid typing during testing, or many
+   simulators behind one NAT/proxy sharing an IP), it'll now get rate-limited where it wasn't before.
+3. Everything else above (CSP, security headers, dependency bumps) is web-response-only and doesn't
+   apply to native API calls at all.
+
+No live mobile app session was running to message this to directly when it came up — noting it here
+per this project's established cross-session pattern (flag in the other repo's `CLAUDE.md` when no
+session is live to message; see `zolo-app/CLAUDE.md`'s own "Flagged to the website session" entries
+for the mirror-image case) so it surfaces on that session's next pass over `../real-app`.
+
 ## Homepage hero rebuilt as a full-bleed photo + full landing-page redesign (2026-09-22)
 
 Two rounds of user feedback, same day, both about the pre-login site's visual quality.
