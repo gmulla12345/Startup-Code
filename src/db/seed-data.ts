@@ -1,4 +1,4 @@
-import type { Experience, ExperienceCategory } from "@/types/database";
+import type { Experience } from "@/types/database";
 
 /**
  * Fictional demo catalog — invented tours/venues with stock photography, for
@@ -17,20 +17,11 @@ import type { Experience, ExperienceCategory } from "@/types/database";
  * a second guardrail, so even an accidental re-seed can't resurface this.
  */
 
-export const CATEGORIES: { id: ExperienceCategory; label: string; icon: string; sortOrder: number }[] = [
-  { id: "outdoor_adventure", label: "Outdoor & Adventure", icon: "mountain", sortOrder: 1 },
-  { id: "food_drink", label: "Food & Drink", icon: "utensils", sortOrder: 2 },
-  { id: "nightlife", label: "Nightlife", icon: "moon", sortOrder: 3 },
-  { id: "arts_culture", label: "Arts & Culture", icon: "palette", sortOrder: 4 },
-  { id: "wellness", label: "Wellness", icon: "heart", sortOrder: 5 },
-  { id: "sports_fitness", label: "Sports & Fitness", icon: "dumbbell", sortOrder: 6 },
-  { id: "music_entertainment", label: "Music & Entertainment", icon: "music", sortOrder: 7 },
-  { id: "history_learning", label: "History & Learning", icon: "landmark", sortOrder: 8 },
-  { id: "hidden_gem", label: "Hidden Gems", icon: "gem", sortOrder: 9 },
-  { id: "day_trip", label: "Day Trips", icon: "car", sortOrder: 10 },
-  { id: "travel", label: "Travel", icon: "plane", sortOrder: 11 },
-  { id: "social", label: "Social", icon: "users", sortOrder: 12 },
-];
+// Moved to lib/config/categories.ts (2026-09-22) -- re-exported here so any
+// existing import of CATEGORIES from this file keeps working. New code
+// should import from lib/config/categories.ts directly (no dependency on
+// this file's much larger fictional EXPERIENCES catalog below).
+export { CATEGORIES } from "@/lib/config/categories";
 
 type SeedExperience = Omit<Experience, "id" | "createdAt" | "updatedAt" | "reviewCount" | "rating"> & {
   rating: number;

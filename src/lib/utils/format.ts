@@ -1,3 +1,5 @@
+import { CATEGORY_LABELS } from "@/lib/config/categories";
+
 // Google Places photo URLs bake a fixed `maxwidth` in at fetch time (see
 // google-places-experience-provider.ts's default of 1200, sized for a
 // full-width gallery image). A component rendering that same URL at a much
@@ -30,7 +32,16 @@ export function formatDistance(miles: number): string {
   return `${Math.round(miles)} mi`;
 }
 
+// Reads the canonical label (e.g. "Food & Drink", "Sports") from
+// CATEGORY_LABELS instead of algorithmically title-casing the enum key --
+// the two used to disagree (this used to produce "Food Drink"/"Sports
+// Fitness", no ampersand, while filter pills showed the real curated label)
+// since they were two independent sources of truth for the same thing.
+// Falls back to a plain title-case for any string that isn't a known
+// ExperienceCategory (defensive only -- every real caller passes one).
 export function formatCategoryLabel(category: string): string {
+  const known = CATEGORY_LABELS[category as keyof typeof CATEGORY_LABELS];
+  if (known) return known;
   return category
     .split("_")
     .map((w) => w[0].toUpperCase() + w.slice(1))

@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/input";
 import { PillGroup } from "@/components/onboarding/pill-group";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CATEGORIES } from "@/db/seed-data";
+import { CATEGORIES } from "@/lib/config/categories";
 
 interface AdminExperience {
   id: string;

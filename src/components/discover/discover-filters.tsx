@@ -4,7 +4,7 @@ import { Search, SlidersHorizontal } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Tabs } from "@/components/ui/tabs";
 import { PillGroup } from "@/components/onboarding/pill-group";
-import { CATEGORIES } from "@/db/seed-data";
+import { CATEGORIES } from "@/lib/config/categories";
 import { BUDGET_LEVELS } from "@/lib/config/taxonomy";
 import { cn } from "@/lib/utils/cn";
 

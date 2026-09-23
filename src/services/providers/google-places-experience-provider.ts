@@ -26,6 +26,19 @@ const CATEGORY_TO_PLACE_TYPE: Record<ExperienceCategory, string> = {
   social: "bar",
 };
 
+// Overrides CATEGORY_TO_PLACE_TYPE for categories where a single Google
+// type can't capture the category -- currently just "Sports": searching
+// only `type=gym` would return mostly regular commercial gyms, which
+// inferCategory now correctly excludes from this category. Fanning out
+// across the real sport-specific types too (same parallel-fetch pattern as
+// DIVERSITY_TYPES) means a filter for "Sports" actually finds stadiums and
+// bowling alleys, plus whatever gyms the name-keyword check can pick out,
+// instead of just whatever "gym" search results happen to survive
+// filtering.
+const CATEGORY_SEARCH_TYPES: Partial<Record<ExperienceCategory, string[]>> = {
+  sports_fitness: ["stadium", "bowling_alley", "gym"],
+};
+
 // When no specific category is requested (the common case for the home feed
 // and Surprise Me), searching only "tourist_attraction" biases heavily
 // toward the handful of most-famous landmarks in an area — Google's Nearby
@@ -37,6 +50,17 @@ const CATEGORY_TO_PLACE_TYPE: Record<ExperienceCategory, string> = {
 // something other than the most obvious tourist spot.
 const DIVERSITY_TYPES = ["tourist_attraction", "restaurant", "cafe", "museum", "park", "bar", "spa"];
 
+// "gym" now maps to "wellness", not "sports_fitness" -- verified live
+// against the real Places API (2026-09-22) that Google's legacy type
+// system cannot distinguish a general commercial gym from a sport-specific
+// one (a real Planet Fitness and a real climbing gym both come back as
+// exactly `["gym", "health", "establishment"]`, nothing more specific).
+// "sports_fitness" ("Sports" — see lib/config/categories.ts) is reserved
+// for places genuinely built around playing a specific sport; see
+// inferCategory's SPORT_KEYWORDS check below for how a sport-specific gym
+// still gets there despite the type system alone not being able to tell.
+// "bowling_alley" was missing entirely before despite already being tagged
+// the "sports" interest tag below -- a real, separate gap, fixed alongside.
 const PLACE_TYPE_TO_CATEGORY: Record<string, ExperienceCategory> = {
   restaurant: "food_drink",
   cafe: "food_drink",
@@ -45,14 +69,46 @@ const PLACE_TYPE_TO_CATEGORY: Record<string, ExperienceCategory> = {
   museum: "arts_culture",
   art_gallery: "arts_culture",
   spa: "wellness",
-  gym: "sports_fitness",
+  gym: "wellness",
+  health: "wellness",
   stadium: "sports_fitness",
+  bowling_alley: "sports_fitness",
   movie_theater: "music_entertainment",
   park: "outdoor_adventure",
   amusement_park: "outdoor_adventure",
   zoo: "outdoor_adventure",
   aquarium: "outdoor_adventure",
 };
+
+// Best-effort only, not a reliable signal -- see the PLACE_TYPE_TO_CATEGORY
+// comment above for why Google's own type data can't do this. A name-
+// keyword check is a real trade-off (can miss a sport-specific gym with a
+// generic name, or a false positive is possible in principle) but it's the
+// only signal available at all; documented rather than silently guessed.
+const SPORT_SPECIFIC_GYM_KEYWORDS = [
+  "climbing",
+  "bouldering",
+  "boulder",
+  "martial arts",
+  "karate",
+  "taekwondo",
+  "jiu jitsu",
+  "jiu-jitsu",
+  "judo",
+  "boxing",
+  "kickboxing",
+  "muay thai",
+  "tennis",
+  "basketball",
+  "volleyball",
+  "gymnastics",
+  "swim",
+];
+
+function isSportSpecificGym(name: string): boolean {
+  const lower = name.toLowerCase();
+  return SPORT_SPECIFIC_GYM_KEYWORDS.some((kw) => lower.includes(kw));
+}
 
 interface AddressComponent {
   long_name: string;
@@ -147,10 +203,12 @@ const CATEGORY_TYPE_PRIORITY = [
   "aquarium",
   "amusement_park",
   "stadium",
+  "bowling_alley",
   "night_club",
   "movie_theater",
   "spa",
   "gym",
+  "health",
   "park",
   "restaurant",
   "bar",
@@ -179,13 +237,20 @@ function isLowProfile(rating: number | undefined, reviewCount: number | undefine
 // for something like Times Square it's a soft, non-specific label rather
 // than a checkably false one).
 function inferCategory(
+  name: string,
   types: string[] | undefined,
   rating: number | undefined,
   reviewCount: number | undefined
 ): ExperienceCategory {
   const present = new Set(types ?? []);
   for (const t of CATEGORY_TYPE_PRIORITY) {
-    if (present.has(t)) return PLACE_TYPE_TO_CATEGORY[t];
+    if (present.has(t)) {
+      // "gym" alone maps to "wellness" (see PLACE_TYPE_TO_CATEGORY) -- this
+      // is the one place that overrides it, when the name itself signals a
+      // specific sport.
+      if (t === "gym" && isSportSpecificGym(name)) return "sports_fitness";
+      return PLACE_TYPE_TO_CATEGORY[t];
+    }
   }
   return isLowProfile(rating, reviewCount) ? "hidden_gem" : "arts_culture";
 }
@@ -225,6 +290,14 @@ function inferSpecificType(types: string[] | undefined, category: ExperienceCate
   const list = types ?? [];
   const present = new Set(list);
 
+  // "gym" itself maps to "wellness" in PLACE_TYPE_TO_CATEGORY, so the loop
+  // below would never match it for a "sports_fitness" experience -- this
+  // only happens via inferCategory's name-keyword override, so "Gym" is
+  // still the honest, real specific type to show, not whatever a generic
+  // fallback further down would pick instead (e.g. a stray "school" type
+  // some climbing gyms are also tagged with).
+  if (category === "sports_fitness" && present.has("gym")) return titleCase("gym");
+
   for (const t of CATEGORY_TYPE_PRIORITY) {
     if (present.has(t) && !GENERIC_PLACE_TYPES.has(t) && PLACE_TYPE_TO_CATEGORY[t] === category) {
       return titleCase(t);
@@ -252,7 +325,9 @@ const PLACE_TYPE_TO_TAGS: Partial<Record<string, InterestTag[]>> = {
   art_gallery: ["art", "culture"],
   spa: ["wellness"],
   gym: ["fitness"],
+  health: ["wellness"],
   stadium: ["sports"],
+  bowling_alley: ["sports"],
   movie_theater: ["music"],
   tourist_attraction: ["adventure", "photography"],
   park: ["outdoors", "nature"],
@@ -265,7 +340,6 @@ const PLACE_TYPE_TO_TAGS: Partial<Record<string, InterestTag[]>> = {
   book_store: ["learning"],
   shopping_mall: ["luxury"],
   casino: ["nightlife", "luxury"],
-  bowling_alley: ["sports"],
 };
 
 function inferTags(types: string[] | undefined): InterestTag[] {
@@ -291,6 +365,7 @@ const INDOOR_TYPES = new Set([
   "art_gallery",
   "spa",
   "gym",
+  "health",
   "movie_theater",
   "library",
   "book_store",
@@ -320,7 +395,7 @@ export class GooglePlacesExperienceProvider implements ExperienceProvider {
   constructor(private apiKey: string) {}
 
   private toExperience(place: GooglePlace, cityHint?: string): Experience {
-    const category = inferCategory(place.types, place.rating, place.user_ratings_total);
+    const category = inferCategory(place.name, place.types, place.rating, place.user_ratings_total);
     const images = (place.photos ?? [])
       .slice(0, 5)
       .map((p) => photoUrl(p.photo_reference, this.apiKey));
@@ -426,7 +501,9 @@ export class GooglePlacesExperienceProvider implements ExperienceProvider {
   async list(query: ExperienceQuery): Promise<Experience[]> {
     if (query.latitude == null || query.longitude == null) return [];
 
-    const types = query.category ? [CATEGORY_TO_PLACE_TYPE[query.category]] : DIVERSITY_TYPES;
+    const types = query.category
+      ? (CATEGORY_SEARCH_TYPES[query.category] ?? [CATEGORY_TO_PLACE_TYPE[query.category]])
+      : DIVERSITY_TYPES;
     const resultsByType = await Promise.all(types.map((type) => this.fetchNearby(type, query)));
 
     const seenPlaceIds = new Set<string>();
@@ -442,6 +519,15 @@ export class GooglePlacesExperienceProvider implements ExperienceProvider {
     let results = merged
       .filter((p) => p.geometry?.location)
       .map((p) => this.toExperience(p, query.city));
+
+    // Only needed for categories fanned out across multiple search types
+    // (currently just "Sports" -- see CATEGORY_SEARCH_TYPES): searching
+    // `type=gym` genuinely returns places whose own inferred category is
+    // "wellness", not "sports_fitness", so without this the filter would
+    // show a mix of both instead of just what it claims to show.
+    if (query.category && CATEGORY_SEARCH_TYPES[query.category]) {
+      results = results.filter((e) => e.category === query.category);
+    }
 
     if (query.excludeIds && query.excludeIds.length > 0) {
       const excludeSet = new Set(query.excludeIds);
