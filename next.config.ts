@@ -55,6 +55,16 @@ const CSP = [
   // than script-src.
   "img-src 'self' data: https:",
   "font-src 'self' data:",
+  // frame-src has no fallback to img-src/connect-src -- CSP falls it back
+  // to child-src, then default-src 'self', which was silently blocking
+  // MiniMap's OpenStreetMap iframe embed (experience/mini-map.tsx) site-
+  // wide the same way worker-src's absence silently blocked the main
+  // map's worker earlier -- same bug class (a directive with no useful
+  // fallback, omitted when this CSP first shipped), different directive.
+  // Chrome/Edge render CSP-blocked iframes as a blank "This content is
+  // blocked" placeholder rather than a console-visible network error,
+  // which is why this one went unnoticed until a user actually hit it.
+  "frame-src 'self' https://www.openstreetmap.org",
   [
     "connect-src 'self'",
     supabaseHost ? `https://${supabaseHost}` : "",
