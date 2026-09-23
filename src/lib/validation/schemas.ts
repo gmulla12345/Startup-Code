@@ -133,6 +133,12 @@ export const updateSavedStatusSchema = z.object({
   category: z.string().nullable().optional(),
 });
 
+export const createReviewSchema = z.object({
+  experienceId: z.string().min(1),
+  rating: z.number().int().min(1).max(5),
+  comment: z.string().max(1000).default(""),
+});
+
 export const trackEventSchema = z.object({
   eventType: z.enum([
     "viewed_experience",

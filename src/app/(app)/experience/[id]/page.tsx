@@ -217,7 +217,12 @@ export default async function ExperienceDetailPage({ params }: PageProps<"/exper
 
           <section>
             <h2 className="font-display text-xl font-semibold text-foreground mb-3">{brand.name} community notes</h2>
-            <ReviewsList reviews={reviews} />
+            <ReviewsList
+              experienceId={experience.id}
+              slug={experience.slug}
+              initialReviews={reviews}
+              isAuthenticated={Boolean(user)}
+            />
           </section>
         </div>
 
