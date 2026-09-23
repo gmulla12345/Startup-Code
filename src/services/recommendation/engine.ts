@@ -87,27 +87,42 @@ export async function getRecommendations(
   options: EngineOptions
 ): Promise<RankedRecommendation[]> {
   const provider = await getExperienceProvider();
-  const { context, seenIds, dismissedIds, savedTagCounts, savedCategoryCounts, rejectedTagCounts, rejectedCategoryCounts } =
-    await buildContext(client, profile);
 
-  // Only the dedicated "Hidden Gems" rail hard-filters the candidate pool
-  // down to isHiddenGem — Surprise Me used to as well, but that meant a
-  // well-matched, slightly-more-popular place could never be picked no
-  // matter how well it fit. Surprise Me now pulls from the full candidate
-  // pool and lets noveltyBias (below) weigh review count/rating as one
-  // continuous signal among several, not a pass/fail gate.
-  const candidates = await provider.list({
-    city: profile.city ?? undefined,
-    latitude: profile.latitude ?? undefined,
-    longitude: profile.longitude ?? undefined,
-    radiusMiles: profile.preferences.maxDistanceMiles * 4, // cast a wider net than strict preference
-    hiddenGemsOnly: options.surfaceContext === "hidden_gem" || undefined,
-    excludeIds: options.additionalExcludeIds,
-    // Candidate pool needs to be at least as large as what was asked for —
-    // Premium's much higher Discover limit was previously invisible because
-    // this stayed fixed at 60 regardless of options.limit.
-    limit: Math.min(Math.max(options.limit ?? 10, 60), 120),
-  });
+  // buildContext() (several Supabase reads + a weather call) and
+  // provider.list() (for "for_you"/no-category surfaces, a 7-way parallel
+  // Google Places fan-out — see DIVERSITY_TYPES) don't depend on each
+  // other's output at all -- list() only ever reads from `profile`/
+  // `options`, never from buildContext's result. They used to run one
+  // after the other regardless, stacking both durations on the critical
+  // path of every single recommendation call in the app (Home, Discover's
+  // default view, Surprise Me, Weekend Planner). Running them together
+  // caps that cost at whichever one is slower instead of their sum --
+  // measured live against production (2026-09-22): this call was taking
+  // ~900ms end to end on a cold, never-queried location.
+  const [
+    { context, seenIds, dismissedIds, savedTagCounts, savedCategoryCounts, rejectedTagCounts, rejectedCategoryCounts },
+    candidates,
+  ] = await Promise.all([
+    buildContext(client, profile),
+    // Only the dedicated "Hidden Gems" rail hard-filters the candidate pool
+    // down to isHiddenGem — Surprise Me used to as well, but that meant a
+    // well-matched, slightly-more-popular place could never be picked no
+    // matter how well it fit. Surprise Me now pulls from the full candidate
+    // pool and lets noveltyBias (below) weigh review count/rating as one
+    // continuous signal among several, not a pass/fail gate.
+    provider.list({
+      city: profile.city ?? undefined,
+      latitude: profile.latitude ?? undefined,
+      longitude: profile.longitude ?? undefined,
+      radiusMiles: profile.preferences.maxDistanceMiles * 4, // cast a wider net than strict preference
+      hiddenGemsOnly: options.surfaceContext === "hidden_gem" || undefined,
+      excludeIds: options.additionalExcludeIds,
+      // Candidate pool needs to be at least as large as what was asked for —
+      // Premium's much higher Discover limit was previously invisible because
+      // this stayed fixed at 60 regardless of options.limit.
+      limit: Math.min(Math.max(options.limit ?? 10, 60), 120),
+    }),
+  ]);
 
   const noveltyBias = options.surfaceContext === "surprise_me" || options.surfaceContext === "hidden_gem";
   const ranked = rankExperiences(candidates, profile, {

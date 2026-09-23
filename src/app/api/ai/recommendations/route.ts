@@ -20,13 +20,20 @@ export async function GET(request: Request) {
       : "for_you";
     const limit = Number(url.searchParams.get("limit") ?? 10);
 
-    const profile = await getProfileByUserId(supabase, user.id);
+    // Neither read depends on the other's result -- subscription only
+    // needs user.id, not the resolved profile -- so there's no reason to
+    // pay for them one after another. The rare early-return paths below
+    // (no profile, onboarding incomplete) just leave the subscription
+    // result unused, which costs nothing extra since both fire together.
+    const [profile, subscription] = await Promise.all([
+      getProfileByUserId(supabase, user.id),
+      getSubscription(supabase, user.id),
+    ]);
     if (!profile) throw new ApiError(404, "Profile not found.");
     if (!profile.onboardingCompleted) {
       return NextResponse.json({ recommendations: [], needsOnboarding: true });
     }
 
-    const subscription = await getSubscription(supabase, user.id);
     const premium = isPremium(subscription);
     const effectiveLimit = premium ? limit : Math.min(limit, FREE_TIER_LIMITS.recommendationsPerWeek);
 
