@@ -7,7 +7,7 @@ import { CheckCircle2, Heart, MapPin, Star, Gem } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils/cn";
-import { formatPrice, formatDuration, formatCategoryLabel } from "@/lib/utils/format";
+import { formatPrice, formatDuration, formatCategoryLabel, withMaxWidth } from "@/lib/utils/format";
 import type { Experience } from "@/types/database";
 import { track } from "@/services/analytics/track";
 
@@ -29,6 +29,14 @@ interface ExperienceCardProps {
   onToggleSave?: (id: string, nextSaved: boolean) => void;
   className?: string;
   priority?: boolean;
+  /**
+   * Caps the Google Places photo's `maxwidth` query param (see
+   * `withMaxWidth`) for callers rendering this card much smaller than the
+   * ~1200px the provider bakes in by default -- e.g. the marketing
+   * homepage's 3-up grid. Omitted everywhere else, so every existing caller
+   * keeps loading the full-size source unchanged.
+   */
+  imageMaxWidth?: number;
 }
 
 export function ExperienceCard({
@@ -42,9 +50,11 @@ export function ExperienceCard({
   onToggleSave,
   className,
   priority = false,
+  imageMaxWidth,
 }: ExperienceCardProps) {
   const [isSaved, setIsSaved] = useState(saved);
-  const image = experience.images[0];
+  const rawImage = experience.images[0];
+  const image = rawImage && imageMaxWidth ? withMaxWidth(rawImage, imageMaxWidth) : rawImage;
 
   // Previously this only flipped local state and called an onToggleSave prop
   // that no caller ever actually passed — every card's heart button looked

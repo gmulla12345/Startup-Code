@@ -10,10 +10,22 @@ import { BreadcrumbJsonLd } from "@/components/shared/breadcrumb-jsonld";
 
 const DESCRIPTION = "Answers to common questions about Zolo's personalized discovery, pricing, privacy, and travel features.";
 
+const TITLE = "Zolo FAQ — How Personalized Discovery, Pricing, and Travel Mode Work";
+
 export const metadata: Metadata = {
-  title: "FAQ",
+  title: { absolute: TITLE },
   description: DESCRIPTION,
-  openGraph: { title: `FAQ · ${brand.name}`, description: DESCRIPTION },
+  // A page-level `openGraph` replaces the root layout's entire openGraph
+  // object rather than merging into it (Next.js metadata rule), so leaving
+  // out `images` here meant /faq had no og:image at all -- a heycatch
+  // site-audit finding (D5.5). Re-spreading the same site default image
+  // fixes the share preview without needing a dedicated FAQ graphic.
+  openGraph: {
+    title: TITLE,
+    description: DESCRIPTION,
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: TITLE }],
+  },
+  twitter: { card: "summary_large_image", title: TITLE, description: DESCRIPTION, images: ["/og-image.png"] },
   ...canonical("/faq"),
 };
 

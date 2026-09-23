@@ -14,7 +14,7 @@ const STEPS = [
   {
     number: "02",
     title: "Get matched instantly",
-    description: "Our hybrid engine — structured filtering, scoring, and AI reasoning — builds your first recommendations.",
+    description: "We match you to real places nearby based on your answers, then use AI to sharpen the picks and explain each one.",
   },
   {
     number: "03",

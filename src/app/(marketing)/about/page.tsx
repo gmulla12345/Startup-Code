@@ -8,11 +8,21 @@ import { canonical } from "@/lib/seo";
 import { BreadcrumbJsonLd } from "@/components/shared/breadcrumb-jsonld";
 
 const DESCRIPTION = "Why Zolo exists: fixing decision fatigue with personalized, reasoned experience recommendations.";
+const TITLE = "Why Zolo Exists — Fixing Decision Fatigue with Personalized Discovery";
 
 export const metadata: Metadata = {
-  title: "About",
+  title: { absolute: TITLE },
   description: DESCRIPTION,
-  openGraph: { title: `About · ${brand.name}`, description: DESCRIPTION },
+  // A page-level `openGraph` replaces the root layout's whole openGraph
+  // object rather than merging into it, so the previous version (title +
+  // description only) had no og:image -- same bug the heycatch audit (D5.5)
+  // flagged for /faq. Re-spreading the site default image here too.
+  openGraph: {
+    title: TITLE,
+    description: DESCRIPTION,
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: TITLE }],
+  },
+  twitter: { card: "summary_large_image", title: TITLE, description: DESCRIPTION, images: ["/og-image.png"] },
   ...canonical("/about"),
 };
 

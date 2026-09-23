@@ -8,7 +8,7 @@
 >
 > Full setup/architecture docs: [README.md](README.md). Full DB schema: [src/db/schema.sql](src/db/schema.sql).
 
-**Last updated:** 2026-09-22
+**Last updated:** 2026-09-23
 
 ## What this is
 
@@ -1635,6 +1635,125 @@ an explicit wider emulation to check — worth remembering for any future `lg:`-
 this project), and on mobile (375px) to confirm both the two-column section and the bento collapse
 cleanly to single-column with the mockup and reasoning-preview chip both legible. Deployed and
 confirmed live on `discoverzolo.com`.
+
+## heycatch site audit — second response pass (2026-09-23)
+
+User re-ran the same heycatch audit (`app.heycatch.ai/audit/hck_pk_Utdu2yDeE-XxmtRgBLi9HJLMcVF6O8HD`)
+after everything in the "first response pass" section above had shipped. Score moved 68 → 66 (down
+slightly, not up) — two real regressions the audit caught that this project hadn't noticed: the
+2026-09-22 hero subhead shortening (see "Homepage hero rebuilt..." above) dropped ICP naming and the
+decision-fatigue language, and Google Places image payload growth pushed homepage load time from
+920ms to 1525ms. Read all 6 dimensions' full findings (not just the action plan) via the audit's own
+page before making any change, same discipline as the first pass.
+
+**Shipped, code-only fixes:**
+- **D1.1/D1.2/D2.1 (hero subhead)** — [hero.tsx](src/components/marketing/hero.tsx) subhead restored
+  to name the ICP ("Built for young professionals...") and the "endless scrolling"/"decision fatigue"
+  pain language, close to the audit's own suggested wording. **Deliberately did not touch the H1** —
+  still inside the 2026-09-01 headline A/B window — and did not restore the badge pill, which was a
+  separate, still-valid simplification. This is a real, explicit reversal of part of the 2026-09-22
+  "simplify the hero" request; the badge-pill removal and one-sentence-ification were two different
+  changes bundled into that one request, and only the length regressed comprehension per the audit —
+  worth remembering if the user asks why the subhead grew back.
+- **D1.6 (technical audience language)** — [how-it-works.tsx](src/components/marketing/how-it-works.tsx)'s
+  step 2 copy ("Our hybrid engine — structured filtering, scoring, and AI reasoning...") rewritten in
+  plain language, avoiding "algorithm"/"recommendation engine" per the audit's own audience-research
+  note.
+- **D4.2 (comparison table unreadable by crawlers)** — root cause found by reading the actual
+  component, not guessed: [comparison-cell.tsx](src/components/marketing/comparison-cell.tsx)'s
+  boolean cells rendered icon-only (`<Check>`/`<Minus>`, no text node) — visually fine, but a
+  checkmark SVG has no text content, so every boolean row (Saved experiences, Map, AI Weekend
+  Planner, ...) read as blank to anything extracting page text rather than pixels. Not actually a
+  "rendered via JavaScript" problem as the audit guessed (the component was already a plain Server
+  Component) — added `sr-only` "Included"/"Not included" text alongside each icon instead. Shared by
+  `/pricing` and all 3 `/vs` pages, so both got the fix from one change.
+- **D5.1 (generic /about, /faq titles)** — both now use the audit's exact suggested titles via
+  `{ absolute: ... }` (bypassing the `"%s · Zolo"` template, same pattern the homepage title already
+  used).
+- **D5.5 (stale homepage OG title; /faq missing OG image)** — root cause: `brand.tagline` is still
+  literally `"Experience more of life."` (the pre-2026-09-01 hero copy), and that's what the root
+  layout's default `openGraph.title` reads from — never updated when the hero H1/subhead moved to
+  "Stop deciding. Start doing." **Deliberately did not edit `brand.tagline` itself** (same reasoning
+  CLAUDE.md already documents for the 2026-09-01 hero test: it also drives the sitewide `<title>`
+  default and every page's OG fallback, a bigger blast radius than what the audit asked for) — instead
+  added a page-scoped `openGraph`/`twitter` override to [(marketing)/page.tsx](<src/app/(marketing)/page.tsx>)
+  with the current title/description. Found the *real* cause of /faq's missing OG image while in
+  there: a page-level `openGraph` object in Next.js metadata **replaces** the root layout's whole
+  `openGraph` object rather than merging into it — so /faq's and /about's existing `openGraph: {
+  title, description }` (no `images`) silently dropped the site's default `og-image.png` entirely.
+  Fixed both by re-spreading the image back in, not just /faq (the audit only named /faq, but /about
+  had the exact same bug, found while editing the adjacent code — fixing one and leaving the other
+  broken made no sense).
+- **D5.4 (page speed — Google Places image payload)** — real, measured cause: `example-recommendations.tsx`
+  (the homepage's "A taste of what you'll get" 3-card grid) rendered `ExperienceCard` with its default
+  ~1200px-wide Google Photos source at a card that displays at roughly a third of the page width —
+  unlike `photo-strip.tsx` and `product-preview.tsx`, which already downsize via the existing
+  `withMaxWidth()` util. Added an optional `imageMaxWidth` prop to
+  [experience-card.tsx](src/components/experience/experience-card.tsx) (omitted everywhere else, so
+  every other caller — Home, Discover, Saved, etc. — is unaffected) and passed `600` from
+  `example-recommendations.tsx`. Did not attempt the audit's other two suggestions here: explicit
+  `width`/`height` attributes are moot (the `<Image fill>` pattern already reserves space via each
+  card's `aspect-[4/3]` container, so there's no CLS to fix), and server-side caching of Google Photos
+  is a real, separate infra project, not a quick win.
+- **D2.4 (10 travel guides not linked from the homepage body)** — new
+  [destinations-section.tsx](src/components/marketing/destinations-section.tsx), a "Travel Mode"
+  section between the `/vs` comparisons and pricing (the audit's own suggested placement), reading
+  all 10 real `DESTINATIONS` via `getTravelProvider().listDestinations()` (the existing provider
+  abstraction — not a direct `seed-data.ts` import) and linking each to its real `/travel/[slug]`
+  guide. Cover photos downsized for the card size (480×480) the same way the image-payload fix above
+  does, so this section doesn't reintroduce the same problem it's adjacent to.
+
+**Recognized as already substantially addressed by the 2026-09-22 redesign, not re-touched:**
+- **D1.3/D2.3 (learning-loop differentiator buried; 5 equal-weight feature cards)** — read
+  [feature-grid.tsx](src/components/marketing/feature-grid.tsx) and
+  [feature-card.tsx](src/components/marketing/feature-card.tsx) before assuming this needed work: the
+  2026-09-22 redesign already made "Intelligent Recommendations" the full-width bento lead with a
+  live reasoning-preview chip (exactly what D2.3's own suggested fix describes) and already promotes
+  "Your Life, Personalized" to position 2 of 5 with `highlighted` styling and the exact tagline the
+  audit's D1.3 action item asks for ("No other tool gets sharper the more you use it", already
+  rendered as a distinct ember-colored callout line via `FeatureCard`'s `subtext` prop). The action
+  plan's Quick win (promote Personalized to *the* lead) and D2.3's own Do-this-quarter item (keep
+  Recommendations as the lead) directly contradict each other — the current layout already resolves
+  that tension in D2.3's favor, which is the more detailed, specific spec of the two. Restructuring
+  further to chase D1.3's literal wording would have undone a deliberate, reasoned recent layout
+  decision for no net gain.
+
+**Not done — flagged to the user, not fabricated or silently skipped:**
+- **D3.1 (user count / activity signal)** — checked the real production numbers first (direct
+  Supabase REST query) rather than guessing: **8 total profiles, 44 `user_events` rows, 2 saved
+  experiences**. The audit's own suggested copy ("500+ explorers") would be fabrication at this scale;
+  the honest real number ("8 explorers") would likely undercut trust rather than build it, the
+  opposite of what this finding exists to fix. Revisit once real usage is large enough to be worth
+  displaying — this is a "not yet," not a "no."
+- **D3.2 / D3.3 / FIT (testimonials, named founder)** — still needs the user's real content (a name,
+  headshot, bio, LinkedIn; 3-5 real user quotes). Unchanged from the first response pass — see that
+  section above and item 3/4 in "Exact next steps" below.
+- **D3.5 (press / third-party validation strip)** — no real press coverage, Product Hunt badge, or
+  third-party mentions exist to show. Fabricating one would be exactly the kind of fake trust signal
+  this finding exists to catch.
+- **D1.5 Bigger bet (move the product mockup into the hero)** — the hero briefly *did* have a live
+  mockup (`HeroRecommendationPreview`, built in the first response pass, 2026-09-04) but it was
+  removed by the 2026-09-22 full-bleed-photo hero redesign, a deliberate simplification the user asked
+  for explicitly. Re-adding a mockup overlay now would directly contradict that recent, explicit
+  direction. Flagging rather than guessing which the user wants more — if they want to revisit hero
+  simplicity vs. this specific audit finding, that's their call, not one to make unilaterally by
+  picking a side.
+- **D2.5 (mobile experience)** — the audit's own scoring note says this dimension is "capped at
+  partial per framework rules... NEEDS-VERIFICATION on a real 375px viewport," i.e. it can't be scored
+  higher without live device testing the audit itself can't do either. Spot-checked the hero at 375px
+  regardless (legible, no overflow, no fix needed) but didn't expect or chase a score change here.
+- **D3.4 (restrictive refund policy) and D4.4 (pricing above the dominant free competitors)** — both
+  are business/pricing decisions, not copy or code fixes, and both were already consciously accepted
+  trade-offs from the first response pass (see D3.4's entry above) — not something to change
+  unilaterally.
+
+Typecheck/lint/all 34 tests clean; a full local production build (`next build --webpack`) succeeded.
+Verified locally: hero subhead reads correctly at both desktop and 375px mobile width, all 10
+destination cards render and link to real `/travel/[slug]` pages, `/faq` and `/about`'s `<title>` and
+`og:image`/`og:title`/`og:description` tags confirmed via direct `curl` (not just DOM inspection),
+homepage `og:title` confirmed updated to "Zolo — Stop deciding. Start doing.", and the pricing
+comparison table's boolean cells confirmed to carry real "Included"/"Not included" text in the static
+HTML via `curl` + grep.
 
 ## Exact next steps (priority order)
 

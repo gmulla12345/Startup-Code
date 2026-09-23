@@ -22,7 +22,11 @@ export function ExampleRecommendations({ experiences }: { experiences: Experienc
           {experiences.slice(0, 3).map((exp, i) => (
             <Reveal key={exp.id} delay={i * 0.08}>
               <div className="pointer-events-none">
-                <ExperienceCard experience={exp} />
+                {/* Cards here render at ~1/3 page width, not the ~1200px
+                    Google bakes into the source URL by default -- capping it
+                    cuts real homepage image payload (heycatch audit D5.4:
+                    page speed regressed to 1525ms partly from this). */}
+                <ExperienceCard experience={exp} imageMaxWidth={600} />
               </div>
             </Reveal>
           ))}

@@ -13,12 +13,14 @@ import { Button } from "@/components/ui/button";
 // download (sourced via Godly AI).
 const HERO_IMAGE = "/hero/urban-night-stroll.webp";
 
-// Simplified per explicit user request (2026-09-22): the badge pill was
-// dropped entirely and the subhead cut from a 4-line paragraph to one
-// sentence -- this is a deliberate, requested content change, not an
-// oversight of the earlier "headline copy is mid-A/B-measurement" note
-// elsewhere in this file's history; the user's direct instruction to
-// simplify this specific screen supersedes that caution for this edit.
+// Badge pill stays dropped per the 2026-09-22 simplification request -- that
+// part of the change is untouched. The subhead itself was lengthened back out
+// on 2026-09-23 in response to a heycatch site-audit finding (D1.1/D1.2/D2.1):
+// the one-sentence version scored worse on 5-second comprehension for dropping
+// ICP naming ("young professionals") and the "endless scrolling"/"decision
+// fatigue" pain language the previous, longer version had. H1 is untouched --
+// still inside the 2026-09-01 headline A/B window noted elsewhere in this
+// file's history.
 export function Hero() {
   const ref = useRef<HTMLElement>(null);
   // Tracks scroll progress across exactly the hero's own height -- 0 when
@@ -78,8 +80,9 @@ export function Hero() {
           <span className="bg-gradient-to-r from-[#ff6a45] to-[#f0bc4e] bg-clip-text text-transparent">doing</span>.
         </h1>
 
-        <p className="mt-6 text-lg sm:text-xl text-[#e4dbc9] max-w-xl mx-auto [text-shadow:0_2px_12px_rgba(0,0,0,0.5)]">
-          A short, curated list of things to do — matched to you, with a reason for every pick.
+        <p className="mt-6 text-lg sm:text-xl text-[#e4dbc9] max-w-2xl mx-auto [text-shadow:0_2px_12px_rgba(0,0,0,0.5)]">
+          No more endless scrolling or decision fatigue — a short, curated list of things to do, matched to your
+          interests, budget, and personality. Built for young professionals who want more from their free time.
         </p>
 
         <div className="mt-9 flex flex-col sm:flex-row gap-3 justify-center">
