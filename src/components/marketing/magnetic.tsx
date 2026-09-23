@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import type { MouseEvent, ReactNode } from "react";
-import { motion, useMotionValue, useSpring } from "framer-motion";
+import { motion, useMotionValue, useReducedMotion, useSpring } from "framer-motion";
 
 /**
  * A restrained magnetic-hover pull (peaks around 8-10px, spring-damped) for
@@ -19,8 +19,14 @@ export function Magnetic({ children, className }: { children: ReactNode; classNa
   const y = useMotionValue(0);
   const springX = useSpring(x, { stiffness: 200, damping: 18, mass: 0.4 });
   const springY = useSpring(y, { stiffness: 200, damping: 18, mass: 0.4 });
+  // Hooks run unconditionally either way; only the pull itself is skipped --
+  // a persistent motion effect tied to cursor position is exactly the kind
+  // of non-essential motion prefers-reduced-motion asks to drop, and the
+  // wrapped button/link is still fully functional without it.
+  const reduceMotion = useReducedMotion();
 
   function handleMouseMove(e: MouseEvent<HTMLDivElement>) {
+    if (reduceMotion) return;
     const rect = ref.current?.getBoundingClientRect();
     if (!rect) return;
     x.set((e.clientX - rect.left - rect.width / 2) * 0.22);
@@ -30,6 +36,14 @@ export function Magnetic({ children, className }: { children: ReactNode; classNa
   function handleMouseLeave() {
     x.set(0);
     y.set(0);
+  }
+
+  if (reduceMotion) {
+    return (
+      <div ref={ref} className={className}>
+        {children}
+      </div>
+    );
   }
 
   return (

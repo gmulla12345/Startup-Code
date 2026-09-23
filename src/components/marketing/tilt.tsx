@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import type { MouseEvent, ReactNode } from "react";
-import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
+import { motion, useMotionValue, useReducedMotion, useSpring, useTransform } from "framer-motion";
 
 /**
  * A restrained 3D tilt-on-hover (peaks around 4 degrees, spring-damped) for
@@ -19,8 +19,13 @@ export function Tilt({ children, className }: { children: ReactNode; className?:
   const springY = useSpring(y, { stiffness: 150, damping: 20 });
   const rotateX = useTransform(springY, [0, 1], [4, -4]);
   const rotateY = useTransform(springX, [0, 1], [-4, 4]);
+  // Same reduced-motion treatment as magnetic.tsx: a persistent tilt tied to
+  // cursor position is non-essential motion, dropped under
+  // prefers-reduced-motion rather than just left running.
+  const reduceMotion = useReducedMotion();
 
   function handleMouseMove(e: MouseEvent<HTMLDivElement>) {
+    if (reduceMotion) return;
     const rect = ref.current?.getBoundingClientRect();
     if (!rect) return;
     x.set((e.clientX - rect.left) / rect.width);
@@ -30,6 +35,14 @@ export function Tilt({ children, className }: { children: ReactNode; className?:
   function handleMouseLeave() {
     x.set(0.5);
     y.set(0.5);
+  }
+
+  if (reduceMotion) {
+    return (
+      <div ref={ref} className={className}>
+        {children}
+      </div>
+    );
   }
 
   return (

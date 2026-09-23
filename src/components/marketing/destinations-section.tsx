@@ -37,7 +37,7 @@ export async function DestinationsSection() {
             <Reveal key={dest.slug} delay={i * 0.04}>
               <Link
                 href={`/travel/${dest.slug}`}
-                className="group relative block aspect-square overflow-hidden rounded-[var(--radius-lg)] border border-border"
+                className="group relative block aspect-square overflow-hidden rounded-[var(--radius-lg)] border border-border transition-transform active:scale-[0.97] active:duration-100"
               >
                 <Image
                   src={cardImage(dest.coverImage)}

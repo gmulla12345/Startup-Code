@@ -73,14 +73,14 @@ export function FAQ() {
                 )}
               >
                 <button
-                  className="w-full flex items-center justify-between gap-4 px-5 py-4 text-left cursor-pointer"
+                  className="w-full flex items-center justify-between gap-4 px-5 py-4 text-left cursor-pointer transition-transform duration-100 active:scale-[0.99]"
                   onClick={() => setOpen(isOpen ? null : i)}
                   aria-expanded={isOpen}
                 >
                   <span className="font-medium text-foreground">{item.q}</span>
                   <ChevronDown
                     className={cn(
-                      "h-4 w-4 shrink-0 transition-all duration-200",
+                      "h-4 w-4 shrink-0 transition-transform duration-300 [transition-timing-function:cubic-bezier(0.32,0.72,0,1)]",
                       isOpen ? "rotate-180 text-ember" : "text-foreground-muted"
                     )}
                   />
@@ -92,8 +92,19 @@ export function FAQ() {
                  * the visual accordion effect. Google explicitly allows
                  * accordion-hidden content for FAQPage rich results as long
                  * as it's actually in the page HTML, which this guarantees.
+                 * The easing curve (not the default linear-ish `ease`) is a
+                 * spring-like cubic-bezier -- fast start, gentle settle,
+                 * no overshoot -- so a CSS transition retains its real
+                 * advantage here (interruption/retargeting mid-click just
+                 * works, no gesture involved) while still feeling alive
+                 * rather than mechanical.
                  */}
-                <div className={cn("grid transition-[grid-template-rows] duration-200", isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]")}>
+                <div
+                  className={cn(
+                    "grid transition-[grid-template-rows] duration-300 [transition-timing-function:cubic-bezier(0.32,0.72,0,1)]",
+                    isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+                  )}
+                >
                   <div className="overflow-hidden">
                     <p className="px-5 pb-4 text-sm text-foreground-muted leading-relaxed">{item.a}</p>
                   </div>

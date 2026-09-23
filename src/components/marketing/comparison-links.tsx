@@ -27,7 +27,7 @@ export function ComparisonLinks() {
           <Reveal key={page.slug} delay={i * 0.08}>
             <Link
               href={`/vs/${page.slug}`}
-              className="group block h-full rounded-[var(--radius-lg)] border border-border bg-surface p-6 transition-all duration-300 hover:border-border-strong hover:-translate-y-1 hover:shadow-[var(--shadow-raised)]"
+              className="group block h-full rounded-[var(--radius-lg)] border border-border bg-surface p-6 transition-all duration-300 hover:border-border-strong hover:-translate-y-1 hover:shadow-[var(--shadow-raised)] active:scale-[0.98] active:duration-100"
             >
               <p className="text-xs font-medium text-foreground-subtle uppercase tracking-wide mb-2">
                 {brand.name} vs {page.competitor}

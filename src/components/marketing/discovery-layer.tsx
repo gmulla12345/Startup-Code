@@ -12,7 +12,7 @@ export function DiscoveryLayer() {
       <div className="relative mx-auto max-w-3xl px-4 sm:px-6 py-20 md:py-28">
         <Reveal>
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-ember mb-6">Positioning</p>
-          <h2 className="font-display text-3xl sm:text-4xl font-medium text-foreground leading-snug mb-6">
+          <h2 className="font-display text-3xl sm:text-4xl font-medium text-foreground leading-snug tracking-tight mb-6">
             {brand.name} doesn&apos;t replace Google Maps, Tripadvisor, or your favorite booking app.
             <span className="text-foreground-muted"> It sits before them</span> — helping you decide what&apos;s
             worth your time, then sending you to the right place to confirm details, check hours, or book.

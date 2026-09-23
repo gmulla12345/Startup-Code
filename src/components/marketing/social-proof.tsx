@@ -14,7 +14,7 @@ export function SocialProof() {
         {STATS.map((s, i) => (
           <Reveal key={s.label} delay={i * 0.08} className="py-6 sm:py-0 sm:px-8 first:pl-0 first:pt-0">
             <s.icon className="h-5 w-5 text-ember mb-3" strokeWidth={1.75} />
-            <div className="font-display text-2xl sm:text-3xl font-semibold text-foreground">{s.value}</div>
+            <div className="font-display text-2xl sm:text-3xl font-semibold text-foreground tracking-tight">{s.value}</div>
             <div className="text-sm text-foreground-muted mt-1">{s.label}</div>
           </Reveal>
         ))}

@@ -22,7 +22,7 @@ export function CTASection() {
             }}
           />
           <div className="relative">
-            <h2 className="font-display text-4xl sm:text-5xl font-semibold text-[#f6f1e7] max-w-2xl mx-auto leading-tight">
+            <h2 className="font-display text-4xl sm:text-5xl font-semibold text-[#f6f1e7] max-w-2xl mx-auto leading-tight tracking-tight">
               Stop scrolling. Start{" "}
               <span className="bg-gradient-to-r from-[#ff6a45] to-[#f0bc4e] bg-clip-text text-transparent">
                 experiencing

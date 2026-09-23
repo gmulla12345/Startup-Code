@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { Check, Lock } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ import { getBillingPreference, setBillingPreference } from "@/lib/utils/billing-
  */
 export function PricingCards() {
   const [interval, setInterval] = useState<BillingInterval>("monthly");
+  const reduceMotion = useReducedMotion();
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- reads localStorage after mount to avoid an SSR hydration mismatch
@@ -46,26 +47,44 @@ export function PricingCards() {
     <div>
       <div className="flex justify-center mb-10">
         <div className="inline-flex rounded-full border border-border bg-surface p-1">
+          {/* One shared pill slides/resizes between the two buttons via
+              framer-motion's layoutId (only one is ever mounted at a time),
+              instead of each button independently flipping its own
+              background color -- a real segmented control, matching the
+              iOS pattern the two-separate-buttons version only approximated.
+              Text sits in its own `relative` span so it stacks above the
+              pill without needing explicit z-index. */}
           <button
             onClick={() => choose("monthly")}
-            className={cn(
-              "px-4 py-3 rounded-full text-sm font-medium transition-colors",
-              !isAnnual ? "bg-ember text-white" : "text-foreground-muted"
-            )}
+            className={cn("relative px-4 py-3 rounded-full text-sm font-medium transition-colors active:scale-[0.97]", !isAnnual ? "text-white" : "text-foreground-muted")}
           >
-            Monthly
+            {!isAnnual && (
+              <motion.span
+                layoutId="pricing-toggle-thumb"
+                className="absolute inset-0 rounded-full bg-ember"
+                transition={reduceMotion ? { duration: 0 } : { type: "spring", bounce: 0, duration: 0.35 }}
+              />
+            )}
+            <span className="relative">Monthly</span>
           </button>
           <button
             onClick={() => choose("annual")}
             className={cn(
-              "px-4 py-3 rounded-full text-sm font-medium transition-colors inline-flex items-center gap-1.5",
-              isAnnual ? "bg-ember text-white" : "text-foreground-muted"
+              "relative px-4 py-3 rounded-full text-sm font-medium transition-colors inline-flex items-center gap-1.5 active:scale-[0.97]",
+              isAnnual ? "text-white" : "text-foreground-muted"
             )}
           >
-            Annual
+            {isAnnual && (
+              <motion.span
+                layoutId="pricing-toggle-thumb"
+                className="absolute inset-0 rounded-full bg-ember"
+                transition={reduceMotion ? { duration: 0 } : { type: "spring", bounce: 0, duration: 0.35 }}
+              />
+            )}
+            <span className="relative">Annual</span>
             <span
               className={cn(
-                "text-[10px] font-semibold px-1.5 py-0.5 rounded-full",
+                "relative text-[10px] font-semibold px-1.5 py-0.5 rounded-full",
                 isAnnual ? "bg-white/20" : "bg-[var(--gold-soft)] text-[color:var(--gold)]"
               )}
             >
