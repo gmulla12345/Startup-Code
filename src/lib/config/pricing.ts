@@ -41,9 +41,11 @@ export const pricing = {
       "AI Weekend Planner",
       "AI Trip Planner",
       "Advanced personalization & filters",
-      "Premium & exclusive experiences",
-      "Travel Mode for 10+ destinations",
-      "Priority access where supported",
+      // "Premium & exclusive experiences" and "Priority access where
+      // supported" removed -- see the matching comment in
+      // (marketing)/pricing/page.tsx's COMPARISON_ROWS for why (legal risk
+      // review finding 6: neither ships today).
+      "Travel Mode for 10 destinations",
     ],
   },
 } as const;

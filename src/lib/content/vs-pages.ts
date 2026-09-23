@@ -28,6 +28,13 @@ export const VS_PAGES: VsPage[] = [
   {
     slug: "zolo-vs-tripadvisor",
     competitor: "Tripadvisor",
+    // The comparison row used to be "AI trip & weekend planning" marked ✗ for
+    // Tripadvisor -- literally false (Tripadvisor launched an AI trip
+    // planner in 2023) on a page titled with their trademark, a real Lanham
+    // Act §43(a) exposure caught by a 2026-09-22/23 legal risk review.
+    // Replaced with a claim that's actually true and specific to what Zolo
+    // does that Tripadvisor's planner doesn't: explain *why* each pick fits
+    // this specific user, not just build an itinerary.
     tagline: "Personalized reasoning vs. review aggregation",
     intro:
       "Tripadvisor is a review aggregator — it shows you what's popular. Zolo is a personalized discovery engine — it shows you what fits your interests, budget, and personality, and tells you why.",
@@ -35,7 +42,7 @@ export const VS_PAGES: VsPage[] = [
       { feature: "How picks are chosen", zolo: "Matched to your interests, budget & personality", competitor: "Ranked by review volume & rating" },
       { feature: "Reason given for each pick", zolo: true, competitor: false },
       { feature: "Learns from what you save or skip", zolo: true, competitor: false },
-      { feature: "AI trip & weekend planning", zolo: true, competitor: false },
+      { feature: "Picks explained for you", zolo: true, competitor: false },
       { feature: "\"Surprise Me\" spontaneous picks", zolo: true, competitor: false },
       { feature: "User reviews & ratings", zolo: false, competitor: true },
       { feature: "Free tier", zolo: true, competitor: true },
@@ -48,7 +55,7 @@ export const VS_PAGES: VsPage[] = [
       },
       {
         title: "It gets better the more you use it",
-        body: "Every save and skip teaches Zolo what you're into. Tripadvisor's rankings are the same for everyone looking at a given place.",
+        body: "Every save and skip teaches Zolo what you're into. Tripadvisor's review rankings and ratings are the same for everyone looking at a given place.",
       },
       {
         title: "You get a plan, not just a list",
@@ -66,7 +73,7 @@ export const VS_PAGES: VsPage[] = [
       },
       {
         q: "Is Zolo free like Tripadvisor?",
-        a: `Zolo has a free tier (personalized picks, unlimited saves, one Surprise Me a week). Unlimited discovery, more specific categories in Discover, AI planning, and exclusive experiences are part of Premium ($${pricing.premium.priceMonthly}/month).`,
+        a: `Zolo has a free tier (personalized picks, unlimited saves, one Surprise Me a week). Unlimited discovery, more specific categories in Discover, and AI planning are part of Premium ($${pricing.premium.priceMonthly}/month).`,
       },
     ],
   },
@@ -111,7 +118,7 @@ export const VS_PAGES: VsPage[] = [
       },
       {
         q: "Is Zolo free like Atlas Obscura?",
-        a: `Yes, Zolo has a free tier. Unlimited discovery, more specific categories in Discover, AI trip planning, and exclusive experiences are part of Premium ($${pricing.premium.priceMonthly}/month).`,
+        a: `Yes, Zolo has a free tier. Unlimited discovery, more specific categories in Discover, and AI trip planning are part of Premium ($${pricing.premium.priceMonthly}/month).`,
       },
     ],
   },
@@ -156,7 +163,7 @@ export const VS_PAGES: VsPage[] = [
       },
       {
         q: "Is Zolo free like Google Maps?",
-        a: `Zolo has a free tier (personalized picks, unlimited saves, one Surprise Me a week). Unlimited discovery, more specific categories in Discover, AI planning, and exclusive experiences are part of Premium ($${pricing.premium.priceMonthly}/month).`,
+        a: `Zolo has a free tier (personalized picks, unlimited saves, one Surprise Me a week). Unlimited discovery, more specific categories in Discover, and AI planning are part of Premium ($${pricing.premium.priceMonthly}/month).`,
       },
     ],
   },

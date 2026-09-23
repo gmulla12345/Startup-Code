@@ -22,7 +22,12 @@ const PERSONALIZED = {
   icon: TrendingUp,
   title: "Your Life, Personalized",
   description: `The more you use ${brand.name}, the better it gets — every save, skip, and trip refines what comes next.`,
-  subtext: "No other tool gets sharper the more you use it.",
+  // Was "No other tool gets sharper the more you use it" -- an absolute
+  // claim contradicted by any competitor with a learning/recommendation
+  // component (including Google Maps), flagged in the 2026-09-22/23 legal
+  // risk review (finding 6, Lanham Act §43(a) exposure). Replaced with a
+  // claim about Zolo's own product only.
+  subtext: "Every save and skip sharpens what comes next.",
 };
 
 const DISCOVERY = {
@@ -55,6 +60,10 @@ function ReasoningPreview() {
         </span>
       </div>
       <p className="text-xs text-foreground-muted">Matches your interests: music, nightlife — fits your usual budget</p>
+      {/* Illustrative, not a live result -- labeled per legal risk review
+          finding 24 (FTC Act §5 net-impression concern with an unlabeled
+          match score). */}
+      <p className="text-[10px] text-foreground-subtle uppercase tracking-wide mt-1.5">Example</p>
     </div>
   );
 }

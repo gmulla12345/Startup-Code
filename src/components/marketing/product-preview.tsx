@@ -87,6 +87,12 @@ export function ProductPreview({ experiences }: { experiences: Experience[] }) {
             <MiniCard key={exp.id} experience={exp} matchScore={MATCH_SCORES[i]} />
           ))}
         </div>
+        {/* Real places, illustrative match %s -- labeled per legal risk
+            review finding 24 (FTC Act §5 net-impression concern with an
+            unlabeled match score shown this close to real product chrome). */}
+        <p className="text-[10px] text-[#8a8071] uppercase tracking-wide mt-3 text-center">
+          Example — not a live result for you
+        </p>
       </div>
     </BrowserFrame>
   );

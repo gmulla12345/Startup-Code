@@ -27,7 +27,7 @@ export async function DestinationsSection() {
           <SectionHeading
             eyebrow="Travel Mode"
             title="Plan your next trip, not just tonight"
-            subtitle={`Dedicated guides and itineraries for ${destinations.length}+ destinations and counting.`}
+            subtitle={`Dedicated guides and itineraries for ${destinations.length} destinations, with more being added regularly.`}
             className="mb-10"
           />
         </Reveal>

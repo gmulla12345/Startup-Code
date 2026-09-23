@@ -97,7 +97,7 @@ export const BLOG_POSTS: BlogPost[] = [
       {
         heading: "Where personalized discovery is headed",
         paragraphs: [
-          `The next step isn't more data — it's better use of the data you already generate just by living your life. Every place you save, skip, or actually go to is a signal. The systems that get this right treat every interaction as an update, not just a click to log, so week two's recommendations are measurably sharper than week one's, and a trip itinerary can be edited conversationally instead of regenerated from scratch. That's the direction ${brand.name} is built around: structured filtering and scoring doing the heavy lifting, AI reasoning explaining the "why," and the whole system getting sharper with actual use — not a longer list, a better one.`,
+          `The next step isn't more data — it's better use of the data you already generate just by living your life. Every place you save, skip, or actually go to is a signal. The systems that get this right treat every interaction as an update, not just a click to log, so recommendations are designed to get sharper the more you use them, and a trip itinerary can be edited conversationally instead of regenerated from scratch. That's the direction ${brand.name} is built around: structured filtering and scoring doing the heavy lifting, AI reasoning explaining the "why," and the whole system getting sharper with actual use — not a longer list, a better one.`,
           "If you want to see the difference between this and a straightforward map or review site, [see how Zolo compares to Google Maps](/vs/zolo-vs-google-maps), or just [create a free account](/signup) and check your first week of recommendations against your second.",
         ],
       },

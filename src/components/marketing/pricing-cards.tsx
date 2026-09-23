@@ -98,9 +98,10 @@ export function PricingCards() {
 
         <motion.div whileHover={{ y: -4 }} transition={{ duration: 0.25, ease: "easeOut" }}>
           <div className="rounded-[var(--radius-lg)] border-2 border-ember bg-surface p-8 relative shadow-[0_0_0_1px_rgba(255,106,69,0.08),var(--shadow-raised)]">
-            <span className="absolute -top-3 left-8 bg-ember text-white text-xs font-semibold px-3 py-1 rounded-full">
-              Most popular
-            </span>
+            {/* "Most popular" is an objective claim about subscriber choice --
+                removed per legal risk review finding 5: with no subscribers
+                yet, it's an unsubstantiated FTC Act §5 claim. Revisit once
+                real usage data actually supports it. */}
             <h3 className="font-display text-xl font-semibold text-foreground">{pricing.premium.name}</h3>
             <div className="mt-2 mb-1 flex items-baseline gap-2 flex-wrap">
               {isAnnual && (

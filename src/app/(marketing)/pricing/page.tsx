@@ -25,9 +25,13 @@ const COMPARISON_ROWS: { feature: string; free: ComparisonCell; premium: Compari
   { feature: "AI Weekend Planner", free: false, premium: true },
   { feature: "AI Trip Planner", free: false, premium: true },
   { feature: "Advanced personalization & filters", free: false, premium: true },
-  { feature: "Premium & exclusive experiences", free: false, premium: true },
-  { feature: "Travel Mode for 10+ destinations", free: false, premium: true },
-  { feature: "Priority access where supported", free: false, premium: true },
+  // "Premium & exclusive experiences" and "Priority access where supported"
+  // removed (legal risk review finding 6): neither ships in the product
+  // today -- there's no curated/exclusive content layer live in production
+  // (see CLAUDE.md's "Production catalog is Google Places-only") and no
+  // booking-priority feature exists. Promising features that don't exist is
+  // an FTC Act §5 exposure, and a buyer's diligence would ask to see them.
+  { feature: "Travel Mode for 10 destinations", free: false, premium: true },
 ];
 
 const PRICING_FAQ_JSON_LD = {
@@ -53,8 +57,7 @@ export default function PricingPage() {
             Simple pricing that grows with you
           </h1>
           <p className="mt-4 text-lg text-foreground-muted">
-            Start free. Upgrade to Premium whenever unlimited discovery, AI trip planning, and exclusive experiences
-            are worth it to you.
+            Start free. Upgrade to Premium whenever unlimited discovery and AI trip planning are worth it to you.
           </p>
         </div>
       </section>
