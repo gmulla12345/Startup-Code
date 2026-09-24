@@ -1755,6 +1755,42 @@ homepage `og:title` confirmed updated to "Zolo — Stop deciding. Start doing.",
 comparison table's boolean cells confirmed to carry real "Included"/"Not included" text in the static
 HTML via `curl` + grep.
 
+## Forced-dark marketing theme was silently broken since 2026-09-22 (found 2026-09-24)
+
+The 2026-09-22 "landing page rebuilt as full-bleed dark" work (see that section above) set
+`data-theme="dark"` on `(marketing)/layout.tsx`'s wrapping `<div>` and claimed this forced every
+visitor into dark mode on the pre-login site regardless of their own system preference. It never
+actually worked. [globals.css](src/app/globals.css)'s dark-theme block was written as
+`:root[data-theme="dark"] { ... }` — `:root` in CSS matches only `<html>`, never any other element,
+and Next.js's App Router can't add attributes to `<html>` from a nested route-group layout, so that
+selector matched nothing, ever. The only thing actually making marketing pages look dark was an
+unrelated fallback rule, `@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+... } }` — since `:root` never carries a `data-theme` attribute anywhere in this codebase, that
+fallback just mirrors each visitor's own OS/browser dark-mode setting. Every verification pass on
+this feature (2026-09-22's own, plus everything since) happened to run on a system with dark mode
+on, which is exactly why this went undetected for two days: **anyone visiting with a light-mode
+system saw the marketing site in light mode**, the literal opposite of the "not
+this-page-happens-to-be-dark-because-someone's-OS-is-dark" design intent that section's own comment
+states.
+
+Found by the user asking why their own (dark-preference) browser showed dark while a screenshot
+came back light — confirmed by capturing the live site with a headless browser that has no
+dark-mode preference set, which reproduced it outside any dev environment.
+
+Fixed with a one-line selector change: `:root[data-theme="dark"]` → `[data-theme="dark"]`. Custom
+properties inherit to descendants from whichever element actually defines them, so dropping `:root`
+is sufficient — the marketing div genuinely does carry the attribute and genuinely does wrap the whole
+route group, it just needed the selector to actually match it. `@media (prefers-color-scheme:
+dark)`'s fallback and the plain `:root` light defaults are untouched, so the logged-in app and auth
+pages still correctly follow each visitor's own system preference, exactly as intended.
+
+Verified with the same tool that found the bug: a headless browser with `colorScheme: 'light'`
+explicitly set (simulating a light-system visitor) against local dev, confirming
+`getComputedStyle(...).getPropertyValue('--background')` on the marketing div now resolves to the
+dark value (`#14120f`) regardless of that forced-light system preference — not just eyeballing a
+screenshot that could coincidentally still be right for the wrong reason. Typecheck/lint/all 34
+tests clean.
+
 ## Exact next steps (priority order)
 
 **Done since the last update:** deployed to production at `discoverzolo.com` (fixed a Vercel

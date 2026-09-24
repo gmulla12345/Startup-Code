@@ -38,7 +38,19 @@
   --shadow-raised: 0 4px 12px rgba(27, 23, 18, 0.08), 0 16px 40px -16px rgba(27, 23, 18, 0.18);
 }
 
-:root[data-theme="dark"] {
+/* Not `:root[data-theme="dark"]` -- :root only ever matches <html>, and
+   data-theme="dark" is set on (marketing)/layout.tsx's wrapping div, not on
+   <html> (Next.js's App Router can't add attributes to <html> from a nested
+   route-group layout). That mismatch meant this rule never matched anything,
+   ever -- the marketing pages' "always dark, regardless of visitor system
+   preference" design (see that file's own comment) was silently just
+   mirroring each visitor's own OS dark-mode setting via the unrelated
+   prefers-color-scheme fallback below, undetected because every verification
+   pass happened to run on a dark-mode system. Custom properties inherit to
+   descendants from whichever element defines them, so dropping `:root` here
+   is enough -- the marketing div (which wraps the whole route group) is
+   where the attribute actually lives. */
+[data-theme="dark"] {
   --background: #14120f;
   --surface: #1c1914;
   --surface-raised: #221e18;
