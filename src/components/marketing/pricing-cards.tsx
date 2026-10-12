@@ -116,7 +116,10 @@ export function PricingCards() {
         </div>
 
         <motion.div whileHover={{ y: -4 }} transition={{ duration: 0.25, ease: "easeOut" }}>
-          <div className="rounded-[var(--radius-lg)] border-2 border-ember bg-surface p-8 relative shadow-[0_0_0_1px_rgba(255,106,69,0.08),var(--shadow-raised)]">
+          {/* The brand gradient as a 2px border (an outer gradient layer with a
+              solid inner card), instead of a flat orange outline. */}
+          <div className="mk-gradient rounded-[calc(var(--radius-lg)+2px)] p-[2px] shadow-[var(--shadow-raised)]">
+          <div className="rounded-[var(--radius-lg)] bg-surface p-8 relative">
             {/* "Most popular" is an objective claim about subscriber choice --
                 removed per legal risk review finding 5: with no subscribers
                 yet, it's an unsubstantiated FTC Act §5 claim. Revisit once
@@ -157,6 +160,7 @@ export function PricingCards() {
             <p className="mt-3 text-center text-xs text-foreground-subtle">
               7-day free trial — cancel before it ends and you won&apos;t be charged
             </p>
+          </div>
           </div>
         </motion.div>
       </div>

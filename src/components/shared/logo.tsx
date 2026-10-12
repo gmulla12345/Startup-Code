@@ -6,7 +6,7 @@ export function Logo({ className, href = "/" }: { className?: string; href?: str
   return (
     <Link
       href={href}
-      className={cn("font-display text-2xl font-semibold tracking-tight text-foreground inline-flex items-center gap-0.5", className)}
+      className={cn("font-logo text-2xl font-semibold tracking-tight text-foreground inline-flex items-center gap-0.5", className)}
     >
       {brand.name}
       <span className="text-ember">.</span>

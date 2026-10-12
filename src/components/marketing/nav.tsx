@@ -25,12 +25,12 @@ export function MarketingNav() {
   const [open, setOpen] = useState(false);
   const reduceMotion = useReducedMotion();
 
-  // Fully opaque, not translucent -- a semi-transparent sticky nav lets
-  // whatever scrolls underneath (e.g. the homepage's dark full-bleed hero
-  // photo) show/bleed through at the boundary, which reads as a rendering
-  // glitch rather than a deliberate glass effect.
+  // Frosted white glass over the page. This used to be fully opaque because
+  // the old dark full-bleed hero photo bled through a translucent bar and
+  // read as a rendering glitch; on the light marketing theme the page
+  // underneath is white or a soft gradient, so the blur reads as intentional.
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-surface">
+    <header className="sticky top-0 z-50 border-b border-border/70 bg-surface/90 backdrop-blur-xl">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 h-16 flex items-center justify-between">
         <Logo />
 

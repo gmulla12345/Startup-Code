@@ -2,39 +2,45 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils/cn";
 
 /**
- * The small uppercase label + heading + subhead pattern every reference
- * site (Linear, Stripe) uses at the top of a section -- the eyebrow label
- * is what was missing before: without it every section jumped straight
- * from a large heading with nothing establishing what "category" of
- * content is coming, which read flatter than it needed to. Left-aligned by
- * default on purpose (not every section should center its text against a
- * photo-heavy page -- reserve `center` for short, punchy standalone
- * statements).
+ * The small colored label + heading + subhead pattern every reference site
+ * (Stripe, Linear) uses at the top of a section -- the eyebrow establishes
+ * what "category" of content is coming before the heading lands. Left-aligned
+ * by default; reserve `center` for short, punchy standalone statements.
+ * `inverted` is for sections on a dark band (white heading, softer subhead).
  */
 export function SectionHeading({
   eyebrow,
   title,
   subtitle,
   align = "left",
+  inverted = false,
   className,
 }: {
   eyebrow?: string;
   title: ReactNode;
   subtitle?: ReactNode;
   align?: "left" | "center";
+  inverted?: boolean;
   className?: string;
 }) {
   return (
-    <div className={cn("max-w-2xl", align === "center" && "mx-auto text-center", className)}>
+    <div className={cn("max-w-3xl", align === "center" && "mx-auto text-center", className)}>
       {eyebrow && (
-        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-ember mb-3">{eyebrow}</p>
+        <p className={cn("text-sm font-semibold mb-3", inverted ? "text-[#ff9b7d]" : "text-ember")}>{eyebrow}</p>
       )}
-      {/* tracking-tight: large display text reads as too loosely spaced at
-          this size without a touch of negative tracking -- the eyebrow
-          above does the opposite (positive tracking) for the same reason at
-          its much smaller size. */}
-      <h2 className="font-display text-3xl sm:text-4xl font-semibold text-foreground leading-tight tracking-tight">{title}</h2>
-      {subtitle && <p className="mt-4 text-foreground-muted text-lg leading-relaxed">{subtitle}</p>}
+      <h2
+        className={cn(
+          "font-display text-balance text-3xl sm:text-4xl lg:text-[2.75rem] font-semibold leading-[1.1] tracking-tight",
+          inverted ? "text-white" : "text-foreground"
+        )}
+      >
+        {title}
+      </h2>
+      {subtitle && (
+        <p className={cn("mt-4 max-w-2xl text-pretty text-lg leading-relaxed", align === "center" && "mx-auto", inverted ? "text-[#a9b8cc]" : "text-foreground-muted")}>
+          {subtitle}
+        </p>
+      )}
     </div>
   );
 }

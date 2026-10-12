@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import { SoftwareApplicationJsonLd } from "@/components/shared/software-application-jsonld";
 import { Hero } from "@/components/marketing/hero";
-import { PhotoStrip } from "@/components/marketing/photo-strip";
 import { FeatureGrid } from "@/components/marketing/feature-grid";
-import { ExampleRecommendations } from "@/components/marketing/example-recommendations";
 import { HowItWorks } from "@/components/marketing/how-it-works";
 import { ComparisonLinks } from "@/components/marketing/comparison-links";
 import { DestinationsSection } from "@/components/marketing/destinations-section";
@@ -13,7 +11,6 @@ import { DiscoveryLayer } from "@/components/marketing/discovery-layer";
 import { FAQ } from "@/components/marketing/faq";
 import { CTASection } from "@/components/marketing/cta-section";
 import { Reveal } from "@/components/marketing/reveal";
-import { getExperienceProvider } from "@/services/providers";
 
 // `absolute` bypasses the root layout's "%s · Zolo" title template — this
 // is the one page that needs an exact, non-templated title for SEO (see
@@ -48,32 +45,21 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function LandingPage() {
-  const provider = await getExperienceProvider();
-  // Same New York strip for every visitor, so reuse the Google lookup for a
-  // day instead of an hour (the page re-renders at the shortest fetch window
-  // it contains, so an hourly one meant ~7 billed Nearby Search calls an hour
-  // for as long as anyone or any crawler kept visiting).
-  const featured = await provider.list({
-    city: "New York",
-    latitude: 40.7128,
-    longitude: -74.006,
-    radiusMiles: 15,
-    limit: 12,
-    cacheSeconds: 60 * 60 * 24,
-  });
-
+// No live Google data anywhere on this page: the hero, feature cards, and How It
+// Works are all designed product mockups (see components/marketing/mock-ui.tsx),
+// so the homepage costs nothing in Places API calls and renders identically
+// whether or not the Google account is in good standing. (It used to fetch a
+// New York feed for a photo strip -- the strip, and that fetch, are gone.)
+export default function LandingPage() {
   return (
     <>
       <SoftwareApplicationJsonLd />
       <Hero />
-      <PhotoStrip experiences={featured.slice(0, 5)} />
+      <Reveal><SocialProof /></Reveal>
       <Reveal><FeatureGrid /></Reveal>
-      <Reveal><ExampleRecommendations experiences={featured.slice(5, 8)} /></Reveal>
-      <Reveal><HowItWorks experiences={featured.slice(8, 12)} /></Reveal>
+      <Reveal><HowItWorks /></Reveal>
       <Reveal><ComparisonLinks /></Reveal>
       <DestinationsSection />
-      <Reveal><SocialProof /></Reveal>
       <Reveal><PricingSection /></Reveal>
       <Reveal><DiscoveryLayer /></Reveal>
       <Reveal><FAQ /></Reveal>

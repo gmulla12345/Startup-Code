@@ -1,6 +1,8 @@
 import { LayoutGrid, Brain, Globe } from "lucide-react";
 import { Reveal } from "@/components/marketing/reveal";
 
+// Plain facts about the product, not traction claims -- there's no user count
+// or testimonial here on purpose (see CLAUDE.md: those wait for real data).
 const STATS = [
   { icon: LayoutGrid, value: "20+", label: "Curated categories" },
   { icon: Brain, value: "Hybrid AI", label: "Scoring + reasoning engine" },
@@ -9,13 +11,20 @@ const STATS = [
 
 export function SocialProof() {
   return (
-    <section className="mx-auto max-w-6xl px-4 sm:px-6 py-16 md:py-20 border-t border-border">
-      <div className="grid sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-border">
+    <section className="mx-auto max-w-6xl px-4 sm:px-6 pb-8 md:pb-12">
+      <div className="grid divide-y divide-border rounded-2xl border border-border bg-surface shadow-[var(--shadow-card)] sm:grid-cols-3 sm:divide-x sm:divide-y-0">
         {STATS.map((s, i) => (
-          <Reveal key={s.label} delay={i * 0.08} className="py-6 sm:py-0 sm:px-8 first:pl-0 first:pt-0">
-            <s.icon className="h-5 w-5 text-ember mb-3" strokeWidth={1.75} />
-            <div className="font-display text-2xl sm:text-3xl font-semibold text-foreground tracking-tight">{s.value}</div>
-            <div className="text-sm text-foreground-muted mt-1">{s.label}</div>
+          <Reveal key={s.label} delay={i * 0.08} className="flex items-center gap-4 p-6 sm:p-7">
+            <span
+              aria-hidden
+              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--ember-soft)] text-ember"
+            >
+              <s.icon className="h-5 w-5" strokeWidth={1.75} />
+            </span>
+            <div>
+              <div className="font-display text-xl font-semibold tracking-tight text-foreground sm:text-2xl">{s.value}</div>
+              <div className="text-sm text-foreground-muted">{s.label}</div>
+            </div>
           </Reveal>
         ))}
       </div>

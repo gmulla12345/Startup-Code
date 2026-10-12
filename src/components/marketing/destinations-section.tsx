@@ -1,57 +1,62 @@
 import Link from "next/link";
-import Image from "next/image";
+import { ArrowUpRight } from "lucide-react";
 import { SectionHeading } from "@/components/marketing/section-heading";
 import { Reveal } from "@/components/marketing/reveal";
 import { getTravelProvider } from "@/services/providers";
 
-// Downsizes the Unsplash cover photo for this section's small card size --
-// `DESTINATIONS.coverImage` bakes in w=1600&h=900 (sized for the full
-// /travel/[destination] banner), which would be a lot of wasted payload for
-// a ~280px-wide card here.
-function cardImage(url: string): string {
-  return url.replace(/w=\d+&h=\d+/, "w=480&h=480");
-}
+// Soft corner washes, cycled across the tiles. Decorative only.
+const WASHES = [
+  "from-[#ffb199] to-[#ff4f93]",
+  "from-[#ffd37a] to-[#ff8a5c]",
+  "from-[#7be0c8] to-[#4cc9f0]",
+  "from-[#b5a8ff] to-[#ff7ab6]",
+  "from-[#8fd6ff] to-[#7be0c8]",
+];
 
 // The sitemap has always listed all 10 Travel Mode destination guides, but
-// nothing on the homepage ever linked to them -- discoverable only via the
-// sitemap itself (heycatch audit D2.4). Placed between the /vs comparisons
-// section and pricing, per the audit's own suggested placement.
+// nothing on the homepage linked to them -- discoverable only via the sitemap
+// itself (heycatch audit D2.4). Typographic tiles rather than city photos:
+// the page no longer leans on stock imagery, and the links stay plain,
+// descriptive text ("Paris France travel guide") for crawlers and screen
+// readers alike.
 export async function DestinationsSection() {
   const destinations = await getTravelProvider().listDestinations();
   if (destinations.length === 0) return null;
 
   return (
-    <section className="relative overflow-hidden bg-background border-t border-border">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 py-20 md:py-28">
+    <section className="border-t border-border bg-surface-sunken">
+      <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 md:py-28">
         <Reveal>
           <SectionHeading
             eyebrow="Travel Mode"
             title="Plan your next trip, not just tonight"
             subtitle={`Dedicated guides and itineraries for ${destinations.length} destinations, with more being added regularly.`}
-            className="mb-10"
+            className="mb-12"
           />
         </Reveal>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
           {destinations.map((dest, i) => (
-            <Reveal key={dest.slug} delay={i * 0.04}>
+            <Reveal key={dest.slug} delay={Math.min(i, 5) * 0.04}>
               <Link
                 href={`/travel/${dest.slug}`}
-                className="group relative block aspect-square overflow-hidden rounded-[var(--radius-lg)] border border-border transition-transform active:scale-[0.97] active:duration-100"
+                className="group relative flex h-32 flex-col justify-between overflow-hidden rounded-2xl border border-border bg-surface p-4 shadow-[var(--shadow-card)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[var(--shadow-raised)] active:scale-[0.97] active:duration-100"
               >
-                <Image
-                  src={cardImage(dest.coverImage)}
-                  alt={`${dest.city}, ${dest.country}`}
-                  width={480}
-                  height={480}
-                  sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 220px"
-                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                <span
+                  aria-hidden
+                  className={`absolute -right-7 -top-7 h-24 w-24 rounded-full bg-gradient-to-br opacity-60 blur-xl transition-opacity duration-300 group-hover:opacity-100 ${WASHES[i % WASHES.length]}`}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
-                <div className="absolute inset-x-0 bottom-0 p-3">
-                  <p className="font-display text-sm font-semibold text-white leading-tight">{dest.city}</p>
-                  <p className="text-xs text-white/75">{dest.country}</p>
-                </div>
+                <ArrowUpRight
+                  aria-hidden
+                  className="relative ml-auto h-4 w-4 text-foreground-subtle transition-colors group-hover:text-ember"
+                />
+                <span className="relative block">
+                  <span className="block font-display text-base font-semibold leading-tight text-foreground">{dest.city}</span>
+                  <span className="block text-xs text-foreground-muted">
+                    {dest.country}
+                    <span className="sr-only"> travel guide</span>
+                  </span>
+                </span>
               </Link>
             </Reveal>
           ))}

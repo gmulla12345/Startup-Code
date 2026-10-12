@@ -108,6 +108,122 @@
   }
 }
 
+/* The pre-login marketing site: a crisp, light, product-first look (white
+   canvas, deep navy ink, cool grays, vivid gradients reserved for decoration),
+   scoped to (marketing)/layout.tsx's wrapper div the same way the old dark
+   theme was -- the logged-in app and auth pages keep following the visitor's
+   own light/dark preference. Every marketing component already reads color
+   through these semantic tokens, so this one block restyles the whole route
+   group at once.
+
+   Contrast, deliberately: --ember here is a deeper orange-red (#d93a17) than
+   the app's #ff4e2b, because #ff4e2b on white is only ~3.3:1 -- too low for
+   small links and eyebrow labels, and for white button text. #d93a17 clears
+   4.5:1 both ways. The vivid brand orange lives in the decorative gradients
+   below instead, where it carries no text. --gold is darkened for the same
+   reason (it's used as text on --gold-soft). */
+[data-theme="marketing"] {
+  color-scheme: light;
+
+  --background: #ffffff;
+  --surface: #ffffff;
+  --surface-raised: #ffffff;
+  --surface-sunken: #f6f9fc;
+  --border: #e3e8ee;
+  --border-strong: #cfd7e3;
+
+  --foreground: #0a2540;
+  --foreground-muted: #425466;
+  --foreground-subtle: #697386;
+
+  --ember: #d93a17;
+  --ember-strong: #bf3012;
+  --ember-soft: #fff0eb;
+  --forest: #0f5c4c;
+  --forest-strong: #0a4438;
+  --forest-soft: #e3f4ef;
+  --gold: #94590b;
+  --gold-soft: #fdf1d6;
+
+  --success: #15803d;
+  --danger: #c2362b;
+
+  --shadow-card: 0 0 0 1px rgba(10, 37, 64, 0.04), 0 2px 5px -1px rgba(50, 50, 93, 0.08), 0 1px 3px -1px rgba(0, 0, 0, 0.06);
+  --shadow-raised: 0 30px 60px -12px rgba(50, 50, 93, 0.22), 0 18px 36px -18px rgba(0, 0, 0, 0.28);
+}
+
+/* Headings across the marketing site are sans (Inter) with a touch of
+   negative tracking -- the serif display face stays for the wordmark
+   (.font-logo) and the logged-in app. */
+[data-theme="marketing"] .font-display {
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -0.022em;
+}
+.font-logo {
+  font-family: var(--font-fraunces), ui-serif, Georgia, serif;
+}
+
+/* Decorative marketing gradient: the brand's ember/pink/gold/teal as one
+   slow-shifting band. Purely visual (no text sits on the vivid part). */
+.mk-gradient {
+  background: linear-gradient(
+    100deg,
+    #ffd2c2 0%,
+    #ff9468 16%,
+    #ff4e2b 30%,
+    #ff4f93 46%,
+    #ffb340 62%,
+    #2fc4a3 80%,
+    #5ccdf5 100%
+  );
+  background-size: 220% 100%;
+  animation: mk-gradient-shift 22s ease-in-out infinite alternate;
+}
+@keyframes mk-gradient-shift {
+  from { background-position: 0% 50%; }
+  to { background-position: 100% 50%; }
+}
+.mk-gradient-text {
+  background: linear-gradient(95deg, #ff4e2b 0%, #ff4f93 55%, #ff9a3c 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.mk-grid {
+  background-image:
+    linear-gradient(to right, rgba(10, 37, 64, 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(10, 37, 64, 0.045) 1px, transparent 1px);
+  background-size: 56px 56px;
+}
+@keyframes mk-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-9px); }
+}
+.animate-mk-float {
+  animation: mk-float 7s ease-in-out infinite;
+}
+@keyframes mk-progress {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+/* Above-the-fold copy rises in via CSS (not JS) so it plays before hydration
+   and never delays the LCP text. --d sets the stagger. */
+@keyframes mk-rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+.mk-rise {
+  animation: mk-rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: var(--d, 0s);
+}
+@media (prefers-reduced-motion: reduce) {
+  .mk-gradient,
+  .animate-mk-float,
+  .mk-rise {
+    animation: none;
+  }
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-surface: var(--surface);
@@ -157,8 +273,15 @@ body {
   color: var(--ember-strong);
 }
 
+/* var(--border), not var(--color-border): --color-border is declared on :root
+   (via @theme inline), so it resolves once at the document root and every
+   descendant inherits that computed value -- a themed wrapper that redefines
+   --border (the marketing route group, forced light/dark regardless of the
+   visitor OS) would never reach it. This rule is unlayered, so it also beats
+   the .border-border utility, which made borders follow the OS theme even
+   when everything else on the page followed the wrapper. */
 * {
-  border-color: var(--color-border);
+  border-color: var(--border);
 }
 
 .no-scrollbar::-webkit-scrollbar {

@@ -1911,6 +1911,45 @@ quota caps per API + a budget alert; (4) billing support request for a one-time 
 balance so the hold lifts. Server-to-Google calls come from Vercel with no fixed IP and no referrer, so the
 key can be API-restricted but not referrer/IP-restricted — which is exactly why it must never reach a browser.
 
+## Landing page redesigned Stripe-style: light, product-first, no photos (2026-10-12)
+
+The user disliked the full-bleed night photo hero and wanted a "SaaS landing page that looks like Stripe".
+The whole pre-login marketing site is now a light theme; the logged-in app and auth pages are untouched.
+
+- **Theme.** [(marketing)/layout.tsx](src/app/(marketing)/layout.tsx) sets `data-theme="marketing"`, defined in
+  [globals.css](src/app/globals.css): white canvas, navy ink (#0a2540), cool grays, Stripe-style layered shadows.
+  Always light regardless of the visitor's OS (the old forced-dark is gone). `.font-display` is **Inter** inside this
+  theme (tight tracking); the serif face survives only as the wordmark (`.font-logo`, used by
+  [logo.tsx](src/components/shared/logo.tsx)) and in the logged-in app. Every other marketing page (pricing, blog,
+  faq, about, vs, legal) picked the theme up automatically through the semantic tokens.
+- **Contrast is deliberate.** Marketing `--ember` is #d93a17 (not the app's #ff4e2b, only ~3.3:1 on white) and `--gold`
+  is darkened, so small links, eyebrows, and white-on-orange buttons clear 4.5:1. The vivid brand orange/pink/gold/teal
+  lives only in decoration (`.mk-gradient`, `.mk-gradient-text`), never behind or as small text.
+- **Latent bug found and fixed:** the global `* { border-color }` rule used `var(--color-border)`, which is declared on
+  `:root` and so resolves once at the document root; being unlayered it also beat `.border-border`. A themed wrapper
+  (marketing) that differs from the visitor's OS therefore got the OS's border color (dark borders on a light page).
+  It now reads `var(--border)`, evaluated per element. The old forced-dark theme had the mirror-image problem
+  (light borders on a dark page for light-OS visitors).
+- **No photos, no live Google data on the landing page.** The hero is a floating, angled product mockup
+  ([hero-mockup.tsx](src/components/marketing/hero-mockup.tsx)) over a feathered brand gradient; the feature bento,
+  "How Zolo works", and destinations are designed markup. Shared pieces live in
+  [mock-ui.tsx](src/components/marketing/mock-ui.tsx). `(marketing)/page.tsx` no longer calls
+  `getExperienceProvider` at all, so the homepage costs **zero** Places calls and renders the same whether or not the
+  Google billing account is in good standing (it also removes the empty "How Zolo works" right column the user hit).
+  Destination tiles are typographic (gradient wash + city + country), still 10 descriptive links.
+- **Honesty rules still apply to every mockup** (legal risk review): picks are category descriptions ("Rooftop jazz bar"),
+  never named businesses; match %s are illustrative and every mockup showing one carries `<ExampleNote />` /
+  "Example". Don't add named places, a user count, or testimonials here without real data.
+- **How Zolo works** ([how-it-works.tsx](src/components/marketing/how-it-works.tsx)) is interactive: four clickable
+  steps (`aria-current`, plain buttons, not a half-built ARIA tabs pattern) drive the product window: onboarding with
+  toggleable chips/budget, ranked matches, save/skip/go, and a re-rank panel. Auto-advances every 7 s only while
+  on-screen and until the visitor clicks; off under prefers-reduced-motion.
+- **Preserved from the audited version:** all copy, the H1 (with "Discover Zolo" inside it), FAQPage JSON-LD,
+  /vs and /travel links, pricing from config. Verified: 0 images on the page, no horizontal overflow at 390/820/1440,
+  clean console.
+- **Deleted (unused):** photo-strip, example-recommendations, product-preview, browser-frame, feature-card,
+  grain-overlay, section-glow, tilt. `public/hero/urban-night-stroll.webp` is now unreferenced (left in place).
+
 ## Exact next steps (priority order)
 
 **Done since the last update:** deployed to production at `discoverzolo.com` (fixed a Vercel

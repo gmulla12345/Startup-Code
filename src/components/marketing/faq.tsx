@@ -54,30 +54,25 @@ export function FAQ() {
   const [open, setOpen] = useState<number | null>(0);
 
   return (
-    <section id="faq" className="mx-auto max-w-3xl px-4 sm:px-6 py-20 md:py-28 border-t border-border">
+    <section id="faq" className="mx-auto max-w-3xl px-4 sm:px-6 py-20 md:py-28">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(FAQ_JSON_LD) }} />
 
       <Reveal>
         <SectionHeading eyebrow="Support" title="Frequently asked questions" align="center" className="mb-10 mx-auto" />
       </Reveal>
 
-      <div className="space-y-2.5">
+      <div className="border-t border-border">
         {FAQS.map((item, i) => {
           const isOpen = open === i;
           return (
             <Reveal key={item.q} delay={Math.min(i, 4) * 0.05}>
-              <div
-                className={cn(
-                  "rounded-[var(--radius-md)] border bg-surface overflow-hidden transition-colors duration-200",
-                  isOpen ? "border-ember/40" : "border-border hover:border-border-strong"
-                )}
-              >
+              <div className="border-b border-border">
                 <button
-                  className="w-full flex items-center justify-between gap-4 px-5 py-4 text-left cursor-pointer transition-transform duration-100 active:scale-[0.99]"
+                  className="w-full flex items-center justify-between gap-4 px-1 py-5 text-left cursor-pointer transition-colors hover:text-ember"
                   onClick={() => setOpen(isOpen ? null : i)}
                   aria-expanded={isOpen}
                 >
-                  <span className="font-medium text-foreground">{item.q}</span>
+                  <span className={cn("font-semibold transition-colors", isOpen ? "text-ember" : "text-foreground")}>{item.q}</span>
                   <ChevronDown
                     className={cn(
                       "h-4 w-4 shrink-0 transition-transform duration-300 [transition-timing-function:cubic-bezier(0.32,0.72,0,1)]",
@@ -106,7 +101,7 @@ export function FAQ() {
                   )}
                 >
                   <div className="overflow-hidden">
-                    <p className="px-5 pb-4 text-sm text-foreground-muted leading-relaxed">{item.a}</p>
+                    <p className="px-1 pb-5 text-foreground-muted leading-relaxed">{item.a}</p>
                   </div>
                 </div>
               </div>

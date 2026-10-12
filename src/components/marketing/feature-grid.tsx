@@ -1,16 +1,14 @@
-import { Compass, MapPinned, Sparkles, Plane, TrendingUp } from "lucide-react";
+import type { ReactNode } from "react";
+import { Compass, MapPinned, Sparkles, Plane, TrendingUp, Music, Palette, Mountain, Coffee } from "lucide-react";
 import { brand } from "@/lib/config/brand";
+import { cn } from "@/lib/utils/cn";
 import { SectionHeading } from "@/components/marketing/section-heading";
-import { SectionGlow } from "@/components/marketing/section-glow";
 import { Reveal } from "@/components/marketing/reveal";
-import { FeatureCard } from "@/components/marketing/feature-card";
+import { PickRow, PickTile, MOCK_PICKS, type MockTone } from "@/components/marketing/mock-ui";
 
-// The two real differentiators — reasoning per pick, and a system that
-// gets sharper with use — get larger, ember-bordered cards and top billing
-// instead of being lost among 5 equal-weight cards (previously "Your Life,
-// Personalized" was position 5 of 5, the learning loop was step 4 of 4 in
-// How It Works, and nothing on the page visually distinguished it from a
-// generic feature like "Travel").
+// The two real differentiators -- reasoning per pick, and a system that gets
+// sharper with use -- lead the grid and get the richest visuals, instead of
+// being lost among five equal-weight cards.
 const RECOMMENDATIONS = {
   icon: Sparkles,
   title: "Intelligent Recommendations",
@@ -22,11 +20,10 @@ const PERSONALIZED = {
   icon: TrendingUp,
   title: "Your Life, Personalized",
   description: `The more you use ${brand.name}, the better it gets — every save, skip, and trip refines what comes next.`,
-  // Was "No other tool gets sharper the more you use it" -- an absolute
-  // claim contradicted by any competitor with a learning/recommendation
-  // component (including Google Maps), flagged in the 2026-09-22/23 legal
-  // risk review (finding 6, Lanham Act §43(a) exposure). Replaced with a
-  // claim about Zolo's own product only.
+  // Was "No other tool gets sharper the more you use it" -- an absolute claim
+  // contradicted by any competitor with a learning component (including
+  // Google Maps), flagged in the legal risk review (finding 6, Lanham Act
+  // §43(a)). Replaced with a claim about Zolo's own product only.
   subtext: "Every save and skip sharpens what comes next.",
 };
 
@@ -46,37 +43,170 @@ const TRAVEL = {
   description: "Landing somewhere new? Get personalized itineraries and hidden gems the moment you arrive.",
 };
 
-// A real UI snippet, not just icon+text -- the same reasoning-chip pattern
-// real cards use elsewhere (see product-preview.tsx / experience-card.tsx),
-// scaled down. "Rooftop jazz bar" is a category description, not a named
-// business -- illustrating the pattern, not claiming a specific real place.
-function ReasoningPreview() {
+function Card({
+  icon: Icon,
+  title,
+  description,
+  subtext,
+  visual,
+  className,
+}: {
+  icon: typeof Sparkles;
+  title: string;
+  description: string;
+  subtext?: string;
+  visual: ReactNode;
+  className?: string;
+}) {
   return (
-    <div className="rounded-[var(--radius-md)] border border-border bg-surface-sunken p-3.5">
-      <div className="flex items-center justify-between gap-2 mb-1.5">
-        <span className="text-sm font-medium text-foreground">Rooftop jazz bar</span>
-        <span className="shrink-0 text-[11px] font-semibold text-ember bg-[var(--ember-soft)] rounded-full px-2 py-0.5">
-          94% match
-        </span>
-      </div>
-      <p className="text-xs text-foreground-muted">Matches your interests: music, nightlife — fits your usual budget</p>
-      {/* Illustrative, not a live result -- labeled per legal risk review
-          finding 24 (FTC Act §5 net-impression concern with an unlabeled
-          match score). */}
-      <p className="text-[10px] text-foreground-subtle uppercase tracking-wide mt-1.5">Example</p>
+    <div
+      className={cn(
+        "group flex h-full flex-col overflow-hidden rounded-3xl border border-border bg-surface p-7 shadow-[var(--shadow-card)] transition-shadow duration-300 hover:shadow-[var(--shadow-raised)] sm:p-8",
+        className
+      )}
+    >
+      <span
+        aria-hidden
+        className="mb-5 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--ember-soft)] text-ember"
+      >
+        <Icon className="h-5 w-5" strokeWidth={1.75} />
+      </span>
+      <h3 className="font-display text-xl font-semibold tracking-tight text-foreground">{title}</h3>
+      <p className="mt-2 max-w-md leading-relaxed text-foreground-muted">{description}</p>
+      {subtext && <p className="mt-3 text-sm font-medium text-ember">{subtext}</p>}
+      <div className="mt-auto pt-7">{visual}</div>
     </div>
   );
 }
 
-// A genuinely uneven bento (one 3-wide/2-tall anchor card, not a perfect
-// 2x2/3x1 grid split) -- real bento layouts on the reference sites vary
-// cell size for rhythm, they don't just tile equal boxes with different
-// content in them.
+// Each visual is a tiny live-rendered slice of the real product, in the same
+// vocabulary as the hero mockup. They're decorative (aria-hidden): the card's
+// heading and description carry the meaning. Picks are category descriptions,
+// not named businesses, and each one that shows a score says "Example".
+const panel = "rounded-2xl border border-border bg-surface-sunken p-4";
+
+function ReasoningVisual() {
+  const [first, ...rest] = MOCK_PICKS;
+  return (
+    <div aria-hidden className={cn(panel, "bg-gradient-to-br from-[#fff4ef] via-white to-[#f4f1ff] p-5")}>
+      <p className="mb-3 text-[11px] font-semibold text-foreground-muted">For you tonight</p>
+      <PickRow pick={first} />
+      <div className="my-3 rounded-xl border border-dashed border-[#f1b9a8] bg-[var(--ember-soft)]/60 p-3.5">
+        <p className="flex items-center gap-1.5 text-[11px] font-semibold text-ember">
+          <Sparkles className="h-3.5 w-3.5" /> Why this pick
+        </p>
+        <p className="mt-1 text-sm text-foreground">
+          Matches your interests: music, nightlife — fits your usual budget
+        </p>
+      </div>
+      <div className="space-y-2.5">
+        {rest.map((pick) => (
+          <PickRow key={pick.id} pick={pick} />
+        ))}
+      </div>
+      <p className="mt-4 text-[10px] font-medium uppercase tracking-wide text-foreground-subtle">Example</p>
+    </div>
+  );
+}
+
+function TasteVisual() {
+  const bars = [
+    { label: "Music", pct: 92 },
+    { label: "Food & drink", pct: 74 },
+    { label: "Outdoors", pct: 51 },
+    { label: "Nightlife", pct: 28 },
+  ];
+  return (
+    <div aria-hidden className={panel}>
+      <p className="mb-3 text-[11px] font-semibold text-foreground-muted">What Zolo has learned about you</p>
+      <div className="space-y-2.5">
+        {bars.map((b) => (
+          <div key={b.label} className="flex items-center gap-3">
+            <span className="w-24 shrink-0 text-xs text-foreground-muted">{b.label}</span>
+            <span className="h-2 flex-1 overflow-hidden rounded-full bg-border">
+              <span className="mk-gradient block h-full rounded-full" style={{ width: `${b.pct}%` }} />
+            </span>
+          </div>
+        ))}
+      </div>
+      <p className="mt-3 text-[10px] font-medium uppercase tracking-wide text-foreground-subtle">Example</p>
+    </div>
+  );
+}
+
+function ChipsVisual() {
+  const chips = ["Music", "Food", "Outdoors", "Art", "Wellness", "$$ budget", "Social", "Spontaneous"];
+  const on = new Set(["Music", "Food", "$$ budget", "Spontaneous"]);
+  return (
+    <div aria-hidden className="flex flex-wrap gap-2">
+      {chips.map((c) => (
+        <span
+          key={c}
+          className={cn(
+            "rounded-full border px-3 py-1.5 text-xs font-medium",
+            on.has(c) ? "border-transparent bg-foreground text-white" : "border-border bg-surface text-foreground-muted"
+          )}
+        >
+          {c}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function CategoriesVisual() {
+  const items: { label: string; tag: string; tone: MockTone; icon: typeof Music }[] = [
+    { label: "Live jazz night", tag: "Hidden gem", tone: "night", icon: Music },
+    { label: "Pottery workshop", tag: "Weekend", tone: "arts", icon: Palette },
+    { label: "Sunrise ridge hike", tag: "Free", tone: "outdoor", icon: Mountain },
+    { label: "Neighborhood café crawl", tag: "Low-key", tone: "arts", icon: Coffee },
+  ];
+  return (
+    <div aria-hidden className={panel}>
+      <p className="mb-3 text-[11px] font-semibold text-foreground-muted">Worth doing this weekend</p>
+      <div className="space-y-2">
+        {items.map((it) => (
+          <div key={it.label} className="flex items-center gap-3 rounded-xl border border-border bg-surface px-3 py-2.5">
+            <PickTile tone={it.tone} icon={it.icon} className="h-9 w-9 rounded-lg" />
+            <span className="flex-1 truncate text-sm font-medium text-foreground">{it.label}</span>
+            <span className="rounded-full bg-surface-sunken px-2 py-0.5 text-[11px] font-medium text-foreground-muted">{it.tag}</span>
+          </div>
+        ))}
+      </div>
+      <p className="mt-3 text-[10px] font-medium uppercase tracking-wide text-foreground-subtle">Example</p>
+    </div>
+  );
+}
+
+function ItineraryVisual() {
+  const stops = [
+    { time: "9:00", label: "Morning coffee near your hotel" },
+    { time: "11:30", label: "Neighborhood walking tour" },
+    { time: "13:30", label: "Lunch somewhere locals love" },
+    { time: "16:30", label: "Sunset viewpoint" },
+    { time: "19:00", label: "Hidden-gem dinner" },
+  ];
+  return (
+    <div aria-hidden className={panel}>
+      <p className="mb-3 text-[11px] font-semibold text-foreground-muted">Day 1</p>
+      <ol className="relative space-y-3 border-l border-border-strong pl-4">
+        {stops.map((s) => (
+          <li key={s.time} className="relative">
+            <span className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full border-2 border-ember bg-surface" />
+            <span className="text-[11px] font-semibold text-ember">{s.time}</span>
+            <p className="text-xs text-foreground">{s.label}</p>
+          </li>
+        ))}
+      </ol>
+      <p className="mt-3 text-[10px] font-medium uppercase tracking-wide text-foreground-subtle">Example</p>
+    </div>
+  );
+}
+
 export function FeatureGrid() {
   return (
-    <section className="relative overflow-hidden bg-background">
-      <SectionGlow tone="ember" side="top-right" />
-      <div className="relative mx-auto max-w-6xl px-4 sm:px-6 py-20 md:py-28">
+    <section className="bg-background">
+      <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 md:py-28">
         <Reveal>
           <SectionHeading
             eyebrow="Why Zolo"
@@ -86,50 +216,21 @@ export function FeatureGrid() {
           />
         </Reveal>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-6">
           <Reveal className="lg:col-span-3 lg:row-span-2">
-            <FeatureCard
-              icon={<RECOMMENDATIONS.icon strokeWidth={1.75} />}
-              title={RECOMMENDATIONS.title}
-              description={RECOMMENDATIONS.description}
-              subtext={RECOMMENDATIONS.subtext}
-              preview={<ReasoningPreview />}
-              highlighted
-              className="lg:h-full"
-            />
+            <Card {...RECOMMENDATIONS} visual={<ReasoningVisual />} />
           </Reveal>
-
-          <Reveal delay={0.08} className="lg:col-span-2">
-            <FeatureCard
-              icon={<PERSONALIZED.icon strokeWidth={1.75} />}
-              title={PERSONALIZED.title}
-              description={PERSONALIZED.description}
-              subtext={PERSONALIZED.subtext}
-              highlighted
-            />
+          <Reveal delay={0.08} className="lg:col-span-3">
+            <Card {...PERSONALIZED} visual={<TasteVisual />} />
           </Reveal>
-
-          <Reveal delay={0.16} className="lg:col-span-2">
-            <FeatureCard
-              icon={<DISCOVERY.icon strokeWidth={1.75} />}
-              title={DISCOVERY.title}
-              description={DISCOVERY.description}
-            />
+          <Reveal delay={0.16} className="lg:col-span-3">
+            <Card {...DISCOVERY} visual={<ChipsVisual />} />
           </Reveal>
-
-          <Reveal delay={0.24} className="sm:col-span-1 lg:col-span-3">
-            <FeatureCard
-              icon={<REAL_WORLD.icon strokeWidth={1.75} />}
-              title={REAL_WORLD.title}
-              description={REAL_WORLD.description}
-            />
+          <Reveal delay={0.08} className="lg:col-span-3">
+            <Card {...REAL_WORLD} visual={<CategoriesVisual />} />
           </Reveal>
-          <Reveal delay={0.32} className="sm:col-span-1 lg:col-span-2">
-            <FeatureCard
-              icon={<TRAVEL.icon strokeWidth={1.75} />}
-              title={TRAVEL.title}
-              description={TRAVEL.description}
-            />
+          <Reveal delay={0.16} className="lg:col-span-3">
+            <Card {...TRAVEL} visual={<ItineraryVisual />} />
           </Reveal>
         </div>
       </div>
