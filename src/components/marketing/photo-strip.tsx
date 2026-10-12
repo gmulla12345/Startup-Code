@@ -35,10 +35,11 @@ function Photo({
       <Image
         src={withMaxWidth(experience.images[0], 800)}
         alt={experience.title}
-        fill
+        width={800}
+        height={600}
         priority={priority}
         sizes="(max-width: 640px) 50vw, 25vw"
-        className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
+        className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
       <div className="absolute inset-0 p-2.5 flex flex-col justify-between items-start">

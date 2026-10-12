@@ -1,17 +1,20 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { MapPin, Clock, Briefcase } from "lucide-react";
 import { JobApplicationForm } from "@/components/marketing/job-application-form";
 import { brand } from "@/lib/config/brand";
 import { canonical } from "@/lib/seo";
+import { PAGE_SEO } from "@/lib/content/page-seo";
 import { BreadcrumbJsonLd } from "@/components/shared/breadcrumb-jsonld";
+import { WebPageJsonLd } from "@/components/shared/webpage-jsonld";
 
-const DESCRIPTION = "Open roles at Zolo — join a small team building personalized discovery from the ground up, with direct access to the founding team.";
+const SEO = PAGE_SEO.careers;
 
 export const metadata: Metadata = {
-  title: "Careers",
-  description: DESCRIPTION,
-  openGraph: { title: `Careers · ${brand.name}`, description: DESCRIPTION },
-  ...canonical("/careers"),
+  title: { absolute: SEO.title },
+  description: SEO.description,
+  openGraph: { title: SEO.title, description: SEO.description },
+  ...canonical(SEO.path),
 };
 
 const ROLE = "Growth & Marketing Specialist";
@@ -37,12 +40,31 @@ const REQUIREMENTS = [
 export default function CareersPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 sm:px-6 py-16">
+      <WebPageJsonLd path={SEO.path} name={SEO.title} description={SEO.description} dateModified={SEO.lastModified} />
       <BreadcrumbJsonLd items={[{ name: "Careers", path: "/careers" }]} />
       <p className="text-sm font-medium text-ember mb-3">Careers at {brand.name}</p>
       <h1 className="font-display text-4xl sm:text-5xl font-semibold text-foreground mb-4">Join us early.</h1>
-      <p className="text-lg text-foreground-muted mb-12 max-w-xl">
+      <p className="text-lg text-foreground-muted mb-4 max-w-xl">
         We&apos;re a small team building the personalized discovery engine for real-world experiences. We&apos;re
         hiring for one role right now — if it&apos;s you, we&apos;d love to hear from you.
+      </p>
+      {/* Descriptive internal links (heycatch audit c_internal_links): this
+          page used to link nowhere in its body, so a reader weighing the role
+          had no route to what the company does or how to ask a question. */}
+      <p className="text-sm text-foreground-muted mb-12 max-w-xl">
+        Want context first? Read{" "}
+        <Link href="/about" className="text-ember hover:underline">
+          why {brand.name} exists
+        </Link>
+        , see{" "}
+        <Link href="/pricing" className="text-ember hover:underline">
+          how {brand.name} is priced
+        </Link>
+        , or{" "}
+        <Link href="/contact" className="text-ember hover:underline">
+          contact the team
+        </Link>{" "}
+        with questions before you apply.
       </p>
 
       <div className="rounded-[var(--radius-lg)] border border-border bg-surface p-6 sm:p-8 mb-10">

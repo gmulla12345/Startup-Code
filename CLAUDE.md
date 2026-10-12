@@ -8,7 +8,7 @@
 >
 > Full setup/architecture docs: [README.md](README.md). Full DB schema: [src/db/schema.sql](src/db/schema.sql).
 
-**Last updated:** 2026-09-23
+**Last updated:** 2026-10-12
 
 ## What this is
 
@@ -1790,6 +1790,68 @@ explicitly set (simulating a light-system visitor) against local dev, confirming
 dark value (`#14120f`) regardless of that forced-light system preference — not just eyeballing a
 screenshot that could coincidentally still be right for the wrong reason. Typecheck/lint/all 34
 tests clean.
+
+## heycatch SEO audit response (2026-10-12)
+
+A separate heycatch report, the **SEO** audit (`.../audit/hck_pk_Utdu2yDeE-XxmtRgBLi9HJLMcVF6O8HD/seo`,
+distinct from the website audit above — different checks, no D-codes), scored the site **78/100** across
+four pillars: Crawlability 21/23, Page clarity 17.6/22, Quotability 22.5/25, Authorship 10/21. Its checks
+are ids like `c_title` / `a_sameas` with a "worth N points" value rather than a score out of a max.
+Worked lowest pillar first. Everything below is in code and unit-tested
+([seo-metadata.test.ts](src/__tests__/seo-metadata.test.ts)); what needs the user is listed at the end.
+
+**Single source of truth** — [page-seo.ts](src/lib/content/page-seo.ts) holds each static page's rendered
+title, description, and `lastModified`; page metadata, JSON-LD `dateModified`, the sitemap, and the tests
+all read it. **When you edit a page's content, bump its `lastModified` there** (blog posts use their own
+`updatedAt`; /vs and /travel share `OTHER_PAGE_LAST_MODIFIED`). It is a hand-maintained "last real
+change" date on purpose: the audit wants honest `lastmod`, not the build date, and Vercel checkouts
+have no useful file mtimes.
+
+- **`a_external_sources` (4 pts)** — each post now has a `sources` list (rendered as a "Sources" section,
+  emitted as JSON-LD `citation`, and cited inline) of verified primary sources: Iyengar & Lepper 2000 (DOI),
+  Tripadvisor's popularity-ranking page, Google's local-ranking help page, NYC DOT / High Line / NYC Parks,
+  USDA Forest Service fall colors / USDA farmers market directory. Every URL was fetched and its text
+  checked to say what the note claims. **Trap:** Tripadvisor's older
+  `/TripAdvisorInsights/popularityranking` URL silently redirects to a generic blog landing page — use
+  `/business/insights/resources/tripadvisor-popularity-ranking`. A test requires ≥2 distinct publishers
+  per post and that every inline external link also appears under Sources.
+- **`g_structured_data`** — root cause: every page already had Organization (site-wide), and FAQPage /
+  BreadcrumbList where relevant, yet only the homepage passed. Those are *supporting* types; the check
+  wants a primary page entity, which only the homepage had (SoftwareApplication). Added
+  [webpage-jsonld.tsx](src/components/shared/webpage-jsonld.tsx) (WebPage / AboutPage / ContactPage /
+  CollectionPage-with-Blog) to every site page, plus a `TouristDestination` on each /travel guide.
+  SoftwareApplication stays homepage-only (see site-jsonld.tsx).
+- **`c_title`** — the previous audit's suggested /about and /faq titles (68-69 chars) were over this
+  audit's 30-60 limit; rewritten. All titles are used verbatim (`title.absolute`) so the length is what's
+  rendered. Posts get an optional `seoTitle` where the H1 is too long.
+- **`c_meta_description`** — 13 pages were under 110 or over 160. Travel descriptions are now *built*
+  by `travelPageSeo()` instead of copying the destination blurb (80-170 chars). San Francisco's lands at
+  exactly 160 — the test fails if a longer city/country pair is ever added.
+- **`c_image_dimensions`** — `next/image` with `fill` emits no `width`/`height` attributes. Swapped to
+  explicit dimensions plus `absolute inset-0 h-full w-full object-cover`, which renders identically
+  (verified visually and by decoding all 10 destination images against live production). Only the audited
+  public pages' images were changed; the logged-in app's `fill` images were left alone.
+- **`c_internal_links` / `g_definition`** — /travel/* guides had 3 links and no definition; they now open
+  with "Zolo's X travel guide is a personalized guide to…" and end with links to the other 9 guides, the
+  FAQ, and pricing (descriptive anchors). /contact now opens with a definition; /careers gained in-body
+  links.
+- **`g_self_contained`** — fall-date-ideas paragraphs that opened with This/It/They or leaned on "it"
+  rewritten to name the subject (a test guards the openers).
+- **`t_sitemap_fresh`** — every sitemap entry now has a real `lastmod` (previously only posts did, so the
+  "newest" was a blog post's publish date). IndexNow: key file `public/755a9cea….txt`,
+  [indexnow.ts](src/lib/config/indexnow.ts), and `npm run indexnow` (`--dry-run` to preview).
+  **Run it after every production deploy** — the engines fetch the key file to verify ownership, so
+  submitting before the deploy is live is rejected. Google doesn't use IndexNow; it reads the sitemap.
+
+**Needs the user, not fabricated (built inert so filling it in turns it on):**
+- **`a_author_schema` (3 pts) / `a_author_page` (2 pts)** — need a real named author. Posts are bylined to
+  the organization today. [authors.ts](src/lib/content/authors.ts) `AUTHORS` is empty; add one `Author`
+  (name, jobTitle, bio, `sameAs`) and set `authorSlug` on their posts, and the byline, `/author/<slug>`
+  page ([author/[slug]/page.tsx](src/app/(marketing)/author/[slug]/page.tsx)), sitemap entry, and Person
+  JSON-LD (with `url` + `sameAs`) all appear. Until then `/author/*` 404s. Same open question as the
+  founder bio flagged in the first audit pass.
+- **`a_sameas` (2 pts)** — needs 3+ profiles the business actually owns. `brand.sameAs` is empty and feeds
+  the Organization JSON-LD; `brand.social`'s handles are still NOT this business's (see site-jsonld.tsx).
 
 ## Exact next steps (priority order)
 

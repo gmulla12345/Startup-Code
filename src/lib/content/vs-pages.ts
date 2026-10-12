@@ -10,6 +10,10 @@ export interface VsComparisonRow {
 export interface VsPage {
   slug: string;
   competitor: string;
+  /** Rendered <title>, used verbatim: 30-60 characters, main query terms up front. */
+  seoTitle: string;
+  /** Meta description: 110-160 characters, says what the reader gets. */
+  seoDescription: string;
   /** Short positioning line, e.g. "personalized reasoning vs review aggregation". */
   tagline: string;
   intro: string;
@@ -28,6 +32,9 @@ export const VS_PAGES: VsPage[] = [
   {
     slug: "zolo-vs-tripadvisor",
     competitor: "Tripadvisor",
+    seoTitle: "Zolo vs Tripadvisor: Personalized Picks vs Reviews",
+    seoDescription:
+      "Zolo vs Tripadvisor: personalized picks with a reason for each one, versus review-ranked lists. See how they compare for finding things to do.",
     // The comparison row used to be "AI trip & weekend planning" marked ✗ for
     // Tripadvisor -- literally false (Tripadvisor launched an AI trip
     // planner in 2023) on a page titled with their trademark, a real Lanham
@@ -80,6 +87,9 @@ export const VS_PAGES: VsPage[] = [
   {
     slug: "zolo-vs-atlas-obscura",
     competitor: "Atlas Obscura",
+    seoTitle: "Zolo vs Atlas Obscura: Personalized vs Editorial Picks",
+    seoDescription:
+      "Personalization + a learning loop vs. editorial curation. See how Zolo compares to Atlas Obscura for finding things to do.",
     tagline: "Personalization + a learning loop vs. editorial curation",
     intro:
       "Atlas Obscura curates hidden gems through its editorial team — the same list for every reader. Zolo curates hidden gems and mainstream picks alike, matched specifically to you, and adjusts as it learns what you respond to.",
@@ -125,6 +135,9 @@ export const VS_PAGES: VsPage[] = [
   {
     slug: "zolo-vs-google-maps",
     competitor: "Google Maps",
+    seoTitle: "Zolo vs Google Maps: Personalized Picks vs Every Pin",
+    seoDescription:
+      "Zolo vs Google Maps: a short, personalized list with a reason for each pick, versus a map of every place. See which fits finding things to do.",
     tagline: "A curated short list vs. 10,000 results",
     intro:
       "Search \"things to do near me\" on Google Maps and you get thousands of pins with no idea where to start. Zolo gives you a short list — usually a handful of picks — already matched to your interests and budget, with a reason for each one.",

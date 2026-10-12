@@ -100,10 +100,11 @@ export function ExperienceCard({
           <Image
             src={image}
             alt={experience.title}
-            fill
+            width={800}
+            height={600}
             priority={priority}
             sizes="(max-width: 768px) 90vw, (max-width: 1200px) 45vw, 320px"
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
+            className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
         )}
 

@@ -24,9 +24,10 @@ function MiniCard({ experience, matchScore }: { experience: Experience; matchSco
           <Image
             src={withMaxWidth(image, 500)}
             alt={experience.title}
-            fill
+            width={500}
+            height={313}
             sizes="280px"
-            className="object-cover"
+            className="absolute inset-0 h-full w-full object-cover"
           />
         )}
         <span className="absolute top-2 left-2 rounded-full bg-white/95 text-[#e63f1d] text-[11px] font-semibold px-2 py-0.5">

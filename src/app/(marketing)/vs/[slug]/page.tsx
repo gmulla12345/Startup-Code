@@ -6,8 +6,10 @@ import { Button } from "@/components/ui/button";
 import { ComparisonCellValue } from "@/components/marketing/comparison-cell";
 import { brand } from "@/lib/config/brand";
 import { VS_PAGES, getVsPage } from "@/lib/content/vs-pages";
+import { OTHER_PAGE_LAST_MODIFIED } from "@/lib/content/page-seo";
 import { canonical, safeJsonLd } from "@/lib/seo";
 import { BreadcrumbJsonLd } from "@/components/shared/breadcrumb-jsonld";
+import { WebPageJsonLd } from "@/components/shared/webpage-jsonld";
 
 export function generateStaticParams() {
   return VS_PAGES.map((p) => ({ slug: p.slug }));
@@ -18,8 +20,9 @@ export async function generateMetadata({ params }: PageProps<"/vs/[slug]">): Pro
   const page = getVsPage(slug);
   if (!page) return { title: "Compare" };
   return {
-    title: `${brand.name} vs ${page.competitor}`,
-    description: `${page.tagline}. See how ${brand.name} compares to ${page.competitor} for finding things to do.`,
+    title: { absolute: page.seoTitle },
+    description: page.seoDescription,
+    openGraph: { title: page.seoTitle, description: page.seoDescription },
     ...canonical(`/vs/${slug}`),
   };
 }
@@ -41,6 +44,12 @@ export default async function VsPage({ params }: PageProps<"/vs/[slug]">) {
 
   return (
     <div>
+      <WebPageJsonLd
+        path={`/vs/${slug}`}
+        name={page.seoTitle}
+        description={page.seoDescription}
+        dateModified={OTHER_PAGE_LAST_MODIFIED.vsPages}
+      />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
       <BreadcrumbJsonLd items={[{ name: `${brand.name} vs ${page.competitor}`, path: `/vs/${slug}` }]} />
 

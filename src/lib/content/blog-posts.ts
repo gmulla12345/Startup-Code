@@ -4,12 +4,12 @@ export interface BlogSection {
   heading?: string;
   /**
    * Supports light inline markup: `[label](/path)` renders as a real
-   * internal link (parsed in blog/[slug]/page.tsx) — kept as plain strings
-   * rather than JSX so this stays content-as-data, same pattern as
-   * vs-pages.ts.
+   * internal link and `[label](https://...)` as an external one (parsed in
+   * blog/[slug]/page.tsx) — kept as plain strings rather than JSX so this
+   * stays content-as-data, same pattern as vs-pages.ts.
    */
   paragraphs: string[];
-  /** Optional bullet list rendered after the section's paragraphs. */
+  /** Optional bullet list rendered after the section's paragraphs. Items take the same inline link markup. */
   list?: string[];
   /** Optional comparison table rendered after the section's paragraphs/list. */
   table?: { headers: string[]; rows: string[][] };
@@ -20,13 +20,41 @@ export interface BlogFaqItem {
   a: string;
 }
 
+/**
+ * An independent primary source a post draws on (official documentation, a
+ * published study, the platform's own description of how it works) -- not
+ * another blog summarising one. Every URL here must resolve and must say
+ * what `note` says it does; check both before adding one. Rendered as a
+ * "Sources" list at the end of the post and emitted as the article's
+ * `citation` in its JSON-LD.
+ */
+export interface BlogSource {
+  label: string;
+  url: string;
+  /** One line on what the source says that the post relies on. */
+  note: string;
+}
+
 export interface BlogPost {
   slug: string;
   title: string;
-  /** Used as the meta description and the card/list-page summary. */
+  /**
+   * Shorter title used for <title> and search results when `title` is too
+   * long for them: the layout appends " · Zolo", so the rendered title stays
+   * within 60 characters only if this is 53 or fewer. The page itself still
+   * shows `title` as its H1.
+   */
+  seoTitle?: string;
+  /** Used as the meta description (110-160 characters) and the card/list-page summary. */
   description: string;
   /** ISO date (YYYY-MM-DD). */
   publishedAt: string;
+  /** ISO date of the last substantive edit; `dateModified` and the sitemap's lastmod. Omit if never edited. */
+  updatedAt?: string;
+  /** Slug of an entry in AUTHORS (authors.ts). Unset = credited to the organization. */
+  authorSlug?: string;
+  /** Independent primary sources the post relies on. At least two per post. */
+  sources?: BlogSource[];
   readingMinutes: number;
   /** Rendered near the top of the post and used as its social-share image. */
   heroImage?: { src: string; alt: string };
@@ -49,6 +77,25 @@ export const BLOG_POSTS: BlogPost[] = [
     description:
       "Search engines gave us more options than ever. Social feeds gave us envy. Here's how AI-driven personalization is starting to give us an actual plan instead.",
     publishedAt: "2026-09-05",
+    updatedAt: "2026-10-12",
+    sources: [
+      {
+        label:
+          "Iyengar & Lepper (2000), \"When Choice Is Demotivating: Can One Desire Too Much of a Good Thing?\", Journal of Personality and Social Psychology",
+        url: "https://doi.org/10.1037/0022-3514.79.6.995",
+        note: "Three experiments in which people offered 6 options were more likely to act, and more satisfied, than people offered 24 or 30.",
+      },
+      {
+        label: "Tripadvisor, \"Everything You Need to Know About the Tripadvisor Popularity Ranking\"",
+        url: "https://www.tripadvisor.com/business/insights/resources/tripadvisor-popularity-ranking",
+        note: "Tripadvisor's own description of its popularity ranking: based on the quality, recency, and quantity of reviews, and their consistency over time.",
+      },
+      {
+        label: "Google Business Profile Help, \"Tips to improve your local ranking on Google\"",
+        url: "https://support.google.com/business/answer/7091",
+        note: "Google's description of what local results are based on: relevance, distance, and popularity.",
+      },
+    ],
     readingMinutes: 8,
     heroImage: {
       src: "https://images.unsplash.com/photo-1522199755839-a2bacb67c546?auto=format&fit=crop&w=1600&q=80",
@@ -58,13 +105,13 @@ export const BLOG_POSTS: BlogPost[] = [
       {
         paragraphs: [
           "Twenty years ago, figuring out what to do on a Saturday meant asking a friend, checking a local paper, or just going somewhere you already knew. Today it means opening an app and choosing from thousands of options ranked by strangers you've never met. Somewhere in that shift, \"more information\" quietly turned into \"more exhausting.\"",
-          "That's the paradox at the center of modern discovery: we have more data about things to do than any generation before us, and it's making the decision harder, not easier. AI-driven personalization is the first real attempt to fix that — not by adding another feed to scroll, but by narrowing the world down to what actually fits you.",
+          "That's the paradox at the center of modern discovery: we have more data about things to do than any generation before us, and it's making the decision harder, not easier. Researchers have measured the effect: in [a well-known set of choice-overload experiments](https://doi.org/10.1037/0022-3514.79.6.995), people given 6 options were more likely to act, and more satisfied with what they picked, than people given 24 or 30. AI-driven personalization is the first real attempt to fix that — not by adding another feed to scroll, but by narrowing the world down to what actually fits you.",
         ],
       },
       {
         heading: "From directories, to search, to feeds",
         paragraphs: [
-          "Discovery has moved through a few distinct eras. First came directories — phone books, local guides, word of mouth. Then search engines, which indexed the entire web and let you ask a specific question, but left the ranking and filtering to you. Then review aggregators and social feeds, which added a popularity signal (star ratings, likes) on top of search, but optimized for engagement and consensus rather than fit.",
+          "Discovery has moved through a few distinct eras. First came directories — phone books, local guides, word of mouth. Then search engines, which indexed the entire web and let you ask a specific question, but left the ranking and filtering to you. Then review aggregators and social feeds, which added a popularity signal (star ratings, likes) on top of search, but optimized for engagement and consensus rather than fit. Tripadvisor, for example, says its popularity ranking is [based on the quality, recency, and quantity of reviews](https://www.tripadvisor.com/business/insights/resources/tripadvisor-popularity-ranking), and Google says [local results are mainly based on relevance, distance, and popularity](https://support.google.com/business/answer/7091).",
           "Each step added more raw material. None of them actually answered the question people are asking, which isn't \"what exists near me\" — it's \"what should I, specifically, do.\" See [Tripadvisor vs Google Maps vs Zolo](/blog/tripadvisor-vs-google-maps-vs-zolo) for how those two specific tools fit into this history.",
         ],
       },
@@ -124,9 +171,29 @@ export const BLOG_POSTS: BlogPost[] = [
   {
     slug: "tripadvisor-vs-google-maps-vs-zolo",
     title: "Tripadvisor vs Google Maps vs Zolo: Which Is Best for Finding Things to Do?",
+    seoTitle: "Tripadvisor vs Google Maps vs Zolo: Which to Use",
     description:
       "Three different tools solve three different problems. Here's when each one actually makes sense, and why they're not really competing with each other.",
     publishedAt: "2026-09-12",
+    updatedAt: "2026-10-12",
+    sources: [
+      {
+        label: "Google Business Profile Help, \"Tips to improve your local ranking on Google\"",
+        url: "https://support.google.com/business/answer/7091",
+        note: "Google's description of what local results are based on: relevance, distance, and popularity.",
+      },
+      {
+        label: "Tripadvisor, \"Everything You Need to Know About the Tripadvisor Popularity Ranking\"",
+        url: "https://www.tripadvisor.com/business/insights/resources/tripadvisor-popularity-ranking",
+        note: "Tripadvisor's own description of its popularity ranking: based on the quality, recency, and quantity of reviews, and their consistency over time.",
+      },
+      {
+        label:
+          "Iyengar & Lepper (2000), \"When Choice Is Demotivating: Can One Desire Too Much of a Good Thing?\", Journal of Personality and Social Psychology",
+        url: "https://doi.org/10.1037/0022-3514.79.6.995",
+        note: "Three experiments in which people offered 6 options were more likely to act, and more satisfied, than people offered 24 or 30.",
+      },
+    ],
     readingMinutes: 9,
     heroImage: {
       src: "https://images.unsplash.com/photo-1526779259212-939e64788e3c?auto=format&fit=crop&w=1600&q=80",
@@ -142,20 +209,20 @@ export const BLOG_POSTS: BlogPost[] = [
         heading: "Google Maps: the map of everything",
         paragraphs: [
           "Google Maps' strength is comprehensiveness. It has more places, more reviews, and more real-time data (hours, busy times, live directions) than almost anything else on the internet. If you already know what you're looking for — \"coffee near me,\" \"the address of this restaurant,\" \"is this place open right now\" — nothing beats it.",
-          "Its weakness is the flip side of the same strength: it's a map of literally everything, with no sense of who's looking. Search \"things to do near me\" and you get the same ranked list everyone else gets, sorted mostly by popularity and proximity, with no idea whether you're into quiet museums or loud bars. It answers \"what's there,\" not \"what fits me.\" [See a fuller comparison](/vs/zolo-vs-google-maps).",
+          "Its weakness is the flip side of the same strength: it's a map of literally everything, with no sense of who's looking. Search \"things to do near me\" and you get the same ranked list everyone else gets, sorted mostly by [popularity and proximity](https://support.google.com/business/answer/7091), with no idea whether you're into quiet museums or loud bars. It answers \"what's there,\" not \"what fits me.\" [See a fuller comparison](/vs/zolo-vs-google-maps).",
         ],
       },
       {
         heading: "Tripadvisor: the traveler's consensus",
         paragraphs: [
           "Tripadvisor is built for a specific moment: you're traveling somewhere unfamiliar and want a second opinion from people who've already been there. Its review depth and \"Top 10 things to do in [city]\" lists are genuinely useful for orienting yourself in a new place fast.",
-          "The tradeoff is that it optimizes for consensus, which tends to concentrate attention on the same handful of famous attractions in every city — the ones already crowded with other tourists reading the same list. It's also built around trips, not your regular weekend at home, and like Google Maps, it isn't personalizing to your specific interests or budget — everyone sees roughly the same \"best of\" ranking. [More on how Zolo differs from Tripadvisor specifically](/vs/zolo-vs-tripadvisor).",
+          "The tradeoff is that it optimizes for consensus (its popularity ranking is [based on the quality, recency, and quantity of reviews](https://www.tripadvisor.com/business/insights/resources/tripadvisor-popularity-ranking)), which tends to concentrate attention on the same handful of famous attractions in every city — the ones already crowded with other tourists reading the same list. It's also built around trips, not your regular weekend at home, and like Google Maps, it isn't personalizing to your specific interests or budget — everyone sees roughly the same \"best of\" ranking. [More on how Zolo differs from Tripadvisor specifically](/vs/zolo-vs-tripadvisor).",
         ],
       },
       {
         heading: `Zolo: personalization, not just more listings`,
         paragraphs: [
-          `${brand.name} isn't trying to out-list Google Maps or out-review Tripadvisor — it starts from a different question: given everything that exists nearby, what's actually worth doing for this specific person, right now? It combines your stated interests, budget, and personality with a scoring model and AI reasoning that explains each pick — [more on how that reasoning actually works](/blog/how-ai-is-changing-the-way-we-discover-things-to-do) — so you get a short list instead of an overwhelming one, plus surfacing genuine hidden gems that a pure popularity ranking would bury.`,
+          `${brand.name} isn't trying to out-list Google Maps or out-review Tripadvisor — it starts from a different question: given everything that exists nearby, what's actually worth doing for this specific person, right now? It combines your stated interests, budget, and personality with a scoring model and AI reasoning that explains each pick — [more on how that reasoning actually works](/blog/how-ai-is-changing-the-way-we-discover-things-to-do) — so you get a short list instead of an overwhelming one ([choice-overload research](https://doi.org/10.1037/0022-3514.79.6.995) suggests fewer options make it easier to act), plus surfacing genuine hidden gems that a pure popularity ranking would bury.`,
           "It's also honest about where it can't help: for real-time specifics like exact hours or live availability, or for deep destination research while traveling, Google Maps and Tripadvisor are still the right tool — which is exactly why every recommendation links out to real booking or map data rather than trying to fake it.",
         ],
       },
@@ -208,9 +275,23 @@ export const BLOG_POSTS: BlogPost[] = [
   {
     slug: "fall-date-ideas-cozy-adventurous-budget-friendly",
     title: "Fall Date Ideas: Cozy, Adventurous & Budget-Friendly Picks",
+    seoTitle: "Fall Date Ideas: Cozy, Adventurous & Budget Picks",
     description:
       "Real, doable date ideas for every fall mood — cozy nights in, outdoor adventures, and budget-friendly options that don't feel like a compromise.",
     publishedAt: "2026-09-13",
+    updatedAt: "2026-10-12",
+    sources: [
+      {
+        label: "U.S. Forest Service, \"Fall Colors\"",
+        url: "https://www.fs.usda.gov/visit/fall-colors",
+        note: "The Forest Service's guide to finding fall colors on national forests.",
+      },
+      {
+        label: "USDA Agricultural Marketing Service, \"National Farmers Market Directory\"",
+        url: "https://www.ams.usda.gov/local-food-directories/farmersmarkets",
+        note: "A directory of farmers markets with locations, directions, operating times, product offerings, and accepted forms of payment.",
+      },
+    ],
     readingMinutes: 8,
     heroImage: {
       src: "https://images.unsplash.com/photo-1476820865390-c52aeebb9891?auto=format&fit=crop&w=1600&q=80",
@@ -220,7 +301,7 @@ export const BLOG_POSTS: BlogPost[] = [
       {
         paragraphs: [
           "Fall has a way of making people want to plan something. The weather turns, the light gets softer earlier in the evening, and there's a built-in excuse for warm drinks, layers, and slower plans. But \"let's do something for fall\" often collapses into the same dinner reservation, because coming up with an actual idea — one that fits your budget, your energy level, and the person you're seeing — takes more thought than it should.",
-          "This isn't a list of the ten best pumpkin patches in America. It's a set of real, repeatable date categories organized by mood, so you can pick based on how you actually want the night to feel, then go find the specific version of it near you.",
+          "The ideas below aren't a list of the ten best pumpkin patches in America. The guide is a set of real, repeatable date categories organized by mood, so you can pick based on how you actually want the night to feel, then go find the specific version of that mood near you.",
         ],
       },
       {
@@ -245,7 +326,7 @@ export const BLOG_POSTS: BlogPost[] = [
         ],
         list: [
           "Apple picking or a pumpkin patch — genuinely fun even if you're not the type who'd normally do it.",
-          "A fall hike somewhere with real elevation change or a view — foliage season makes even a familiar trail feel new.",
+          "A fall hike somewhere with real elevation change or a view — foliage season makes even a familiar trail feel new (the U.S. Forest Service has a [guide to finding fall colors on national forests](https://www.fs.usda.gov/visit/fall-colors)).",
           "A corn maze or a local fall festival, if your area has one.",
           "Kayaking or canoeing before it gets too cold — often quieter and cheaper in fall than peak summer.",
           "An escape room — built-in teamwork, built-in stakes, over in an hour.",
@@ -256,13 +337,13 @@ export const BLOG_POSTS: BlogPost[] = [
       {
         heading: "Budget-Friendly",
         paragraphs: [
-          "Budget-friendly doesn't have to mean \"the cheap option\" — it means picking something where the shared experience is the actual point, not the price tag. Some of the best fall dates cost almost nothing.",
+          "Budget-friendly doesn't have to mean \"the cheap option\" — a budget-friendly date means picking something where the shared experience is the actual point, not the price tag. Some of the best fall dates cost almost nothing.",
         ],
         list: [
           "Free museum days — many museums and galleries have a free day or free evening hours once a month; worth checking before you assume admission is required.",
           "A public park walk timed for peak foliage — free, and genuinely one of the best fall activities regardless of budget.",
           "A home-cooked picnic — pack food you already have, find a good spot, total cost close to zero.",
-          "Farmers markets — free to browse, and affordable for a shared snack or two while you walk through.",
+          "Farmers markets — free to browse, and affordable for a shared snack or two while you walk through (the USDA's [National Farmers Market Directory](https://www.ams.usda.gov/local-food-directories/farmersmarkets) lists markets by location).",
           "Free outdoor concerts or fall festivals — a lot of towns run these and they're easy to miss if you're not looking.",
           "A library or community-center event — often free, often underrated as a date idea.",
           "A scenic drive — the only real cost is gas, and fall is the best season for it.",
@@ -272,8 +353,8 @@ export const BLOG_POSTS: BlogPost[] = [
       {
         heading: "The real bottleneck isn't ideas — it's matching one to tonight",
         paragraphs: [
-          `Reading a list like this is the easy part. The harder part is picking the right version of "cozy" or "adventurous" for a specific budget, a specific person, and a specific night — and then actually finding a real place nearby that fits, instead of falling back to the same restaurant again. That's the exact gap ${brand.name} is built to close: tell it your budget, your interests, and what kind of night you're going for, and it turns a mood ("something cozy, under $25, nothing we've already done") into a short list of real, specific places near you — with a reason attached for each one, not just a rating. [See how the matching actually works](/blog/how-ai-is-changing-the-way-we-discover-things-to-do).`,
-          `If you'd rather not choose from a list at all, Surprise Me picks something for you directly — useful on the nights where the real obstacle isn't lack of options, it's decision fatigue. Either way, the categories above are a starting point, not the destination — the point is to land on a mood, then let something else handle turning that mood into an actual plan. [Create a free account](/signup) or [see what's included with Premium](/pricing) if you want unlimited personalized picks all season. If you're weighing this against other tools for finding things to do, see [how Zolo, Google Maps, and Tripadvisor actually differ](/blog/tripadvisor-vs-google-maps-vs-zolo).`,
+          `Reading a list like this is the easy part. The harder part is picking the right version of "cozy" or "adventurous" for a specific budget, a specific person, and a specific night — and then actually finding a real place nearby that fits, instead of falling back to the same restaurant again. That's the exact gap ${brand.name} is built to close: tell ${brand.name} your budget, your interests, and what kind of night you're going for, and ${brand.name} turns a mood ("something cozy, under $25, nothing we've already done") into a short list of real, specific places near you — with a reason attached for each one, not just a rating. [See how the matching actually works](/blog/how-ai-is-changing-the-way-we-discover-things-to-do).`,
+          `If you'd rather not choose from a list at all, Surprise Me picks something for you directly — useful on the nights where the real obstacle isn't lack of options, it's decision fatigue. Either way, the categories above are a starting point, not the destination — the point is to land on a mood, then let ${brand.name} handle turning that mood into an actual plan. [Create a free account](/signup) or [see what's included with Premium](/pricing) if you want unlimited personalized picks all season. If you're weighing this against other tools for finding things to do, see [how Zolo, Google Maps, and Tripadvisor actually differ](/blog/tripadvisor-vs-google-maps-vs-zolo).`,
         ],
       },
     ],
@@ -292,16 +373,35 @@ export const BLOG_POSTS: BlogPost[] = [
       },
       {
         q: "What if we've already done everything on this list?",
-        a: "That's the point where a general list stops being useful and you need something matched to your specific interests and city — which is exactly what a personalized discovery tool like Zolo is for, rather than a longer version of the same generic list.",
+        a: "Once a general list has run out, the next step is something matched to your specific interests and city — which is exactly what a personalized discovery tool like Zolo is for, rather than a longer version of the same generic list.",
       },
     ],
   },
   {
     slug: "things-to-do-this-weekend-near-new-york",
     title: "Things to Do This Weekend Near New York: A No-Planning Guide",
+    seoTitle: "Things to Do This Weekend Near New York",
     description:
-      "Not sure what to do this weekend in New York? Get spontaneous, no-planning weekend ideas — free activities, food spots, and things to do near you, organized by vibe.",
+      "Not sure what to do this weekend in New York? Spontaneous, no-planning ideas — free activities, food spots, and things to do near you, by vibe.",
     publishedAt: "2026-09-19",
+    updatedAt: "2026-10-12",
+    sources: [
+      {
+        label: "NYC DOT, \"Staten Island Ferry\"",
+        url: "https://www.nyc.gov/html/dot/html/ferrybus/staten-island-ferry.shtml",
+        note: "NYC DOT operates the Staten Island Ferry as a free service between Staten Island and Lower Manhattan, every day of the week, year-round.",
+      },
+      {
+        label: "The High Line, \"Plan Your Visit\"",
+        url: "https://www.thehighline.org/visit/",
+        note: "The High Line's own visitor information, including its seasonal hours and its commitment to keeping the public space free.",
+      },
+      {
+        label: "NYC Parks, \"Free and Low-cost Events\"",
+        url: "https://www.nycgovparks.org/events",
+        note: "NYC Parks' official, searchable listing of free and low-cost events in parks across the city.",
+      },
+    ],
     readingMinutes: 7,
     heroImage: {
       src: "https://images.unsplash.com/photo-1673296633888-6fa24514d256?auto=format&fit=crop&w=1600&q=80",
@@ -327,7 +427,7 @@ export const BLOG_POSTS: BlogPost[] = [
         heading: "Active & Outdoorsy Ideas",
         paragraphs: ["If you want a weekend activity that gets you moving:"],
         list: [
-          "Walk the High Line — start to finish, it's one of the most reliable free things to do in NYC any time of year.",
+          "Walk the High Line — start to finish, it's one of the most reliable free things to do in NYC any time of year (the [High Line's own visitor page](https://www.thehighline.org/visit/) covers hours and describes keeping the public space free for everyone).",
           "Bike the Hudson River Greenway — rent a Citi Bike and ride from Battery Park up to the GWB, or as far as you feel like going.",
           "Kayaking on the Hudson — free public kayaking is available seasonally at a few Manhattan and Brooklyn boathouses.",
           "Explore a new park entirely — Prospect Park, Governors Island, or Van Cortlandt Park all feel like a day trip without leaving city limits.",
@@ -356,9 +456,9 @@ export const BLOG_POSTS: BlogPost[] = [
         heading: "Free & Budget-Friendly Options",
         paragraphs: ["A weekend in New York doesn't have to cost anything:"],
         list: [
-          "Staten Island Ferry — free, and one of the best skyline views in the city.",
+          "Staten Island Ferry — free, and one of the best skyline views in the city (NYC DOT [runs it as a free service](https://www.nyc.gov/html/dot/html/ferrybus/staten-island-ferry.shtml) every day of the week, year-round).",
           "Free museum days and pay-what-you-wish hours.",
-          "Central Park or Prospect Park — always free, always different depending on the season.",
+          "Central Park or Prospect Park — always free, always different depending on the season (NYC Parks also lists [free and low-cost events](https://www.nycgovparks.org/events) across the city's parks).",
           "Public art installations and open studios, which rotate throughout the city.",
         ],
       },

@@ -42,9 +42,10 @@ export async function DestinationsSection() {
                 <Image
                   src={cardImage(dest.coverImage)}
                   alt={`${dest.city}, ${dest.country}`}
-                  fill
+                  width={480}
+                  height={480}
                   sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 220px"
-                  className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
                 <div className="absolute inset-x-0 bottom-0 p-3">

@@ -18,6 +18,24 @@ export function canonical(path: string): { alternates: { canonical: string } } {
 }
 
 /**
+ * Stable identity for the business, shared by every JSON-LD block that needs
+ * to point at it (the site-wide Organization node, each page's `publisher`,
+ * an article's `author` when no individual author is configured). The name
+ * is "Discover Zolo", not "Zolo" -- see site-jsonld.tsx for why.
+ */
+export const ORGANIZATION_ID = `${brand.domain}/#organization`;
+export const ORGANIZATION_NAME = "Discover Zolo";
+
+export function organizationRef() {
+  return {
+    "@type": "Organization" as const,
+    "@id": ORGANIZATION_ID,
+    name: ORGANIZATION_NAME,
+    url: brand.domain,
+  };
+}
+
+/**
  * For pages that should never be indexed (thin/duplicate content, or
  * private authenticated screens) but are still fine for Google to crawl and
  * follow links through — prefer this over a robots.txt Disallow, which

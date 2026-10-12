@@ -5,12 +5,14 @@ import { Button } from "@/components/ui/button";
 import { FaqAccordion, type FaqSection } from "@/components/marketing/faq-accordion";
 import { brand } from "@/lib/config/brand";
 import { PRICING_FAQ_ITEMS } from "@/lib/content/pricing-faq";
+import { PAGE_SEO } from "@/lib/content/page-seo";
 import { canonical, safeJsonLd } from "@/lib/seo";
 import { BreadcrumbJsonLd } from "@/components/shared/breadcrumb-jsonld";
+import { WebPageJsonLd } from "@/components/shared/webpage-jsonld";
 
-const DESCRIPTION = "Answers to common questions about Zolo's personalized discovery, pricing, privacy, and travel features.";
-
-const TITLE = "Zolo FAQ — How Personalized Discovery, Pricing, and Travel Mode Work";
+const SEO = PAGE_SEO.faq;
+const TITLE = SEO.title;
+const DESCRIPTION = SEO.description;
 
 export const metadata: Metadata = {
   title: { absolute: TITLE },
@@ -26,7 +28,7 @@ export const metadata: Metadata = {
     images: [{ url: "/og-image.png", width: 1200, height: 630, alt: TITLE }],
   },
   twitter: { card: "summary_large_image", title: TITLE, description: DESCRIPTION, images: ["/og-image.png"] },
-  ...canonical("/faq"),
+  ...canonical(SEO.path),
 };
 
 export default function FaqPage() {
@@ -152,6 +154,7 @@ export default function FaqPage() {
 
   return (
     <div>
+      <WebPageJsonLd path={SEO.path} name={TITLE} description={DESCRIPTION} dateModified={SEO.lastModified} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(faqJsonLd) }} />
       <BreadcrumbJsonLd items={[{ name: "FAQ", path: "/faq" }]} />
       <section>

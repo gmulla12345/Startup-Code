@@ -11,6 +11,7 @@
     "test": "vitest run",
     "migrate": "tsx scripts/migrate.ts",
     "seed": "tsx scripts/seed-supabase.ts",
+    "indexnow": "tsx scripts/indexnow.ts",
     "postinstall": "node scripts/copy-maplibre-worker.mjs"
   },
   "dependencies": {

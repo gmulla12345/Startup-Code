@@ -47,10 +47,11 @@ export function Hero() {
         <Image
           src={HERO_IMAGE}
           alt=""
-          fill
+          width={967}
+          height={1200}
           priority
           sizes="100vw"
-          className="object-cover object-[62%_28%] sm:object-[58%_32%]"
+          className="absolute inset-0 h-full w-full object-cover object-[62%_28%] sm:object-[58%_32%]"
         />
       </motion.div>
 

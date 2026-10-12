@@ -4,15 +4,18 @@ import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PricingCards } from "@/components/marketing/pricing-cards";
 import { ComparisonCellValue, type ComparisonCell } from "@/components/marketing/comparison-cell";
-import { brand } from "@/lib/config/brand";
 import { PRICING_FAQ_ITEMS } from "@/lib/content/pricing-faq";
+import { PAGE_SEO } from "@/lib/content/page-seo";
 import { canonical, safeJsonLd } from "@/lib/seo";
 import { BreadcrumbJsonLd } from "@/components/shared/breadcrumb-jsonld";
+import { WebPageJsonLd } from "@/components/shared/webpage-jsonld";
+
+const SEO = PAGE_SEO.pricing;
 
 export const metadata: Metadata = {
-  title: "Pricing — Free & Premium Plans",
-  description: `See ${brand.name} pricing for personalized discovery, AI trip planning, and things to do near you. Free plan available. Premium from $19.99/month or $190/year — cancel anytime.`,
-  ...canonical("/pricing"),
+  title: { absolute: SEO.title },
+  description: SEO.description,
+  ...canonical(SEO.path),
 };
 
 const COMPARISON_ROWS: { feature: string; free: ComparisonCell; premium: ComparisonCell }[] = [
@@ -47,6 +50,7 @@ const PRICING_FAQ_JSON_LD = {
 export default function PricingPage() {
   return (
     <div>
+      <WebPageJsonLd path={SEO.path} name={SEO.title} description={SEO.description} dateModified={SEO.lastModified} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(PRICING_FAQ_JSON_LD) }} />
       <BreadcrumbJsonLd items={[{ name: "Pricing", path: "/pricing" }]} />
 

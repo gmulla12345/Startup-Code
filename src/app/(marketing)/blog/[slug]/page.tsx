@@ -6,11 +6,11 @@ import { notFound } from "next/navigation";
 import { format } from "date-fns";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { safeJsonLd } from "@/lib/seo";
+import { canonical, organizationRef, safeJsonLd } from "@/lib/seo";
 import { brand } from "@/lib/config/brand";
-import { canonical } from "@/lib/seo";
 import { BreadcrumbJsonLd } from "@/components/shared/breadcrumb-jsonld";
 import { BLOG_POSTS, getBlogPost } from "@/lib/content/blog-posts";
+import { articleAuthorJsonLd, getAuthor } from "@/lib/content/authors";
 
 export function generateStaticParams() {
   return BLOG_POSTS.map((p) => ({ slug: p.slug }));
@@ -21,23 +21,26 @@ export async function generateMetadata({ params }: PageProps<"/blog/[slug]">): P
   const post = getBlogPost(slug);
   if (!post) return { title: "Post not found" };
   return {
-    title: post.title,
+    // `seoTitle` keeps the rendered title (with the layout's " · Zolo"
+    // suffix) within 60 characters; the page's own H1 still uses `title`.
+    title: post.seoTitle ?? post.title,
     description: post.description,
     openGraph: {
       title: post.title,
       description: post.description,
       type: "article",
       publishedTime: post.publishedAt,
+      ...(post.updatedAt ? { modifiedTime: post.updatedAt } : {}),
       images: [post.heroImage?.src ?? "/og-image.png"],
     },
     ...canonical(`/blog/${slug}`),
   };
 }
 
-// Light inline markup: `[label](/path)` becomes a real internal link.
-// Content stays plain strings in blog-posts.ts (content-as-data) rather
-// than storing JSX there.
-const LINK_PATTERN = /\[([^\]]+)\]\((\/[^)]+)\)/g;
+// Light inline markup: `[label](/path)` becomes a real internal link and
+// `[label](https://...)` an external one (a cited source). Content stays plain
+// strings in blog-posts.ts (content-as-data) rather than storing JSX there.
+const LINK_PATTERN = /\[([^\]]+)\]\(((?:\/|https?:\/\/)[^)\s]+)\)/g;
 
 function renderWithLinks(text: string): ReactNode[] {
   const nodes: ReactNode[] = [];
@@ -47,10 +50,17 @@ function renderWithLinks(text: string): ReactNode[] {
   LINK_PATTERN.lastIndex = 0;
   while ((match = LINK_PATTERN.exec(text)) !== null) {
     if (match.index > lastIndex) nodes.push(text.slice(lastIndex, match.index));
+    const href = match[2];
     nodes.push(
-      <Link key={key++} href={match[2]} className="text-ember hover:underline">
-        {match[1]}
-      </Link>
+      href.startsWith("/") ? (
+        <Link key={key++} href={href} className="text-ember hover:underline">
+          {match[1]}
+        </Link>
+      ) : (
+        <a key={key++} href={href} rel="noopener noreferrer" target="_blank" className="text-ember hover:underline">
+          {match[1]}
+        </a>
+      )
     );
     lastIndex = match.index + match[0].length;
   }
@@ -63,17 +73,26 @@ export default async function BlogPostPage({ params }: PageProps<"/blog/[slug]">
   const post = getBlogPost(slug);
   if (!post) notFound();
 
+  const author = getAuthor(post.authorSlug);
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
     headline: post.title,
     description: post.description,
     datePublished: post.publishedAt,
-    dateModified: post.publishedAt,
+    // The post's real last-edit date, not a copy of the publish date -- the
+    // sitemap's lastmod reads the same field.
+    dateModified: post.updatedAt ?? post.publishedAt,
     ...(post.heroImage ? { image: post.heroImage.src } : {}),
-    author: { "@type": "Organization", name: brand.name },
-    publisher: { "@type": "Organization", name: brand.name, logo: { "@type": "ImageObject", url: `${brand.domain}/icon.png` } },
+    // A named Person (with an on-site author page and sameAs profiles) once
+    // one is configured in authors.ts; the organization until then.
+    author: articleAuthorJsonLd(post.authorSlug),
+    publisher: { ...organizationRef(), logo: { "@type": "ImageObject", url: `${brand.domain}/icon.png` } },
     mainEntityOfPage: `${brand.domain}/blog/${slug}`,
+    ...(post.sources && post.sources.length > 0
+      ? { citation: post.sources.map((s) => ({ "@type": "CreativeWork", name: s.label, url: s.url })) }
+      : {}),
   };
 
   const faqJsonLd = post.faq
@@ -95,13 +114,29 @@ export default async function BlogPostPage({ params }: PageProps<"/blog/[slug]">
       <BreadcrumbJsonLd items={[{ name: "Blog", path: "/blog" }, { name: post.title, path: `/blog/${slug}` }]} />
 
       <p className="text-xs text-foreground-subtle mb-3">
+        {author && (
+          <>
+            <Link href={`/author/${author.slug}`} className="text-ember hover:underline">
+              By {author.name}
+            </Link>{" "}
+            ·{" "}
+          </>
+        )}
         {format(new Date(`${post.publishedAt}T12:00:00`), "MMMM d, yyyy")} · {post.readingMinutes} min read
+        {post.updatedAt && <> · Updated {format(new Date(`${post.updatedAt}T12:00:00`), "MMMM d, yyyy")}</>}
       </p>
       <h1 className="font-display text-3xl sm:text-4xl font-semibold text-foreground leading-tight mb-6">{post.title}</h1>
 
       {post.heroImage && (
         <div className="relative aspect-[16/9] w-full rounded-[var(--radius-lg)] overflow-hidden mb-8">
-          <Image src={post.heroImage.src} alt={post.heroImage.alt} fill priority className="object-cover" />
+          <Image
+            src={post.heroImage.src}
+            alt={post.heroImage.alt}
+            width={1600}
+            height={900}
+            priority
+            className="absolute inset-0 h-full w-full object-cover"
+          />
         </div>
       )}
 
@@ -119,7 +154,7 @@ export default async function BlogPostPage({ params }: PageProps<"/blog/[slug]">
             {section.list && (
               <ul className="list-disc list-outside pl-5 space-y-2">
                 {section.list.map((item, k) => (
-                  <li key={k}>{item}</li>
+                  <li key={k}>{renderWithLinks(item)}</li>
                 ))}
               </ul>
             )}
@@ -155,6 +190,24 @@ export default async function BlogPostPage({ params }: PageProps<"/blog/[slug]">
           </div>
         ))}
       </div>
+
+      {post.sources && post.sources.length > 0 && (
+        <section className="mt-12 pt-8 border-t border-border" aria-labelledby="sources-heading">
+          <h2 id="sources-heading" className="font-display text-xl font-semibold text-foreground mb-4">
+            Sources
+          </h2>
+          <ol className="list-decimal list-outside pl-5 space-y-3 text-sm text-foreground-muted leading-relaxed">
+            {post.sources.map((source) => (
+              <li key={source.url}>
+                <a href={source.url} rel="noopener noreferrer" target="_blank" className="text-ember hover:underline">
+                  {source.label}
+                </a>
+                <span> — {source.note}</span>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
 
       {post.faq && (
         <div className="mt-12 pt-8 border-t border-border">

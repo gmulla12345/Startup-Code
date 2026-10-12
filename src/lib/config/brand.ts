@@ -15,6 +15,19 @@ export const brand = {
     twitter: "@zoloapp",
     instagram: "@zolo",
   },
+  /**
+   * Full profile URLs for accounts this business actually owns (LinkedIn
+   * company page, X, Instagram, YouTube, GitHub org, Crunchbase, ...). Fed
+   * straight into the Organization JSON-LD's `sameAs` (see
+   * site-jsonld.tsx), which is how search engines and AI assistants learn
+   * that those profiles and this site are the same entity.
+   *
+   * Empty on purpose: `social` above is NOT a source for this -- neither
+   * @zoloapp nor @zolo belongs to this business (checked 2026-09-01), and
+   * listing someone else's account here would assert a false identity. Add a
+   * URL only once the account exists and this business controls it.
+   */
+  sameAs: [] as readonly string[],
   supportEmail: "team@discoverzolo.com",
 } as const;
 

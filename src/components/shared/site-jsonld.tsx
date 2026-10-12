@@ -1,5 +1,5 @@
 import { brand } from "@/lib/config/brand";
-import { safeJsonLd } from "@/lib/seo";
+import { ORGANIZATION_ID, ORGANIZATION_NAME, safeJsonLd } from "@/lib/seo";
 
 /**
  * Organization structured data, present on every page (mounted in the root
@@ -11,8 +11,10 @@ import { safeJsonLd } from "@/lib/seo";
  * of them. Still no `sameAs` social links — the handles in brand.ts
  * (@zoloapp on X, @zolo on Instagram) were checked and belong to unrelated
  * third parties (a dormant account from 2013 and someone's private personal
- * account, respectively), not this business. Add real ones here once this
- * business actually claims its own accounts.
+ * account, respectively), not this business. `sameAs` is therefore driven by
+ * `brand.sameAs`, which is empty until this business actually claims its own
+ * accounts -- add the real profile URLs there and they appear here
+ * automatically (the heycatch SEO audit's `a_sameas` check wants 3+).
  *
  * SoftwareApplication schema moved out of here (2026-09-16, see
  * software-application-jsonld.tsx) — it used to be mounted site-wide, which
@@ -24,11 +26,13 @@ export function SiteJsonLd() {
   const organization = {
     "@context": "https://schema.org",
     "@type": "Organization",
-    name: "Discover Zolo",
+    "@id": ORGANIZATION_ID,
+    name: ORGANIZATION_NAME,
     alternateName: brand.name,
     url: brand.domain,
     logo: `${brand.domain}/icon.png`,
     description: brand.description,
+    ...(brand.sameAs.length > 0 ? { sameAs: [...brand.sameAs] } : {}),
   };
 
   return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(organization) }} />;

@@ -4,13 +4,17 @@ import Image from "next/image";
 import { format } from "date-fns";
 import { brand } from "@/lib/config/brand";
 import { canonical } from "@/lib/seo";
+import { PAGE_SEO } from "@/lib/content/page-seo";
 import { BreadcrumbJsonLd } from "@/components/shared/breadcrumb-jsonld";
+import { WebPageJsonLd } from "@/components/shared/webpage-jsonld";
 import { BLOG_POSTS } from "@/lib/content/blog-posts";
 
+const SEO = PAGE_SEO.blog;
+
 export const metadata: Metadata = {
-  title: "Blog",
-  description: `Guides, comparisons, and ideas on personalized discovery, travel, and finding things to do — from the team behind ${brand.name}.`,
-  ...canonical("/blog"),
+  title: { absolute: SEO.title },
+  description: SEO.description,
+  ...canonical(SEO.path),
 };
 
 export default function BlogIndexPage() {
@@ -18,6 +22,24 @@ export default function BlogIndexPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 sm:px-6 py-16">
+      <WebPageJsonLd
+        type="CollectionPage"
+        path={SEO.path}
+        name={SEO.title}
+        description={SEO.description}
+        dateModified={SEO.lastModified}
+        mainEntity={{
+          "@type": "Blog",
+          name: `${brand.name} Blog`,
+          url: `${brand.domain}${SEO.path}`,
+          blogPost: posts.map((post) => ({
+            "@type": "BlogPosting",
+            headline: post.title,
+            url: `${brand.domain}/blog/${post.slug}`,
+            datePublished: post.publishedAt,
+          })),
+        }}
+      />
       <BreadcrumbJsonLd items={[{ name: "Blog", path: "/blog" }]} />
       <p className="text-sm font-medium text-ember mb-3">From the team</p>
       <h1 className="font-display text-4xl sm:text-5xl font-semibold text-foreground mb-4">{brand.name} Blog</h1>
@@ -35,7 +57,13 @@ export default function BlogIndexPage() {
           >
             {post.heroImage && (
               <div className="relative hidden sm:block w-32 h-24 shrink-0 rounded-[var(--radius-md)] overflow-hidden">
-                <Image src={post.heroImage.src} alt={post.heroImage.alt} fill className="object-cover" />
+                <Image
+                  src={post.heroImage.src}
+                  alt={post.heroImage.alt}
+                  width={256}
+                  height={192}
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
               </div>
             )}
             <div>

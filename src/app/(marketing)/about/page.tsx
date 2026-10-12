@@ -5,30 +5,38 @@ import { ArrowRight, Compass, Sparkles, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { brand } from "@/lib/config/brand";
 import { canonical } from "@/lib/seo";
+import { PAGE_SEO } from "@/lib/content/page-seo";
 import { BreadcrumbJsonLd } from "@/components/shared/breadcrumb-jsonld";
+import { WebPageJsonLd } from "@/components/shared/webpage-jsonld";
 
-const DESCRIPTION = "Why Zolo exists: fixing decision fatigue with personalized, reasoned experience recommendations.";
-const TITLE = "Why Zolo Exists — Fixing Decision Fatigue with Personalized Discovery";
+const SEO = PAGE_SEO.about;
 
 export const metadata: Metadata = {
-  title: { absolute: TITLE },
-  description: DESCRIPTION,
+  title: { absolute: SEO.title },
+  description: SEO.description,
   // A page-level `openGraph` replaces the root layout's whole openGraph
   // object rather than merging into it, so the previous version (title +
   // description only) had no og:image -- same bug the heycatch audit (D5.5)
   // flagged for /faq. Re-spreading the site default image here too.
   openGraph: {
-    title: TITLE,
-    description: DESCRIPTION,
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: TITLE }],
+    title: SEO.title,
+    description: SEO.description,
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: SEO.title }],
   },
-  twitter: { card: "summary_large_image", title: TITLE, description: DESCRIPTION, images: ["/og-image.png"] },
-  ...canonical("/about"),
+  twitter: { card: "summary_large_image", title: SEO.title, description: SEO.description, images: ["/og-image.png"] },
+  ...canonical(SEO.path),
 };
 
 export default function AboutPage() {
   return (
     <div>
+      <WebPageJsonLd
+        type="AboutPage"
+        path={SEO.path}
+        name={SEO.title}
+        description={SEO.description}
+        dateModified={SEO.lastModified}
+      />
       <BreadcrumbJsonLd items={[{ name: "About", path: "/about" }]} />
       <section>
         <div className="mx-auto max-w-4xl px-4 sm:px-6 pt-20 pb-16 text-center">
@@ -111,8 +119,9 @@ export default function AboutPage() {
             <Image
               src="https://images.unsplash.com/photo-1527631746610-bca00a040d60?auto=format&fit=crop&w=1600&h=680&q=80"
               alt="People exploring outdoors together"
-              fill
-              className="object-cover"
+              width={1600}
+              height={680}
+              className="absolute inset-0 h-full w-full object-cover"
             />
             <div className="absolute inset-0 bg-black/30 flex items-center justify-center text-center px-6">
               <div>
