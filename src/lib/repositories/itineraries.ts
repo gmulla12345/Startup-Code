@@ -3,6 +3,8 @@ import { randomUUID } from "crypto";
 import type { Itinerary, ItineraryItem } from "@/types/database";
 import type { TripPlan, WeekendPlan } from "@/types/ai";
 import { getExperienceProvider } from "@/services/providers";
+import { legacyPhotoToProxy } from "@/lib/google/photo-url";
+import { brand } from "@/lib/config/brand";
 
 function rowToItinerary(row: Record<string, unknown>): Itinerary {
   return {
@@ -35,7 +37,11 @@ function rowToItem(row: Record<string, unknown>): ItineraryItem {
     notes: row.notes as string | null,
     estimatedCost: row.estimated_cost != null ? Number(row.estimated_cost) : null,
     orderIndex: row.order_index as number,
-    images: (row.images as string[]) ?? [],
+    // Rows saved before the photo proxy existed hold raw Google photo URLs
+    // with the API key in the query string. Rewrite on read so the key never
+    // reaches a client again (and old trips keep working once it's rotated);
+    // an unparseable one is dropped rather than returned.
+    images: ((row.images as string[]) ?? []).map((url) => legacyPhotoToProxy(url, brand.domain)).filter(Boolean),
   };
 }
 

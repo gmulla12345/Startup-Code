@@ -1853,6 +1853,64 @@ have no useful file mtimes.
 - **`a_sameas` (2 pts)** — needs 3+ profiles the business actually owns. `brand.sameAs` is empty and feeds
   the Organization JSON-LD; `brand.social`'s handles are still NOT this business's (see site-jsonld.tsx).
 
+## Google Maps cost controls (2026-10-12) — read before touching Places code
+
+Context: the Google Cloud billing account went on hold with ~$300 owed and almost no real users, which
+turned off every live Google feature (REQUEST_DENIED → empty discovery rails). Code-side causes found and
+closed in this pass; the Cloud Console half (below) can only be done by the user.
+
+**What was wrong:**
+- **The API key was in client-visible URLs.** `photoUrl()` built `maps.googleapis.com/…/photo?…&key=<MAPS_API_KEY>`
+  and every image tag, API response (so the mobile app too), and saved itinerary (`itinerary_items.images`)
+  carried it. Treat the old key as compromised — it must be **rotated** (user task, see below).
+- **`/api/experiences` and `/api/experiences/[id]` were public with no rate limit or input validation.**
+  Each distinct lat/lng/search = 7 billed Nearby Search calls; a bad `category` sent a literal `type=undefined`;
+  a missing Google id was looked up twice (`getBySlug` then `getById`, same Details call).
+- **Upstream cache keys were never shared.** Exact user coordinates + per-user radius in the URL meant no two
+  users hit the same cache entry. The fixed-city pages (home New York strip, 10 Travel Mode guides) re-fetched
+  hourly — ~77 Nearby Search calls/hour for as long as any crawler kept the ISR pages warm.
+
+**What changed:**
+- [`/api/place-photo`](src/app/api/place-photo/route.ts) is the only way photos reach a client. Keyless URLs via
+  [photo-url.ts](src/lib/google/photo-url.ts) (absolute `brand.domain` URLs — the mobile app renders them as-is).
+  The route validates the reference, rounds width to 100px steps (≤1600), rate-limits per IP, calls Google with
+  `redirect: "manual"`, and passes Google's `lh3.googleusercontent.com` Location back with CDN cache headers
+  (only the `maps.googleapis.com` hop is billed). Redirect host is allow-listed; failures are cached 5 min so an
+  outage isn't retried per image view.
+- `rowToItem` in [itineraries.ts](src/lib/repositories/itineraries.ts) rewrites legacy key-bearing URLs to the
+  proxy form on read (old trips keep working after rotation; no DB migration needed).
+- `GooglePlacesExperienceProvider`: coordinates bucketed to 2 decimals, radius rounded up to the next 5 km
+  (neighbours share an entry); invalid coordinates / a category with no Places type return `[]` with **no**
+  Google call; keyword capped at 80 chars; `ExperienceQuery.cacheSeconds` (default 1 h) — home and Travel pass
+  24 h, and a list cached >1 h drops `opening_hours` so it never claims "open now" for a stale response.
+- Both `/api/experiences` routes: per-IP limit (90/min list, 120/min detail), category validated against
+  `CATEGORY_LABELS`, lat/lng/radius/limit clamped, search/city length capped.
+- Tests: [google-cost-guards.test.ts](src/__tests__/google-cost-guards.test.ts) (27) pin all of the above,
+  including "no experience ever contains the API key".
+
+**Deliberately NOT done — Google's terms.** The tempting fix ("cache Places results in Supabase for 7–30
+days") is not allowed: Google's Places policies bar storing/caching Places content except `place_id`
+(indefinite) and lat/lng (≤30 days, Service Specific Terms §5.4). Names, ratings, hours, and photos can't be
+persisted; doing it risks suspension of the key, which is worse than the bill. The comment atop
+google-places-experience-provider.ts ("not stored in our database") is load-bearing. Note itinerary items
+already persist photo URLs — a pre-existing gray area, flagged, not widened. Compliant levers instead: longer
+*transient* cache for fixed pages (done), fewer calls (below), and growing our own curated catalog (content we
+own/seed — `SupabaseExperienceProvider`) in the top cities.
+
+**Known limits:** `checkRateLimit` is in-memory per serverless instance — a soft cap, not a hard one; a hard
+cap needs Upstash/Vercel KV with the same call signature. Field masks: legacy Place Details already passes
+`fields=`; legacy Nearby Search has no field mask at all, and the fields we need (rating, review count) are in
+the priciest tier regardless, so migrating to Places API (New) would save little. Not yet done (user decisions):
+the 7-type `DIVERSITY_TYPES` fan-out (biggest remaining multiplier), free-tier daily limits on Google-hitting
+surfaces, per-user cost metering.
+
+**User-side (Cloud Console — cannot be done from here):** (1) Billing → Reports, group by SKU and by day, to see
+which SKU/day spiked; (2) **create a new API key**, restrict it to *Places API* + *Geocoding API* only, put it
+in Vercel `MAPS_API_KEY` and redeploy, then **delete the old key** (it has been public in HTML); (3) daily
+quota caps per API + a budget alert; (4) billing support request for a one-time adjustment; (5) pay the
+balance so the hold lifts. Server-to-Google calls come from Vercel with no fixed IP and no referrer, so the
+key can be API-restricted but not referrer/IP-restricted — which is exactly why it must never reach a browser.
+
 ## Exact next steps (priority order)
 
 **Done since the last update:** deployed to production at `discoverzolo.com` (fixed a Vercel

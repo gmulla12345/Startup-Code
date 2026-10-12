@@ -1,6 +1,8 @@
 import type { Experience, ExperienceCategory, BudgetLevel, InterestTag } from "@/types/database";
 import type { ExperienceProvider, ExperienceQuery } from "./types";
 import { titleCase } from "@/lib/utils/format";
+import { photoProxyUrl } from "@/lib/google/photo-url";
+import { brand } from "@/lib/config/brand";
 
 /**
  * Live, worldwide experience data sourced directly from Google Places —
@@ -384,8 +386,42 @@ function inferIndoorOutdoor(types: string[] | undefined): "indoor" | "outdoor" |
   return "either";
 }
 
-function photoUrl(photoReference: string, apiKey: string, maxWidth = 1200): string {
-  return `https://maps.googleapis.com/maps/api/place/photo?maxwidth=${maxWidth}&photo_reference=${photoReference}&key=${apiKey}`;
+// Absolute (not relative) because these URLs also reach the mobile app, which
+// renders them as-is. Always goes through /api/place-photo so the API key is
+// never part of a URL we hand out -- see lib/google/photo-url.ts.
+function photoUrl(photoReference: string, maxWidth = 1200): string {
+  return photoProxyUrl(photoReference, maxWidth, brand.domain);
+}
+
+// Default upstream reuse window for Nearby Search / Details. Open-now data is
+// only trustworthy at about this age, so anything longer-lived must drop it
+// (see list()).
+const DEFAULT_CACHE_SECONDS = 60 * 60;
+
+// Every user used to send their exact coordinates (6+ decimals) and their own
+// preference-derived radius, so no two users ever shared an upstream cache
+// entry and each one paid for 7 fresh Nearby Search calls. Two decimals is
+// ~1.1km: far below the 6km+ search radius, so results are effectively the
+// same, but neighbours now share a cache entry. The radius rounds UP to the
+// next 5km for the same reason (never smaller than asked for).
+function bucketCoordinate(value: number): string {
+  return value.toFixed(2);
+}
+
+function bucketRadiusMeters(radiusMiles: number | undefined): number {
+  const meters = Math.min((radiusMiles ?? 15) * 1609, 50000);
+  return Math.min(50000, Math.ceil(meters / 5000) * 5000);
+}
+
+function isValidCoordinate(latitude: number | undefined, longitude: number | undefined): boolean {
+  return (
+    latitude != null &&
+    longitude != null &&
+    Number.isFinite(latitude) &&
+    Number.isFinite(longitude) &&
+    Math.abs(latitude) <= 90 &&
+    Math.abs(longitude) <= 180
+  );
 }
 
 export class GooglePlacesExperienceProvider implements ExperienceProvider {
@@ -398,7 +434,7 @@ export class GooglePlacesExperienceProvider implements ExperienceProvider {
     const category = inferCategory(place.name, place.types, place.rating, place.user_ratings_total);
     const images = (place.photos ?? [])
       .slice(0, 5)
-      .map((p) => photoUrl(p.photo_reference, this.apiKey));
+      .map((p) => photoUrl(p.photo_reference));
 
     // Nearby Search (list results) only returns `vicinity` ("<landmark>,
     // <city>" — no country), so the comma-split heuristic below is the only
@@ -477,14 +513,14 @@ export class GooglePlacesExperienceProvider implements ExperienceProvider {
 
   private async fetchNearby(type: string, query: ExperienceQuery): Promise<GooglePlace[]> {
     const url = new URL("https://maps.googleapis.com/maps/api/place/nearbysearch/json");
-    url.searchParams.set("location", `${query.latitude},${query.longitude}`);
-    url.searchParams.set("radius", String(Math.min((query.radiusMiles ?? 15) * 1609, 50000)));
+    url.searchParams.set("location", `${bucketCoordinate(query.latitude!)},${bucketCoordinate(query.longitude!)}`);
+    url.searchParams.set("radius", String(bucketRadiusMeters(query.radiusMiles)));
     url.searchParams.set("type", type);
-    if (query.search) url.searchParams.set("keyword", query.search);
+    if (query.search) url.searchParams.set("keyword", query.search.slice(0, 80));
     url.searchParams.set("key", this.apiKey);
 
     try {
-      const res = await fetch(url.toString(), { next: { revalidate: 60 * 60 } });
+      const res = await fetch(url.toString(), { next: { revalidate: query.cacheSeconds ?? DEFAULT_CACHE_SECONDS } });
       if (!res.ok) return [];
       const data = (await res.json()) as { status: string; results: GooglePlace[] };
       if (data.status !== "OK" && data.status !== "ZERO_RESULTS") {
@@ -499,12 +535,27 @@ export class GooglePlacesExperienceProvider implements ExperienceProvider {
   }
 
   async list(query: ExperienceQuery): Promise<Experience[]> {
-    if (query.latitude == null || query.longitude == null) return [];
+    // Defence in depth: every Google call below is billed, so garbage input
+    // (out-of-range coordinates, a category that has no Places type) must be
+    // turned away here rather than trusted to every caller's validation.
+    if (!isValidCoordinate(query.latitude, query.longitude)) return [];
 
     const types = query.category
-      ? (CATEGORY_SEARCH_TYPES[query.category] ?? [CATEGORY_TO_PLACE_TYPE[query.category]])
+      ? (CATEGORY_SEARCH_TYPES[query.category] ??
+          (CATEGORY_TO_PLACE_TYPE[query.category] ? [CATEGORY_TO_PLACE_TYPE[query.category]] : null))
       : DIVERSITY_TYPES;
+    if (!types) return [];
     const resultsByType = await Promise.all(types.map((type) => this.fetchNearby(type, query)));
+
+    // "Open now" in a cached Nearby Search response is only true as of when it
+    // was fetched. Past the default one-hour window it would show a place as
+    // open long after it closed, so longer-cached lists simply don't claim it.
+    const dropOpenNow = (query.cacheSeconds ?? DEFAULT_CACHE_SECONDS) > DEFAULT_CACHE_SECONDS;
+    if (dropOpenNow) {
+      for (const places of resultsByType) {
+        for (let i = 0; i < places.length; i++) places[i] = { ...places[i], opening_hours: undefined };
+      }
+    }
 
     const seenPlaceIds = new Set<string>();
     const merged: GooglePlace[] = [];

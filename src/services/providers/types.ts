@@ -22,6 +22,14 @@ export interface ExperienceQuery {
   search?: string;
   excludeIds?: string[];
   limit?: number;
+  /**
+   * How long upstream Google results may be reused before refetching
+   * (default one hour). Fixed-location pages -- the homepage's New York
+   * strip, the Travel Mode destination guides -- show the same city's places
+   * to everyone, so they pass a day instead of paying for the same lookup
+   * every hour. A list cached longer than an hour never claims "open now".
+   */
+  cacheSeconds?: number;
 }
 
 export interface ExperienceProvider {

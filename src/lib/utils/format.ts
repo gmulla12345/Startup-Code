@@ -1,14 +1,20 @@
 import { CATEGORY_LABELS } from "@/lib/config/categories";
+import { PHOTO_PROXY_PATH, clampPhotoWidth } from "@/lib/google/photo-url";
 
-// Google Places photo URLs bake a fixed `maxwidth` in at fetch time (see
+// Google Places photo URLs bake a fixed width in at fetch time (see
 // google-places-experience-provider.ts's default of 1200, sized for a
 // full-width gallery image). A component rendering that same URL at a much
 // smaller display size — e.g. a 64px thumbnail — would otherwise download
 // the full 1200px payload for nothing; `unoptimized: true` in next.config
 // means next/image can't resize this for us, so the source URL itself has
-// to ask Google for less. No-op on any URL that isn't a Google Places
-// photo URL (nothing to resize).
+// to ask for less. No-op on any URL that isn't one of our photo-proxy URLs
+// (nothing to resize). The legacy `maxwidth=` form is still handled for any
+// old URL that slips through; it's rewritten to the keyless proxy form
+// server-side wherever it's stored (see legacyPhotoToProxy).
 export function withMaxWidth(url: string, maxWidth: number): string {
+  if (url.includes(`${PHOTO_PROXY_PATH}?`)) {
+    return url.replace(/([?&])w=\d+/, `$1w=${clampPhotoWidth(maxWidth)}`);
+  }
   if (!url.includes("maps.googleapis.com/maps/api/place/photo")) return url;
   return url.replace(/maxwidth=\d+/, `maxwidth=${maxWidth}`);
 }

@@ -147,6 +147,9 @@ async function DestinationRails({ dest }: { dest: DestinationInfo }) {
     longitude: dest.longitude,
     radiusMiles: 25,
     limit: 40,
+    // Fixed destination, identical for everyone: a day, not the hourly
+    // default (10 guides x 7 Nearby Search calls each, crawled constantly).
+    cacheSeconds: 60 * 60 * 24,
   });
 
   const toItems = (list: typeof experiences) => list.map((experience) => ({ experience }));

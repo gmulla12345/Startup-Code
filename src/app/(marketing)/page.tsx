@@ -50,7 +50,18 @@ export const metadata: Metadata = {
 
 export default async function LandingPage() {
   const provider = await getExperienceProvider();
-  const featured = await provider.list({ city: "New York", latitude: 40.7128, longitude: -74.006, radiusMiles: 15, limit: 12 });
+  // Same New York strip for every visitor, so reuse the Google lookup for a
+  // day instead of an hour (the page re-renders at the shortest fetch window
+  // it contains, so an hourly one meant ~7 billed Nearby Search calls an hour
+  // for as long as anyone or any crawler kept visiting).
+  const featured = await provider.list({
+    city: "New York",
+    latitude: 40.7128,
+    longitude: -74.006,
+    radiusMiles: 15,
+    limit: 12,
+    cacheSeconds: 60 * 60 * 24,
+  });
 
   return (
     <>
