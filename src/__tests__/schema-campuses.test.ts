@@ -55,8 +55,8 @@ describe("campuses and the waitlist", () => {
     expect(signup.indexOf("insert into public.profiles")).toBeLessThan(signup.indexOf("exception when others"));
   });
 
-  it("seeds Loyola, and the application's fallback list is the same row", () => {
-    const loyola = FALLBACK_CAMPUSES[0];
+  it("seeds Loyola, and the application's fallback list has the same row", () => {
+    const loyola = FALLBACK_CAMPUSES.find((c) => c.slug === "loyola-maryland")!;
     expect(migration).toContain(`'${loyola.slug}'`);
     expect(migration).toContain(`'${loyola.name}'`);
     expect(migration).toContain(`array['${loyola.emailDomains[0]}']`);
@@ -68,5 +68,36 @@ describe("campuses and the waitlist", () => {
     expect(sql).not.toMatch(/\bdrop table\b/i);
     expect(sql).not.toMatch(/\bdelete from\b/i);
     expect(sql).not.toMatch(/\btruncate\b/i);
+  });
+});
+
+describe("the seeded schools", () => {
+  const seed = readFileSync(join(root, "migrations/20261018_01_seed_campuses.sql"), "utf-8");
+
+  // ('slug', 'Name', 'Short', array['a.edu', 'b.edu'])
+  const rowPattern = /^\s*\('([^']+)', '((?:[^']|'')+)', '((?:[^']|'')+)', array\[([^\]]+)\]\),?$/gm;
+  const parse = (sql: string) =>
+    [...sql.matchAll(rowPattern)].map(([, slug, name, shortName, domains]) => ({
+      slug,
+      name: name.replace(/''/g, "'"),
+      shortName: shortName.replace(/''/g, "'"),
+      emailDomains: [...domains.matchAll(/'([^']+)'/g)].map((m) => m[1]),
+    }));
+  const withoutLoyola = FALLBACK_CAMPUSES.filter((c) => c.slug !== "loyola-maryland");
+
+  it("adds every other school in the application's list, identically, and nothing else", () => {
+    expect(parse(seed)).toEqual(withoutLoyola);
+    expect(parse(seed)).toHaveLength(99);
+  });
+
+  it("is mirrored in schema.sql", () => {
+    const insert = seed.match(/insert into public\.campuses \(slug, name, short_name, email_domains\)[\s\S]*?on conflict \(slug\) do nothing;/)![0];
+    expect(schema).toContain(insert);
+  });
+
+  it("only adds rows, and can be run twice", () => {
+    const sql = seed.replace(/--[^\n]*/g, "");
+    expect(sql).toMatch(/on conflict \(slug\) do nothing/);
+    expect(sql).not.toMatch(/\b(drop|delete|truncate|update|alter)\b/i);
   });
 });

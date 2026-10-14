@@ -9,7 +9,7 @@ import { getActiveCampuses } from "@/lib/repositories/campuses";
 const SEO = PAGE_SEO.students;
 
 // The canonical URL ignores ?src= and ?code=, so every campaign link
-// (/students?code=LOYOLA-BUSINESSCLUB&src=poster-library) is one page to search
+// (/students?code=CAMPUS-CLUB&src=poster-library) is one page to search
 // engines, and a tagged link never splits its ranking.
 export const metadata: Metadata = {
   title: { absolute: SEO.title },

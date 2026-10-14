@@ -62,7 +62,7 @@ beforeEach(() => {
 
 describe("recording an event", () => {
   it("writes the row with the user, the event, and the src/code from the campaign cookie", async () => {
-    h.cookie = cookieValue("src=poster-library&code=LOYOLA-BUSINESSCLUB");
+    h.cookie = cookieValue("src=poster-library&code=CAMPUS-CLUB");
     await trackAnalytics("place_saved", { userId: "u1", props: { category: "food_drink" } });
     await flush();
     expect(h.inserts).toEqual([
@@ -70,7 +70,7 @@ describe("recording an event", () => {
         event: "place_saved",
         user_id: "u1",
         src: "poster-library",
-        code: "LOYOLA-BUSINESSCLUB",
+        code: "CAMPUS-CLUB",
         props: { category: "food_drink" },
         dedupe_key: null,
       },
@@ -85,10 +85,10 @@ describe("recording an event", () => {
   });
 
   it("also reads a cookie value that is still percent-encoded", async () => {
-    h.cookie = encodeURIComponent("src=poster-library&code=LOYOLA-BUSINESSCLUB");
+    h.cookie = encodeURIComponent("src=poster-library&code=CAMPUS-CLUB");
     await trackAnalytics("place_saved", { userId: "u1" });
     await flush();
-    expect(h.inserts[0]).toMatchObject({ src: "poster-library", code: "LOYOLA-BUSINESSCLUB" });
+    expect(h.inserts[0]).toMatchObject({ src: "poster-library", code: "CAMPUS-CLUB" });
   });
 
   it("prefers an explicit attribution over the cookie", async () => {

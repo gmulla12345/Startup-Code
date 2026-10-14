@@ -40,18 +40,18 @@ beforeEach(() => {
   h.views = {
     v_event_counts: [{ event: "place_saved", last_7d: 4, last_30d: 9, total: 12 }],
     v_signups_by_src_code: [
-      { src: "poster-library", code: "LOYOLA-BUSINESSCLUB", signups: 7, signups_7d: 3, signups_30d: 7, last_signup_at: "2026-10-12T15:00:00Z" },
+      { src: "poster-library", code: "CAMPUS-CLUB", signups: 7, signups_7d: 3, signups_30d: 7, last_signup_at: "2026-10-12T15:00:00Z" },
       { src: "(none)", code: "(none)", signups: 10, signups_7d: 0, signups_30d: 0, last_signup_at: null },
     ],
     v_return_rates_by_src_code: [
-      { src: "poster-library", code: "LOYOLA-BUSINESSCLUB", users: 7, week2_eligible: 3, week2_returned: 2, week2_return_pct: 66.7, week4_eligible: 0, week4_returned: 0, week4_return_pct: null },
+      { src: "poster-library", code: "CAMPUS-CLUB", users: 7, week2_eligible: 3, week2_returned: 2, week2_return_pct: 66.7, week4_eligible: 0, week4_returned: 0, week4_return_pct: null },
     ],
     v_saves_by_src_code: [
-      { src: "poster-library", code: "LOYOLA-BUSINESSCLUB", users: 7, users_with_save: 4, users_with_save_pct: 57.1, total_saves: 11, saves_per_user: 1.57, median_saves: 1 },
+      { src: "poster-library", code: "CAMPUS-CLUB", users: 7, users_with_save: 4, users_with_save_pct: 57.1, total_saves: 11, saves_per_user: 1.57, median_saves: 1 },
     ],
     v_events_by_src_code: [
-      { src: "poster-library", code: "LOYOLA-BUSINESSCLUB", event: "signup_completed", events: 7 },
-      { src: "poster-library", code: "LOYOLA-BUSINESSCLUB", event: "place_saved", events: 11 },
+      { src: "poster-library", code: "CAMPUS-CLUB", event: "signup_completed", events: 7 },
+      { src: "poster-library", code: "CAMPUS-CLUB", event: "place_saved", events: 11 },
     ],
   };
 });
@@ -87,7 +87,7 @@ describe("what it shows", () => {
   it("shows signups by source and code, with (none) for untagged accounts", async () => {
     const html = await render();
     expect(html).toContain("poster-library");
-    expect(html).toContain("LOYOLA-BUSINESSCLUB");
+    expect(html).toContain("CAMPUS-CLUB");
     expect(html).toContain("(none)");
   });
 
@@ -114,7 +114,7 @@ describe("what it shows", () => {
 
   it("pivots events into a funnel per source and code", async () => {
     const html = await render();
-    expect(html).toMatch(/LOYOLA-BUSINESSCLUB<\/td>(<td[^>]*>\d+<\/td>){2}<td[^>]*>7<\/td>/);
+    expect(html).toMatch(/CAMPUS-CLUB<\/td>(<td[^>]*>\d+<\/td>){2}<td[^>]*>7<\/td>/);
   });
 
   it("says so plainly when nothing has been recorded", async () => {

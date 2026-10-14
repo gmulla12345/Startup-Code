@@ -18,12 +18,12 @@ import { captureAttribution } from "@/lib/attribution-cookie";
 describe("src and code", () => {
   it("normalizes src to lowercase and code to uppercase", () => {
     expect(sanitizeSrc("Poster-Library")).toBe("poster-library");
-    expect(sanitizeCode("loyola-businessclub")).toBe("LOYOLA-BUSINESSCLUB");
+    expect(sanitizeCode("campus-club")).toBe("CAMPUS-CLUB");
   });
 
   it("accepts the documented example", () => {
-    const a = attributionFromParams(new URLSearchParams("code=LOYOLA-BUSINESSCLUB&src=poster-library"));
-    expect(a).toEqual({ src: "poster-library", code: "LOYOLA-BUSINESSCLUB" });
+    const a = attributionFromParams(new URLSearchParams("code=CAMPUS-CLUB&src=poster-library"));
+    expect(a).toEqual({ src: "poster-library", code: "CAMPUS-CLUB" });
   });
 
   it("rejects anything that is not a plain token", () => {
@@ -48,8 +48,8 @@ describe("src and code", () => {
 
 describe("the cookie value", () => {
   it("round-trips", () => {
-    const value = serializeAttribution({ src: "poster-library", code: "LOYOLA-BUSINESSCLUB" });
-    expect(parseAttribution(value)).toEqual({ src: "poster-library", code: "LOYOLA-BUSINESSCLUB" });
+    const value = serializeAttribution({ src: "poster-library", code: "CAMPUS-CLUB" });
+    expect(parseAttribution(value)).toEqual({ src: "poster-library", code: "CAMPUS-CLUB" });
   });
 
   it("treats a tampered cookie as no attribution, never as an error", () => {
@@ -75,8 +75,8 @@ describe("capturing it in the proxy", () => {
   };
 
   it("stores src and code from a campaign link for 30 days, readable by the signup form", () => {
-    const cookie = run("https://discoverzolo.com/students?code=loyola-businessclub&src=Poster-Library");
-    expect(parseAttribution(decodeURIComponent(cookie!.value))).toEqual({ src: "poster-library", code: "LOYOLA-BUSINESSCLUB" });
+    const cookie = run("https://discoverzolo.com/students?code=campus-club&src=Poster-Library");
+    expect(parseAttribution(decodeURIComponent(cookie!.value))).toEqual({ src: "poster-library", code: "CAMPUS-CLUB" });
     expect(cookie).toMatchObject({ maxAge: 60 * 60 * 24 * 30, path: "/", sameSite: "lax", httpOnly: false });
   });
 

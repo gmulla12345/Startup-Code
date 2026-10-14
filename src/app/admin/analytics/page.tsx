@@ -156,7 +156,7 @@ export default async function AdminAnalyticsPage() {
       <p className="mb-8 max-w-3xl text-sm text-foreground-muted">
         Where people come from and whether they stay. Every row is grouped by the <code>src</code> and{" "}
         <code>code</code> in the link they arrived with, for example{" "}
-        <code>/students?code=LOYOLA-BUSINESSCLUB&amp;src=poster-library</code>. Accounts created before tracking began,
+        <code>/students?code=CAMPUS-CLUB&amp;src=poster-library</code>. Accounts created before tracking began,
         and visitors who arrived without a tagged link, appear as (none).
       </p>
 

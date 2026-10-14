@@ -2093,8 +2093,8 @@ line of copy, the signup card, then two example outputs. It is in the sitemap an
 Nothing on it reads the request: the promo-code prefill and the `students_page_view` event happen in the browser after load, which is what
 keeps it cacheable. Voice: calm, no exclamation points or emoji (a test checks the form's text and the stored preview).
 
-**Signup** ([students-signup.tsx](src/components/students/students-signup.tsx)): school selector (the `campuses` table, Loyola first, plus
-"Don't see your school?"), school email (must end in `.edu`), password, promo code (prefilled from `?code=` or the campaign cookie). It calls
+**Signup** ([students-signup.tsx](src/components/students/students-signup.tsx)): school dropdown (the `campuses` table, 100 schools sorted
+alphabetically by the component; "Select your school" first, nothing preselected, and "Don't see your school?" last, which opens the waitlist), school email (must end in `.edu`), password, promo code (prefilled from `?code=` or the campaign cookie). It calls
 `supabase.auth.signUp`; the confirmation email's link goes through `/auth/callback` to onboarding. No first name: onboarding asks for it. The
 campus shown under the email is detected in the browser from the typed domain ([campus.ts](src/lib/campus.ts)); nothing is sent anywhere to do that.
 **The promo code does nothing yet** beyond being saved as the account's campaign `code`; it is validated and redeemed on the server in Phase 3,
@@ -2108,6 +2108,15 @@ A `.edu` at a school we do not serve is still verified, with no campus. A Google
 the same function at creation (and `apply_signup_attribution` also patches that event's src/code afterwards). All of it is wrapped so it can
 never block an account being created or confirmed. Verified live against production through Supabase's admin API (no mail sent), then cleaned up.
 **Loyola's domain `loyola.edu` is confirmed by the owner (2026-10-14)**; add any other domains to `campuses.email_domains`.
+
+**The 100 schools** (owner's list, 2026-10-14): [campus-directory.ts](src/lib/campus-directory.ts) is the list and the page's fallback if the table cannot
+be read; migration `20261018_01_seed_campuses.sql` (generated from it) inserts the 99 beyond Loyola, additive and idempotent; a test keeps the two
+and `schema.sql` identical, and checks that no domain is shared with or a subdomain of another school's (so no address belongs to two schools).
+**The other 99 domains are not confirmed with the schools**: they are the domains students are known to use, and each was checked only to have mail
+servers. A missing domain means that student verifies as a `.edu` with no campus; a wrong one that is another school's domain would put them on the wrong campus
+until corrected. Fix either with an update to `campuses.email_domains`, no deploy.
+A school's name or domain can change in the table without touching the code, but then bring the directory file back in line (the test compares them).
+Native equivalent: the same `campuses` rows (public read) behind a platform picker; the mobile app has no campus signup yet.
 
 **Waitlist** ([/api/waitlist](src/app/api/waitlist/route.ts), table `campus_waitlist`): an email and an optional school name, nothing else.
 Rate-limited per IP, a hidden honeypot field, lowercased and unique, and a repeat answers identically to a new one (the list cannot be probed).

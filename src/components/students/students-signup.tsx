@@ -1,23 +1,25 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Check } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
-import { campusForEmail, isEduEmail, normalizeEmail, type Campus } from "@/lib/campus";
+import { campusForEmail, isEduEmail, normalizeEmail, sortCampusesByName, type Campus } from "@/lib/campus";
 import { sanitizeCode } from "@/lib/attribution";
 import { readAttribution, sendAnalyticsEvent } from "@/lib/analytics/client";
-import { cn } from "@/lib/utils/cn";
 
 /**
- * The /students signup: choose a school, give a school (.edu) email, a password
- * and, if there is one, a promo code. A confirmation link is sent to the email;
- * clicking it verifies the address and the database records the campus from its
- * domain (see apply_student_verification). "Don't see your school?" is a short
- * waitlist form instead.
+ * The /students signup: choose a school from a dropdown (alphabetical), give a
+ * school (.edu) email, a password and, if there is one, a promo code. A
+ * confirmation link is sent to the email; clicking it verifies the address and the
+ * database records the campus from its domain (see apply_student_verification),
+ * whatever the dropdown said. "Don't see your school?", the last option, is a
+ * short waitlist form instead.
+ *
+ * Native equivalent: the same `campuses` rows behind a platform picker.
  *
  * The promo code is prefilled from ?code= (or the campaign cookie) and is saved
  * with the account as its campaign code. It does nothing yet beyond that: the
@@ -33,7 +35,7 @@ type Mode = "idle" | "submitting" | "sent";
 
 export function StudentsSignup({ campuses }: { campuses: Campus[] }) {
   const router = useRouter();
-  const [selected, setSelected] = useState<string>(campuses[0]?.slug ?? OTHER);
+  const [selected, setSelected] = useState<string>(""); // "" until a school is chosen
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
@@ -58,7 +60,8 @@ export function StudentsSignup({ campuses }: { campuses: Campus[] }) {
     sendAnalyticsEvent("students_page_view");
   }, []);
 
-  const campus = campuses.find((c) => c.slug === selected) ?? null;
+  const schools = useMemo(() => sortCampusesByName(campuses), [campuses]);
+  const campus = schools.find((c) => c.slug === selected) ?? null;
   const detected = isEduEmail(email) ? campusForEmail(email, campuses) : null;
   const placeholderDomain = campus?.emailDomains[0] ?? "school.edu";
 
@@ -159,37 +162,34 @@ export function StudentsSignup({ campuses }: { campuses: Campus[] }) {
 
   return (
     <div className={card}>
-      <fieldset>
-        <legend className="mb-3 text-sm font-medium text-foreground">Your school</legend>
-        <div className="space-y-2">
-          {[...campuses.map((c) => ({ slug: c.slug, label: c.name })), { slug: OTHER, label: "Don't see your school?" }].map(
-            (option) => (
-              <label key={option.slug} className="block cursor-pointer">
-                <input
-                  type="radio"
-                  name="school"
-                  value={option.slug}
-                  checked={selected === option.slug}
-                  onChange={() => {
-                    setSelected(option.slug);
-                    setError(null);
-                  }}
-                  className="peer sr-only"
-                />
-                <span
-                  className={cn(
-                    "flex items-center justify-between rounded-[var(--radius-md)] border border-border-strong px-4 py-3 text-sm text-foreground transition-colors",
-                    "peer-checked:border-foreground peer-checked:bg-surface-sunken peer-focus-visible:ring-2 peer-focus-visible:ring-[var(--ring)]"
-                  )}
-                >
-                  {option.label}
-                  {selected === option.slug && <Check className="h-4 w-4" aria-hidden />}
-                </span>
-              </label>
-            )
-          )}
+      <div>
+        <label htmlFor="students-school" className="mb-1.5 block text-sm font-medium text-foreground">
+          Your school
+        </label>
+        <div className="relative">
+          <select
+            id="students-school"
+            value={selected}
+            onChange={(e) => {
+              setSelected(e.target.value);
+              setError(null);
+            }}
+            className="flex h-12 w-full appearance-none rounded-[var(--radius-md)] border border-border-strong bg-surface pl-4 pr-10 text-sm text-foreground transition-colors focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[var(--ring)]"
+          >
+            <option value="">Select your school</option>
+            {schools.map((c) => (
+              <option key={c.slug} value={c.slug}>
+                {c.name}
+              </option>
+            ))}
+            <option value={OTHER}>Don&apos;t see your school?</option>
+          </select>
+          <ChevronDown
+            className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground-subtle"
+            aria-hidden
+          />
         </div>
-      </fieldset>
+      </div>
 
       {selected !== OTHER ? (
         <form onSubmit={handleSubmit} onFocusCapture={markStarted} className="mt-6 space-y-3" noValidate>
@@ -305,7 +305,7 @@ export function StudentsSignup({ campuses }: { campuses: Campus[] }) {
           </div>
           <div>
             <label htmlFor="waitlist-school" className="mb-1.5 block text-sm font-medium text-foreground">
-              Your school
+              Name of your school
             </label>
             <Input
               id="waitlist-school"

@@ -1,6 +1,6 @@
 /**
  * Campaign attribution: the `src` and `code` values a visitor arrives with
- * (e.g. /students?code=LOYOLA-BUSINESSCLUB&src=poster-library).
+ * (e.g. /students?code=CAMPUS-CLUB&src=poster-library).
  *
  *   src   where the link was placed. Lowercase: poster-library, groupme, ...
  *   code  the campaign / promo code carried in the link. Uppercase.

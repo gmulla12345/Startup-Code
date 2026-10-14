@@ -5,7 +5,7 @@ import { FALLBACK_CAMPUSES, campusForEmail, emailDomain, isEduEmail, isValidEmai
 // typed. The database's campus_for_email() is the authority and follows the same
 // rule (rehearsed against production); these tests pin the rule itself.
 
-const loyola = FALLBACK_CAMPUSES[0];
+const loyola = FALLBACK_CAMPUSES.find((c) => c.slug === "loyola-maryland")!;
 const another: Campus = { slug: "example-college", name: "Example College", shortName: "Example", emailDomains: ["example.edu", "ex.edu"] };
 
 describe("matching an address to a campus", () => {

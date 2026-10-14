@@ -21,7 +21,7 @@ const submit = () => fireEvent.click(screen.getByRole("button", { name: /create 
 const fill = (label: RegExp | string, value: string) => fireEvent.change(field(label), { target: { value } });
 
 function fillValidForm(overrides: { email?: string; password?: string; code?: string } = {}) {
-  fill("School email", overrides.email ?? "Maya@Students.Loyola.edu");
+  fill("School email", overrides.email ?? "Maya@Students.Georgetown.edu");
   fill("Password", overrides.password ?? "correct horse");
   if (overrides.code !== undefined) fill("Promo code", overrides.code);
 }
@@ -38,9 +38,9 @@ afterEach(() => cleanup());
 
 describe("the promo code", () => {
   it("is prefilled from ?code= in the link, uppercased", () => {
-    window.history.pushState({}, "", "/students?code=loyola-businessclub&src=poster-library");
+    window.history.pushState({}, "", "/students?code=campus-club&src=poster-library");
     render(<StudentsSignup campuses={FALLBACK_CAMPUSES} />);
-    expect(field("Promo code").value).toBe("LOYOLA-BUSINESSCLUB");
+    expect(field("Promo code").value).toBe("CAMPUS-CLUB");
   });
 
   it("falls back to the campaign cookie when the URL has none", () => {
@@ -102,14 +102,14 @@ describe("creating the account", () => {
   it("signs up with the normalized email and the campaign saved in the account's metadata", async () => {
     h.attribution = { src: "poster-library", code: null };
     render(<StudentsSignup campuses={FALLBACK_CAMPUSES} />);
-    fillValidForm({ code: "loyola-businessclub" });
+    fillValidForm({ code: "campus-club" });
     submit();
 
     await waitFor(() => expect(h.signUp).toHaveBeenCalledTimes(1));
     const arg = h.signUp.mock.calls[0][0];
-    expect(arg.email).toBe("maya@students.loyola.edu");
+    expect(arg.email).toBe("maya@students.georgetown.edu");
     expect(arg.password).toBe("correct horse");
-    expect(arg.options.data).toEqual({ src: "poster-library", code: "LOYOLA-BUSINESSCLUB" });
+    expect(arg.options.data).toEqual({ src: "poster-library", code: "CAMPUS-CLUB" });
     expect(arg.options.emailRedirectTo).toMatch(/\/auth\/callback\?redirect=\/onboarding$/);
   });
 
@@ -128,7 +128,7 @@ describe("creating the account", () => {
     fillValidForm();
     submit();
     expect(await screen.findByText("Check your inbox.")).toBeTruthy();
-    expect(screen.getByText("maya@students.loyola.edu")).toBeTruthy();
+    expect(screen.getByText("maya@students.georgetown.edu")).toBeTruthy();
   });
 
   it("goes straight to onboarding when no confirmation is required", async () => {
@@ -152,9 +152,9 @@ describe("creating the account", () => {
 describe("recognizing the school", () => {
   it("names the school as soon as the address matches, including a subdomain", () => {
     render(<StudentsSignup campuses={FALLBACK_CAMPUSES} />);
-    expect(screen.getAllByText("Loyola University Maryland")).toHaveLength(1); // just the option
-    fill("School email", "maya@students.loyola.edu");
-    expect(screen.getAllByText("Loyola University Maryland")).toHaveLength(2);
+    expect(screen.getAllByText("Georgetown University")).toHaveLength(1); // just the option
+    fill("School email", "maya@students.georgetown.edu");
+    expect(screen.getAllByText("Georgetown University")).toHaveLength(2);
   });
 
   it("is honest about a school that is not served yet, and points to the waitlist", () => {
@@ -166,15 +166,64 @@ describe("recognizing the school", () => {
   });
 });
 
+describe("the school dropdown", () => {
+  const select = () => screen.getByLabelText("Your school") as HTMLSelectElement;
+  const optionLabels = () => Array.from(select().options).map((o) => o.textContent);
+  const choose = (value: string) => fireEvent.change(select(), { target: { value } });
+
+  it("lists every school alphabetically, between a prompt and the waitlist option", () => {
+    render(<StudentsSignup campuses={FALLBACK_CAMPUSES} />);
+    const labels = optionLabels();
+    expect(labels[0]).toBe("Select your school");
+    expect(labels.at(-1)).toBe("Don't see your school?");
+    const schools = labels.slice(1, -1);
+    expect(schools).toHaveLength(100);
+    expect(schools).toEqual([...schools].sort((a, b) => a.localeCompare(b, "en", { sensitivity: "base" })));
+    expect(schools[0]).toBe("American University");
+    expect(schools).toContain("Loyola University Maryland");
+    expect(schools).toContain("University of Wisconsin–Madison");
+  });
+
+  it("sorts whatever it is given, so the database order never shows through", () => {
+    render(<StudentsSignup campuses={[...FALLBACK_CAMPUSES].reverse()} />);
+    const schools = optionLabels().slice(1, -1);
+    expect(schools[0]).toBe("American University");
+    expect(schools.at(-1)).toBe("Yale University");
+  });
+
+  it("starts with no school chosen, and no school used as an example", () => {
+    render(<StudentsSignup campuses={FALLBACK_CAMPUSES} />);
+    expect(select().value).toBe("");
+    expect(field("School email").placeholder).toBe("you@school.edu");
+    // Loyola appears once, as an option in the list like any other school, and nowhere else.
+    expect(document.body.textContent).not.toMatch(/loyola(?! university maryland)/i);
+  });
+
+  it("shows the chosen school's own email domain", () => {
+    render(<StudentsSignup campuses={FALLBACK_CAMPUSES} />);
+    choose("georgetown-university");
+    expect(field("School email").placeholder).toBe("you@georgetown.edu");
+    choose("university-of-maryland-baltimore-county");
+    expect(field("School email").placeholder).toBe("you@umbc.edu");
+  });
+
+  it("recognizes a school by the address even when another was chosen", () => {
+    render(<StudentsSignup campuses={FALLBACK_CAMPUSES} />);
+    choose("georgetown-university");
+    fill("School email", "maya@jhu.edu");
+    expect(screen.getAllByText("Johns Hopkins University")).toHaveLength(2); // the option and the confirmation
+  });
+});
+
 describe("the waitlist", () => {
-  const openWaitlist = () => fireEvent.click(screen.getByLabelText("Don't see your school?"));
+  const openWaitlist = () => fireEvent.change(screen.getByLabelText("Your school"), { target: { value: "other" } });
 
   it("replaces the signup form with an email and an optional school name", () => {
     render(<StudentsSignup campuses={FALLBACK_CAMPUSES} />);
     openWaitlist();
     expect(screen.queryByLabelText("Password")).toBeNull();
     expect(field("Your email")).toBeTruthy();
-    expect(field("Your school")).toBeTruthy();
+    expect(field("Name of your school")).toBeTruthy();
   });
 
   it("posts the email and school, with the hidden field empty, and says thank you", async () => {
@@ -183,7 +232,7 @@ describe("the waitlist", () => {
     render(<StudentsSignup campuses={FALLBACK_CAMPUSES} />);
     openWaitlist();
     fill("Your email", "maya@someplace.edu");
-    fill("Your school", "Someplace College");
+    fill("Name of your school", "Someplace College");
     fireEvent.click(screen.getByRole("button", { name: /join the waitlist/i }));
 
     expect(await screen.findByText(/we will write when we reach your school/i)).toBeTruthy();

@@ -7,8 +7,10 @@
  *
  * The list of schools lives in the `campuses` table (a new school is an insert,
  * not a code change). FALLBACK_CAMPUSES only keeps the page rendering if that
- * table cannot be read, and must stay identical to the seeded row.
+ * table cannot be read, and must stay identical to the seeded rows.
  */
+
+import { CAMPUS_DIRECTORY } from "@/lib/campus-directory";
 
 export interface Campus {
   slug: string;
@@ -17,10 +19,13 @@ export interface Campus {
   emailDomains: string[];
 }
 
-/** Mirrors the row seeded by migrations/20261016_01_campuses_and_student_verification.sql. */
-export const FALLBACK_CAMPUSES: Campus[] = [
-  { slug: "loyola-maryland", name: "Loyola University Maryland", shortName: "Loyola", emailDomains: ["loyola.edu"] },
-];
+/** Mirrors the rows seeded by migrations/20261016_01 (Loyola) and 20261018_01 (the rest). */
+export const FALLBACK_CAMPUSES: Campus[] = CAMPUS_DIRECTORY;
+
+/** A copy of the list in alphabetical order by name, which is the order the selector shows. */
+export function sortCampusesByName(campuses: readonly Campus[]): Campus[] {
+  return [...campuses].sort((a, b) => a.name.localeCompare(b.name, "en", { sensitivity: "base" }));
+}
 
 const EMAIL_SHAPE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
