@@ -132,8 +132,8 @@ export async function previewPromoCode(
  * Reserves the one student redemption this person gets, before they are sent to
  * Checkout. Reuses their pending reservation if an earlier Checkout was
  * abandoned, and refuses if they have already redeemed. Returns the previous
- * Checkout Session (if any) so the caller can close it: two open sessions for
- * one person could otherwise both complete.
+ * Checkout Session (if any) so the caller can close it once the new one exists:
+ * two open sessions for one person could otherwise both complete.
  */
 export async function claimStudentPromo(params: {
   userId: string;
@@ -141,10 +141,12 @@ export async function claimStudentPromo(params: {
   promotionCodeId: string;
 }): Promise<{ id: string; previousSessionId: string | null }> {
   const admin = createAdminClient();
+  // The earlier checkout session is deliberately not cleared here: it stays on the
+  // row until the new session replaces it (attachSessionToClaim), so if creating
+  // the new one fails, the next attempt still knows which old one to close.
   const fields = {
     code: params.code,
     stripe_promotion_code_id: params.promotionCodeId,
-    stripe_checkout_session_id: null,
   };
 
   // Two passes: the second is for the rare case that a parallel request inserted

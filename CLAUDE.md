@@ -2147,8 +2147,8 @@ list and waitlist are public endpoints/tables the app can call as-is.
 
 ## Phase 3 of the campus pivot: student promo codes (2026-10-14)
 
-Context: one free month of Premium for verified students, by code. **Built and committed, not yet applied to production or deployed**, and the
-Stripe objects have not been created in the live account (see "State" below).
+Context: one free month of Premium for verified students, by code. **Deployed 2026-10-14**; the live Stripe coupon and codes still need the owner to create
+them with the live key (see "Decisions taken" below).
 
 **How it works.** A student code is a Stripe *promotion code* that points at ONE coupon, `zolo-student-free-month` (100% off, `duration: once`, so
 the first monthly invoice is free). Stripe keeps each code's `max_redemptions` and `expires_at`; Stripe cannot know whether the holder is a
@@ -2201,12 +2201,30 @@ that loading; see State.)
 the retention (account deletion removes the link), and [privacy-policy.test.tsx](src/__tests__/privacy-policy.test.tsx) now requires it; the Terms
 (section 4) describe the student free month and what happens at its end for both settings of the card flag.
 
-**State (2026-10-14).** Code, migration, tests (374; six new test files, plus the admin, privacy and signup ones extended), typecheck, lint and
-a production build are clean. (One unrelated Google-photo guard test timed out once under the full parallel run and passes on its own.) The migration was rehearsed against the production database in a rolled-back transaction (constraints, one use per person,
-the view's arithmetic, no access for anon/authenticated, de-identification on account deletion) and is **not applied**. In Stripe **test mode only** the coupon
-`zolo-student-free-month` and one example code `SCHOOL-CLUB` (max 5, expires 2027-05-31) exist, created by that mistaken `--apply`; nothing exists in live
-mode, and the Stripe key production uses (hidden in Vercel) has not been inspected, so whether production is on test or live keys is **unknown**.
-To ship: apply the migration, create the coupon and codes in the account production uses, deploy; then try it end to end in test mode.
+**Decisions taken (owner delegated them, 2026-10-14):** card **required** (flag left unset in Vercel); any verified student may use any student
+code (no per-school restriction); the delete-and-resign-up gap above is left open (most private default); pilot code suggested as
+`LOYOLA-LAUNCH`, 100 redemptions, expiring 2027-05-31 (the end of the academic year); Dashboard promotion-code settings are the owner's to check.
+
+**Production Stripe is LIVE** (`pk_live` publishable key; the secret key is a hidden Vercel secret). The Stripe key in `.env.local` is a TEST key, so
+`npm run promo-codes -- ... --apply` from this machine only ever reaches the TEST account. **The live coupon and codes are not created yet** and cannot
+be by anyone who lacks the live secret key: until the owner runs the script with it, a typed code answers "That code is not valid." (safe and inert).
+Owner's command (PowerShell, key typed only into their own terminal, never shared):
+`$env:STRIPE_SECRET_KEY="sk_live_..."; npm run promo-codes -- --prefix LOYOLA --names LAUNCH --max 100 --expires 2027-05-31 --apply --yes-live`
+(drop `--apply --yes-live` first to see the dry run). **A mistaken `--apply` was run once against the TEST account** while testing the no-key refusal (the script
+loads `.env.local` itself, so there is no such refusal); it created the test coupon and an example test code, and was reported to the owner.
+
+**What was verified (2026-10-14).** The migration is **applied to production** (table, view, RLS on; 0 rows). Unit tests: 377 pass, plus typecheck, lint and a
+production build. **End to end against real Stripe TEST mode and the real database**, with throwaway users that were all removed (0 leftovers): an ordinary
+checkout is unchanged (no promo box); a student code gives a session due $0 with the full $19.99 discounted, card collection `always`; with the flag off,
+`if_required`, and the hosted page then asks only for a name and billing address (no payment method), while the card page shows "$0.00, then $19.99 per month
+starting next month"; a second attempt reuses the reservation and closes the first session; annual + code, an unknown code, an unverified .edu account, a non-.edu
+account and a code with stray characters are all refused with the right message and create no reservation; a real test subscription with the code starts
+active with a $0 paid first invoice, Stripe counted the redemption (0 to 1), our webhook handler turned the reservation into a redemption, put the person on
+Premium and recorded one `promo_redeemed` event, and a replay changed nothing; a second use by the same person is refused; the admin view counted it.
+**Found and fixed by that test:** a retry of the same checkout within a minute would have closed the person's session and then been handed that same closed
+session back by Stripe (a dead link). The idempotency key is now derived from the request itself, and the earlier session is closed only after the new one
+exists and only if it is a different session (see checkout.ts). **Not verified:** what a no-card subscription does when the free month ends (the flag stays on
+"card required" until it has been tried), the live Stripe account, and the real browser redirect after paying.
 
 **Mobile equivalent:** none of this reaches the app. Digital subscriptions bought in an iOS or Android app go through the stores, so the free month
 there is Apple offer codes / Google Play promo codes, redeemed against the app's store products; `/api/stripe/checkout` is a web path. The

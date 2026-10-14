@@ -136,16 +136,48 @@ describe("a student code", () => {
     expect(h.sessionExpire).toHaveBeenCalledWith("cs_old");
   });
 
+  it("closes the earlier checkout only after the new one exists", async () => {
+    h.db.promo_redemptions = (c) =>
+      c.op === "select" ? ok({ id: "claim_1", status: "pending", stripe_checkout_session_id: "cs_old" }) : ok();
+    await createCheckoutSession({ ...base, promoCode: "SCHOOL-CLUB" });
+    expect(h.sessionCreate.mock.invocationCallOrder[0]).toBeLessThan(h.sessionExpire.mock.invocationCallOrder[0]);
+  });
+
+  it("never closes the session Stripe hands back for a retry of the same request", async () => {
+    // Stripe answers a repeat of the same request (same idempotency key) with the original session.
+    h.db.promo_redemptions = (c) =>
+      c.op === "select" ? ok({ id: "claim_1", status: "pending", stripe_checkout_session_id: "cs_new" }) : ok();
+    const url = await createCheckoutSession({ ...base, promoCode: "SCHOOL-CLUB" });
+    expect(url).toBe("https://checkout.stripe.test/cs_new");
+    expect(h.sessionExpire).not.toHaveBeenCalled();
+  });
+
+  it("leaves the earlier checkout open, and still on record, if the new one cannot be made", async () => {
+    h.db.promo_redemptions = (c) =>
+      c.op === "select" ? ok({ id: "claim_1", status: "pending", stripe_checkout_session_id: "cs_old" }) : ok();
+    h.sessionCreate.mockRejectedValue(new Error("Stripe is down"));
+    await expect(createCheckoutSession({ ...base, promoCode: "SCHOOL-CLUB" })).rejects.toThrow(/Stripe is down/);
+    expect(h.sessionExpire).not.toHaveBeenCalled();
+    const update = h.calls.find((c) => c.op === "update" && c.table === "promo_redemptions")!;
+    expect(update.values).not.toHaveProperty("stripe_checkout_session_id");
+  });
+
   it("keeps the affiliate referral alongside, as before", async () => {
     await createCheckoutSession({ ...base, promoCode: "SCHOOL-CLUB", endorselyReferral: "ref_1" });
     expect(created().metadata).toMatchObject({ endorsely_referral: "ref_1", promo_claim: "claim_1" });
   });
 
-  it("uses a different idempotency key from the same minute's checkout without a code", async () => {
-    await createCheckoutSession(base);
+  it("derives the idempotency key from the request: the same request repeats it, any difference changes it", async () => {
+    const minute = (key: string) => key.replace(/_\d+$/, ""); // ignore the clock part: it is the same within a minute
     await createCheckoutSession({ ...base, promoCode: "SCHOOL-CLUB" });
-    const [a, b] = h.sessionCreate.mock.calls.map((c) => c[1].idempotencyKey);
-    expect(a).not.toBe(b);
+    await createCheckoutSession({ ...base, promoCode: "SCHOOL-CLUB" });
+    process.env.STUDENT_PROMO_REQUIRE_CARD = "false"; // same person, same code, a different setting
+    await createCheckoutSession({ ...base, promoCode: "SCHOOL-CLUB" });
+    delete process.env.STUDENT_PROMO_REQUIRE_CARD;
+    await createCheckoutSession(base); // no code
+    const keys = h.sessionCreate.mock.calls.map((c) => minute(c[1].idempotencyKey));
+    expect(keys[0]).toBe(keys[1]);
+    expect(new Set([keys[0], keys[2], keys[3]]).size).toBe(3);
   });
 });
 

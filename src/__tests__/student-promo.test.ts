@@ -239,12 +239,7 @@ describe("reserving the one free month", () => {
     h.db.promo_redemptions = (c) => (c.op === "select" ? ok(null) : ok({ id: "claim_1" }));
     expect(await claim()).toEqual({ id: "claim_1", previousSessionId: null });
     const insert = h.calls.find((c) => c.op === "insert")!;
-    expect(insert.values).toEqual({
-      user_id: "u1",
-      code: "SCHOOL-CLUB",
-      stripe_promotion_code_id: "promo_1",
-      stripe_checkout_session_id: null,
-    });
+    expect(insert.values).toEqual({ user_id: "u1", code: "SCHOOL-CLUB", stripe_promotion_code_id: "promo_1" });
   });
 
   it("reuses an abandoned reservation, and hands back its checkout so it can be closed", async () => {
@@ -253,6 +248,9 @@ describe("reserving the one free month", () => {
     expect(await claim()).toEqual({ id: "claim_1", previousSessionId: "cs_old" });
     const update = h.calls.find((c) => c.op === "update")!;
     expect(update.filters).toEqual({ id: "claim_1", status: "pending" }); // never touches a redeemed row
+    // The earlier session stays on the row until the new one replaces it, so a failed
+    // attempt does not make the next one forget which old checkout to close.
+    expect(update.values).not.toHaveProperty("stripe_checkout_session_id");
     expect(h.calls.some((c) => c.op === "insert")).toBe(false);
   });
 

@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+import type Stripe from "stripe";
 import { getStripeClient } from "./client";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { premiumPriceId, type BillingInterval } from "@/lib/config/pricing";
@@ -64,13 +66,11 @@ export async function createCheckoutSession(params: {
 
   const customerId = await getOrCreateStripeCustomer(params.userId, params.email);
 
-  // A student code reserves the one free month this person gets, and closes any
-  // earlier unfinished checkout of theirs so two cannot both complete.
+  // A student code reserves the one free month this person gets.
   const claim =
     promo?.kind === "student"
       ? await claimStudentPromo({ userId: params.userId, code: promo.code, promotionCodeId: promo.promotionCodeId })
       : null;
-  if (claim) await expireCheckoutSession(claim.previousSessionId);
 
   // Endorsely (affiliate-click tracking, see src/components/shared/endorsely.tsx)
   // asks for its referral id in the session's metadata so it can attribute
@@ -82,51 +82,63 @@ export async function createCheckoutSession(params: {
     ? { endorsely_referral: params.endorselyReferral }
     : {};
 
-  const session = await stripe.checkout.sessions.create(
-    {
-      customer: customerId,
-      mode: "subscription",
-      line_items: [{ price: priceId, quantity: 1 }],
-      success_url: params.successUrl,
-      cancel_url: params.cancelUrl,
-      subscription_data: {
-        // The free month of a student code replaces the standard 7-day trial; the
-        // two are never stacked.
-        ...(claim ? {} : { trial_period_days: 7 }),
-        metadata: { userId: params.userId, ...endorselyMetadata, ...(promo ? { promo_code: promo.code } : {}) },
-      },
-      // promo_claim is how the webhook knows this session carried a reserved student
-      // code. Only this server can set metadata, so a customer cannot forge it.
-      metadata: {
-        userId: params.userId,
-        ...endorselyMetadata,
-        ...(promo ? { promo_code: promo.code } : {}),
-        ...(claim ? { promo_claim: claim.id } : {}),
-      },
-      // A code is applied here, by the server, after its checks. Stripe's own
-      // promotion-code box is deliberately not offered (allow_promotion_codes
-      // stays off): a student code typed into it would skip the verified-student
-      // check, which Stripe cannot make.
-      ...(promo ? { discounts: [{ promotion_code: promo.promotionCodeId }] } : {}),
-      ...(claim ? { payment_method_collection: studentPromoRequiresCard() ? ("always" as const) : ("if_required" as const) } : {}),
-      // Stripe Tax: calculates and collects the right tax for the
-      // customer's location automatically. Requires Stripe Tax to be
-      // enabled and an origin address set in the Dashboard (Settings > Tax)
-      // — until then Stripe just skips tax calculation, so this is safe to
-      // leave on unconditionally.
-      automatic_tax: { enabled: true },
-      billing_address_collection: "required",
-      customer_update: { name: "auto", address: "auto" },
+  const sessionParams: Stripe.Checkout.SessionCreateParams = {
+    customer: customerId,
+    mode: "subscription",
+    line_items: [{ price: priceId, quantity: 1 }],
+    success_url: params.successUrl,
+    cancel_url: params.cancelUrl,
+    subscription_data: {
+      // The free month of a student code replaces the standard 7-day trial; the
+      // two are never stacked.
+      ...(claim ? {} : { trial_period_days: 7 }),
+      metadata: { userId: params.userId, ...endorselyMetadata, ...(promo ? { promo_code: promo.code } : {}) },
     },
-    // Idempotency key: if this request is retried (network blip, double
-    // click before the button disables), Stripe returns the original
-    // session instead of creating a second one for the same user+price
-    // (and code: the same key with different parameters is an error).
-    { idempotencyKey: `checkout_${params.userId}_${priceId}_${promo?.code ?? "none"}_${Date.now() / 60_000 | 0}` }
-  );
+    // promo_claim is how the webhook knows this session carried a reserved student
+    // code. Only this server can set metadata, so a customer cannot forge it.
+    metadata: {
+      userId: params.userId,
+      ...endorselyMetadata,
+      ...(promo ? { promo_code: promo.code } : {}),
+      ...(claim ? { promo_claim: claim.id } : {}),
+    },
+    // A code is applied here, by the server, after its checks. Stripe's own
+    // promotion-code box is deliberately not offered (allow_promotion_codes
+    // stays off): a student code typed into it would skip the verified-student
+    // check, which Stripe cannot make.
+    ...(promo ? { discounts: [{ promotion_code: promo.promotionCodeId }] } : {}),
+    ...(claim ? { payment_method_collection: studentPromoRequiresCard() ? "always" : "if_required" } : {}),
+    // Stripe Tax: calculates and collects the right tax for the
+    // customer's location automatically. Requires Stripe Tax to be
+    // enabled and an origin address set in the Dashboard (Settings > Tax)
+    // — until then Stripe just skips tax calculation, so this is safe to
+    // leave on unconditionally.
+    automatic_tax: { enabled: true },
+    billing_address_collection: "required",
+    customer_update: { name: "auto", address: "auto" },
+  };
+
+  // Idempotency key, derived from the request itself: a retry of the SAME request
+  // within the minute (network blip, double click before the button disables)
+  // gets Stripe's original session back instead of a second one, and a request
+  // that differs in any way (another code, plan, or setting) gets a new session
+  // instead of Stripe's "same key, different parameters" error.
+  const fingerprint = createHash("sha256").update(JSON.stringify(sessionParams)).digest("hex").slice(0, 32);
+  const session = await stripe.checkout.sessions.create(sessionParams, {
+    idempotencyKey: `checkout_${fingerprint}_${(Date.now() / 60_000) | 0}`,
+  });
 
   if (!session.url) throw new Error("Stripe did not return a checkout URL.");
-  if (claim) await attachSessionToClaim(claim.id, session.id);
+
+  if (claim) {
+    await attachSessionToClaim(claim.id, session.id);
+    // Close this person's earlier unfinished checkout so two cannot both complete,
+    // but only now that the new one exists, and never when Stripe handed back the
+    // very same session (a retry), which must stay open.
+    if (claim.previousSessionId && claim.previousSessionId !== session.id) {
+      await expireCheckoutSession(claim.previousSessionId);
+    }
+  }
   return session.url;
 }
 
