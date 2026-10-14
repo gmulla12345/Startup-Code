@@ -11,8 +11,8 @@ import { Reveal } from "@/components/marketing/reveal";
 
 const FAQS = [
   {
-    q: `Is Discover Zolo related to Zolo.ca or other companies named "Zolo"?`,
-    a: `No. "Zolo" is used by several unrelated companies, including Zolo.ca (Canadian real estate) and ZoloStays (co-living in India). Discover Zolo, at discoverzolo.com, is an independent personalized discovery platform — not affiliated with any of them.`,
+    q: `Is ${brand.name} related to Zolo.ca or other companies named "Zolo"?`,
+    a: `No. "Zolo" is used by several unrelated companies, including Zolo.ca (Canadian real estate) and ZoloStays (co-living in India). ${brand.name}, at discoverzolo.com, is an independent personalized discovery platform — not affiliated with any of them.`,
   },
   {
     q: `How does ${brand.name} pick recommendations for me?`,
