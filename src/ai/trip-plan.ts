@@ -1,6 +1,7 @@
 import { callStructuredTool, isAIConfigured } from "./client";
 import type { UsageContext } from "@/lib/usage/context";
 import { weekendPlanSchema } from "./schema";
+import { VOICE_RULE } from "./voice";
 import { attachImages } from "./weekend-plan";
 import { brand } from "@/lib/config/brand";
 import type { Experience } from "@/types/database";
@@ -61,7 +62,8 @@ Rules:
   requested energy level (low = 2-3 relaxed items/day, high = 4-5 packed items/day) and social mode.
 - Don't repeat the same experienceId on multiple days.
 - Keep total cost roughly aligned with the requested budget level across the whole trip.
-- Write a short, energetic 2-3 sentence summary of the overall trip.`;
+- Write a short 2-3 sentence summary of the overall trip.
+- ${VOICE_RULE} This applies to the summary and to every note.`;
 
 /**
  * Multi-day equivalent of generateWeekendPlan (src/ai/weekend-plan.ts) — same

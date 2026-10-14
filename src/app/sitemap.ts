@@ -39,6 +39,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${brand.domain}${PAGE_SEO.about.path}`, lastModified: PAGE_SEO.about.lastModified, changeFrequency: "monthly", priority: 0.5 },
     { url: `${brand.domain}${PAGE_SEO.contact.path}`, lastModified: PAGE_SEO.contact.lastModified, changeFrequency: "yearly", priority: 0.3 },
     { url: `${brand.domain}${PAGE_SEO.careers.path}`, lastModified: PAGE_SEO.careers.lastModified, changeFrequency: "monthly", priority: 0.3 },
+    { url: `${brand.domain}${PAGE_SEO.students.path}`, lastModified: PAGE_SEO.students.lastModified, changeFrequency: "monthly", priority: 0.6 },
     { url: `${brand.domain}${PAGE_SEO.faq.path}`, lastModified: PAGE_SEO.faq.lastModified, changeFrequency: "monthly", priority: 0.5 },
     { url: `${brand.domain}/privacy`, lastModified: OTHER_PAGE_LAST_MODIFIED.privacy, changeFrequency: "yearly", priority: 0.2 },
     { url: `${brand.domain}/terms`, lastModified: OTHER_PAGE_LAST_MODIFIED.terms, changeFrequency: "yearly", priority: 0.2 },

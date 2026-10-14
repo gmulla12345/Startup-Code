@@ -1,0 +1,74 @@
+{
+  "generatedAt": "2026-10-14T19:11:21.650Z",
+  "model": "claude-sonnet-5",
+  "surpriseMe": {
+    "title": "Saturday farmers' market",
+    "category": "Food & Drink",
+    "reasoning": "Food and outdoors in one stop, fits your low budget, and markets are easy for meeting people."
+  },
+  "weekend": {
+    "summary": "A low-cost, medium-energy weekend built around markets, music, and art, with plenty of room for the group to wander and regroup. Saturday leans toward food and browsing before an evening concert, while Sunday moves from a slow coffee morning to an outdoor sunset and a free gallery opening.",
+    "days": [
+      {
+        "day": "saturday",
+        "items": [
+          {
+            "time": "09:30",
+            "title": "Saturday farmers' market",
+            "note": "A relaxed start to the day, good for browsing produce and local food stalls with the group."
+          },
+          {
+            "time": "12:00",
+            "title": "Lunch break",
+            "note": "Grab lunch near the market, giving everyone a chance to compare finds."
+          },
+          {
+            "time": "14:00",
+            "title": "Thrift and vintage shops, a short walk apart",
+            "note": "A low-key afternoon of browsing, easy to split up and regroup as a group."
+          },
+          {
+            "time": "19:00",
+            "title": "Free concert on the lawn",
+            "note": "An evening outdoors with live music, good for sitting together on a blanket."
+          },
+          {
+            "time": "21:30",
+            "title": "Late-night pancake house",
+            "note": "A casual, affordable stop to close out the night before heading home."
+          }
+        ]
+      },
+      {
+        "day": "sunday",
+        "items": [
+          {
+            "time": "09:00",
+            "title": "Coffee and a long conversation at a corner café",
+            "note": "A slow morning to catch up before the day picks up."
+          },
+          {
+            "time": "11:00",
+            "title": "Used bookstore with a reading nook",
+            "note": "A quiet browse for anyone who wants to slow the pace further."
+          },
+          {
+            "time": "13:00",
+            "title": "Lunch break",
+            "note": "A mid-day meal somewhere nearby before heading outdoors."
+          },
+          {
+            "time": "17:30",
+            "title": "Sunset from a quiet overlook",
+            "note": "A calm outdoor close to the weekend, good for watching the light change together."
+          },
+          {
+            "time": "19:00",
+            "title": "A gallery opening, free to enter",
+            "note": "An easy, free way to end the weekend with some art and conversation."
+          }
+        ]
+      }
+    ]
+  }
+}

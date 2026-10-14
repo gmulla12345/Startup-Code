@@ -1,6 +1,7 @@
 import { callStructuredTool, isAIConfigured } from "./client";
 import type { UsageContext } from "@/lib/usage/context";
 import { recommendationBatchSchema } from "./schema";
+import { VOICE_RULE } from "./voice";
 import { brand } from "@/lib/config/brand";
 import type { RecommendationContext, StructuredRecommendation } from "@/types/ai";
 import type { ScoredExperience } from "@/services/recommendation/scoring";
@@ -27,7 +28,7 @@ const RECOMMEND_TOOL_SCHEMA = {
 
 const SYSTEM_PROMPT = `You are the recommendation reasoning layer for ${brand.name}, a personalized real-world discovery app.
 You will be given a user's profile and a shortlist of candidate experiences that have ALREADY been
-filtered and scored by a deterministic system — your job is only to write a short, warm, specific
+filtered and scored by a deterministic system — your job is only to write a short, specific
 reason each one was picked, and to lightly refine the match score (0-100) and a confidence (0-1).
 
 Rules:
@@ -36,6 +37,7 @@ Rules:
 - Reasoning must reference something specific about the user (an interest, a personality trait,
   their budget, or their recent behavior) — never generic filler like "you'll love this".
 - Keep each reasoning under 30 words.
+- ${VOICE_RULE}
 - Return one entry per candidate provided, in the same or better order.`;
 
 // Candidates beyond this get fast, free deterministic reasoning instead of

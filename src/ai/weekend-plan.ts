@@ -1,6 +1,7 @@
 import { callStructuredTool, isAIConfigured } from "./client";
 import type { UsageContext } from "@/lib/usage/context";
 import { weekendPlanSchema } from "./schema";
+import { VOICE_RULE } from "./voice";
 import { brand } from "@/lib/config/brand";
 import type { Experience, Profile } from "@/types/database";
 import type { WeekendPlan, WeekendPlanRequest } from "@/types/ai";
@@ -39,7 +40,8 @@ Rules:
 - Space items realistically across the day (roughly 2-4 hours apart), respecting the user's requested
   energy level and social mode.
 - Keep total cost roughly aligned with the requested budget level.
-- Write a short, energetic 1-2 sentence summary of the plan.`;
+- Write a short 1-2 sentence summary of the plan.
+- ${VOICE_RULE} This applies to the summary and to every note.`;
 
 export async function generateWeekendPlan(
   profile: Profile,

@@ -12,6 +12,7 @@
     "migrate": "tsx scripts/migrate.ts",
     "seed": "tsx scripts/seed-supabase.ts",
     "indexnow": "tsx scripts/indexnow.ts",
+    "students-preview": "tsx scripts/generate-students-preview.ts",
     "postinstall": "node scripts/copy-maplibre-worker.mjs"
   },
   "dependencies": {

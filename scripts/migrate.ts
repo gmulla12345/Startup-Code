@@ -59,6 +59,12 @@ async function main() {
         console.log("  applied");
       }
     }
+    // Supabase's REST layer keeps its own copy of the schema; direct SQL does not
+    // refresh it, so a new table can answer 404 for a while. This asks it to reload.
+    if (!dryRun) {
+      await client.query("notify pgrst, 'reload schema'");
+      console.log("Asked the API layer to reload its schema.");
+    }
   } finally {
     await client.end();
   }

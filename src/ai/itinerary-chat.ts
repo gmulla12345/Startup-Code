@@ -1,4 +1,5 @@
 import { callStructuredTool, isAIConfigured } from "./client";
+import { VOICE_RULE } from "./voice";
 import { itineraryChatIntentSchema, itineraryChatPickSchema, type ItineraryChatIntent, type ItineraryChatPick } from "./schema";
 import { brand } from "@/lib/config/brand";
 import type { Itinerary, ItineraryItem } from "@/types/database";
@@ -30,10 +31,11 @@ Rules:
   swap/remove of one existing item (e.g. reordering days, adding a whole new day, changing dates).
   Briefly explain in "reply" what you can actually help with right now.
 - itemId must be exactly one of the item ids given below, or null only when action is "clarify".
-- reply is a short (under 20 words), friendly, present-tense message shown in the chat immediately,
+- reply is a short (under 20 words), plain, present-tense message shown in the chat immediately,
   before anything is actually changed — describe the ACTION you're taking, not an outcome you don't
   know yet. E.g. "Swapping today's lunch for something cheaper..." or "Removing the museum visit on
-  Tuesday." Never mention a specific replacement place here — you don't know it yet.`;
+  Tuesday." Never mention a specific replacement place here — you don't know it yet.
+- ${VOICE_RULE}`;
 
 /**
  * First step of the chat-editing flow: figure out which item and what kind
@@ -104,7 +106,7 @@ candidates near the destination — never invent a place or describe one that is
 the one that best matches what the user asked for. If none of the candidates reasonably fit, return
 experienceId: null and say so in "reply". Keep "reply" short (under 20 words), present-tense, and
 specific, e.g. "Swapped in Joe's Pizza — cheaper and just as close." or "Nothing nearby really fit
-'quiet and outdoors' — try being more specific."`;
+'quiet and outdoors' — try being more specific." ${VOICE_RULE}`;
 
 /**
  * Second step, only reached for a "swap": picks from real candidates

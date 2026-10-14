@@ -53,6 +53,12 @@ export const PAGE_SEO = {
     description: `Answers to common questions about how ${brand.name}'s personalized discovery works, what Premium costs, how your data is used, and how Travel Mode plans trips.`,
     lastModified: "2026-10-12",
   },
+  students: {
+    path: "/students",
+    title: `${brand.name} for College Students: Things to Do Near Campus`,
+    description: `${brand.name} for students: a short, personalized list of places and plans near your campus, chosen for you. Create an account with your school email.`,
+    lastModified: "2026-10-14",
+  },
   blog: {
     path: "/blog",
     title: `${brand.name} Blog: Things to Do and How Discovery Works`,

@@ -2082,6 +2082,60 @@ sign-in, call an authenticated endpoint that runs `apply_signup_attribution` (th
 route, which the app does not use); send the `zolo_attr` cookie value, or add `src`/`code` body fields to the public
 event endpoint, since the app has no cookie jar; deep links from posters and QR codes carry the same two params.
 
+## Phase 2 of the campus pivot: the /students page (2026-10-14)
+
+Migration applied to production: [20261016_01_campuses_and_student_verification.sql](src/db/migrations/20261016_01_campuses_and_student_verification.sql)
+(folded into `schema.sql`). The existing homepage is untouched; the only change to shared chrome is one footer link ("For students").
+
+**The page** ([students/page.tsx](src/app/(marketing)/students/page.tsx)): campus-neutral, mobile-first, static (`○`, revalidated hourly, so a
+school added in the database appears without a deploy), indexable, canonical `/students` regardless of `?src=` / `?code=`. Headline and one
+line of copy, the signup card, then two example outputs. It is in the sitemap and `PAGE_SEO` (so the title/description length tests cover it).
+Nothing on it reads the request: the promo-code prefill and the `students_page_view` event happen in the browser after load, which is what
+keeps it cacheable. Voice: calm, no exclamation points or emoji (a test checks the form's text and the stored preview).
+
+**Signup** ([students-signup.tsx](src/components/students/students-signup.tsx)): school selector (the `campuses` table, Loyola first, plus
+"Don't see your school?"), school email (must end in `.edu`), password, promo code (prefilled from `?code=` or the campaign cookie). It calls
+`supabase.auth.signUp`; the confirmation email's link goes through `/auth/callback` to onboarding. No first name: onboarding asks for it. The
+campus shown under the email is detected in the browser from the typed domain ([campus.ts](src/lib/campus.ts)); nothing is sent anywhere to do that.
+**The promo code does nothing yet** beyond being saved as the account's campaign `code`; it is validated and redeemed on the server in Phase 3,
+and no copy on the page promises a discount.
+
+**Verification and campus** (database, so every path is covered, including the future mobile app): clicking the confirmation link updates
+`auth.users.email_confirmed_at`, and the trigger `on_auth_user_email_confirmed` calls `apply_student_verification()`. For any verified `.edu`
+address it sets `profiles.edu_verified_at`, sets `profiles.campus_id` from the domain (a school's domain or a subdomain of it matches, a
+lookalike like `notloyola.edu` or `loyola.edu.evil.com` does not), and records the `edu_verified` event once with the campus slug (or `other`).
+A `.edu` at a school we do not serve is still verified, with no campus. A Google account arrives already verified, so `handle_new_user()` runs
+the same function at creation (and `apply_signup_attribution` also patches that event's src/code afterwards). All of it is wrapped so it can
+never block an account being created or confirmed. Verified live against production through Supabase's admin API (no mail sent), then cleaned up.
+**Loyola's domain is seeded as `loyola.edu`: confirm it with the school**; add others to `campuses.email_domains`.
+
+**Waitlist** ([/api/waitlist](src/app/api/waitlist/route.ts), table `campus_waitlist`): an email and an optional school name, nothing else.
+Rate-limited per IP, a hidden honeypot field, lowercased and unique, and a repeat answers identically to a new one (the list cannot be probed).
+Written with the service role; no browser key can read or write the table. It records the campaign src/code so demand reads per poster.
+**This stores personal data (an email): the privacy policy should say so** (see below).
+
+**The example output is real output, from example inputs** ([preview.ts](src/lib/students/preview.ts), [students-preview.json](src/lib/content/students-preview.json)).
+`npm run students-preview` runs the actual Surprise Me scoring and reasoning and the actual Weekend Planner (two Claude calls, a few cents) on an
+imagined student and 13 archetype places ("Open-mic night at a neighborhood café"): campus-neutral, no named businesses, no Google data, and no
+invented price, rating or hours (the archetypes carry none, and a test checks the output has none). It is stored, so viewing costs nothing, and the
+page labels it "Example output, written for an imagined student. Not a live result." It **fails instead of writing** if either half quietly fell
+back to its non-AI version. It could not use real nearby places because Google Places is still rejecting requests (billing hold), and Google's terms
+would not let us bake its place names into a static page anyway; for the same reason a future "real places" preview should come from our own campus
+catalog.
+
+**The AI voice rule** ([ai/voice.ts](src/ai/voice.ts)). The preview exposed that the product's own AI prompts asked for "warm" and "energetic"
+copy, which broke the brand voice (an exclamation point in the first plan, "chill vibe", "fun finds"). One shared rule now feeds all five
+user-facing prompts (recommendation reasons, Weekend and Trip planners, both chat steps): calm, specific, understated, no exclamation points,
+emoji, slang or marketing words. **A first draft of the rule that listed example words in double quotes made the Weekend Planner fail validation
+6 of 6 times** (the model returned the whole `{items, summary}` object double-encoded as a string inside `items`, so every user would have silently
+received the non-AI fallback plan). The same rule without quotes, and the prompt with no rule at all, were 6 of 6 fine. So the rule must never contain
+quotation marks or backticks; [ai-voice.test.ts](src/__tests__/ai-voice.test.ts) enforces it. Open item: the planner's tool-call output is brittle to
+prompt wording; tolerating a stringified `items` (parse it and carry on) would make production robust to this class of failure.
+
+**Mobile equivalents:** the signup form's logic is a thin client over `signUp` + the database triggers, so the app reuses it: send `src`/`code` in
+`signUp` metadata, deep-link the confirmation URL, and (for Google/Apple) the verification and attribution already happen server-side. The campus
+list and waitlist are public endpoints/tables the app can call as-is.
+
 ## Exact next steps (priority order)
 
 **Done since the last update:** deployed to production at `discoverzolo.com` (fixed a Vercel
