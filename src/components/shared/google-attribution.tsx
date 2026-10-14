@@ -13,7 +13,7 @@ export function GoogleAttribution() {
     // safe-area padding — see components/layout/bottom-nav.tsx) instead of
     // sitting on top of it; BottomNav doesn't render at md+, so the badge
     // reverts to sitting directly in the corner there.
-    <div className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom)+0.5rem)] md:bottom-2 right-2 z-40 pointer-events-none">
+    <div data-google-attribution className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom)+0.5rem)] md:bottom-2 right-2 z-40 pointer-events-none">
       <span className="text-[10px] text-foreground-subtle bg-surface/80 backdrop-blur-sm px-1.5 py-0.5 rounded">
         Powered by Google
       </span>

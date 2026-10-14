@@ -307,3 +307,10 @@ body {
     animation: none;
   }
 }
+
+/* A page that prints its own Google credit in its content (a shared place or plan) marks itself
+   with data-own-google-attribution, and the floating site-wide badge steps aside: on a phone it
+   would otherwise sit on top of the page's main button. */
+body:has([data-own-google-attribution]) [data-google-attribution] {
+  display: none;
+}

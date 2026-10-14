@@ -156,6 +156,16 @@ describe("a shared plan", () => {
   });
 });
 
+describe("Google's credit", () => {
+  it("is printed on the page itself, so the floating site-wide badge can step aside rather than sit on the main button", async () => {
+    expect(await html()).toContain("data-own-google-attribution");
+    const css = readFileSync(join(__dirname, "../app/globals.css"), "utf-8");
+    expect(css).toMatch(/body:has\(\[data-own-google-attribution\]\) \[data-google-attribution\]\s*\{\s*display: none;/);
+    const badge = readFileSync(join(__dirname, "../components/shared/google-attribution.tsx"), "utf-8");
+    expect(badge).toContain("data-google-attribution");
+  });
+});
+
 describe("the way in", () => {
   it("is 'Plan your own with Zolo', and carries where the visitor came from", async () => {
     expect(await html()).toContain('href="/signup?src=share-place"');

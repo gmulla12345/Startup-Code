@@ -171,7 +171,8 @@ export default async function SharePage({ params }: Props) {
   if (!view) notFound();
 
   return (
-    <div className="flex min-h-screen flex-col">
+    // data-own-google-attribution: this page prints its own Google credit, so the floating site-wide badge steps aside (globals.css).
+    <div data-own-google-attribution className="flex min-h-screen flex-col">
       <header className="flex items-center justify-between px-6 py-5">
         <Logo />
         <Link href="/login" className="text-sm text-foreground-muted underline-offset-4 hover:text-foreground hover:underline">
