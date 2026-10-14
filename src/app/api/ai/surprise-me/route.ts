@@ -9,6 +9,7 @@ import { FREE_TIER_LIMITS } from "@/lib/config/pricing";
 import { surpriseMeFeedbackSchema } from "@/lib/validation/schemas";
 import { usageContext } from "@/lib/usage/context";
 import { assertWithinLimit } from "@/lib/usage/limits";
+import { trackAnalytics } from "@/lib/analytics/server";
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -61,6 +62,7 @@ export async function GET(request: Request) {
     }
 
     await trackEvent(supabase, user.id, "surprise_me_requested", result.experience.id);
+    await trackAnalytics("surprise_me_used", { userId: user.id, props: { reroll: false } });
     return NextResponse.json({ result });
   });
 }
@@ -107,6 +109,7 @@ export async function POST(request: Request) {
 
     const nextExcludeIds = [...body.excludeIds, body.experienceId];
     const result = await getSurpriseMe(supabase, profile, nextExcludeIds, usage);
+    if (result) await trackAnalytics("surprise_me_used", { userId: user.id, props: { reroll: true } });
 
     return NextResponse.json({ result });
   });

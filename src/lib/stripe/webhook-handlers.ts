@@ -1,6 +1,7 @@
 import type Stripe from "stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { SubscriptionStatus } from "@/types/database";
+import { trackAnalytics } from "@/lib/analytics/server";
 
 /**
  * All Stripe webhook business logic lives here, separate from the route
@@ -99,4 +100,19 @@ async function upsertSubscriptionRow(userId: string, subscription: Stripe.Subscr
       cancel_at_period_end: subscription.cancel_at_period_end,
     })
     .eq("user_id", userId);
+
+  // Measurement: the moment a subscription becomes live (paid or trialing). The
+  // dedupe key is the Stripe subscription id, so the several events Stripe sends
+  // for one subscription, and any retries, record it once.
+  if (["active", "trialing"].includes(subscription.status)) {
+    const interval = item?.price.recurring?.interval;
+    await trackAnalytics("premium_started", {
+      userId,
+      dedupeKey: `premium_started:stripe:${subscription.id}`,
+      props: {
+        interval: interval === "year" ? "annual" : interval === "month" ? "monthly" : undefined,
+        trial: subscription.status === "trialing",
+      },
+    });
+  }
 }

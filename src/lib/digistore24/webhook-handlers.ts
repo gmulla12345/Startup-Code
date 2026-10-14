@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { trackAnalytics } from "@/lib/analytics/server";
 
 /**
  * All Digistore24 IPN business logic lives here, separate from the route
@@ -73,6 +74,8 @@ export async function handleDigistore24Event(ipn: Ipn): Promise<void> {
         })
         .eq("user_id", userId);
       await recordPayment(admin, userId, ipn, "paid");
+      // Measurement: once per Digistore24 order (renewals reuse the order id).
+      await trackAnalytics("premium_started", { userId, dedupeKey: `premium_started:ds24:${orderId}` });
       break;
     }
     // DS24's own guidance: use this to temporarily suspend access until a

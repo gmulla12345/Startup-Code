@@ -5,6 +5,7 @@ const LINKS = [
   { href: "/admin", label: "Overview" },
   { href: "/admin/experiences", label: "Experiences" },
   { href: "/admin/users", label: "Users" },
+  { href: "/admin/analytics", label: "Analytics" },
 ];
 
 export default function AdminLayout({ children }: LayoutProps<"/admin">) {

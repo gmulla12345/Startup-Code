@@ -5,6 +5,7 @@ import { trackEvent } from "@/lib/repositories/events";
 import { getExperienceProvider } from "@/services/providers";
 import { saveExperienceSchema, updateSavedStatusSchema } from "@/lib/validation/schemas";
 import { usageContext } from "@/lib/usage/context";
+import { trackAnalytics } from "@/lib/analytics/server";
 
 export async function GET() {
   return withErrorHandling(async () => {
@@ -34,6 +35,7 @@ export async function POST(request: Request) {
       body.category ?? null
     );
     await trackEvent(supabase, user.id, "saved_experience", body.experienceId, { collection: body.collection });
+    await trackAnalytics("place_saved", { userId: user.id, props: { category: body.category } });
 
     return NextResponse.json({ saved });
   });

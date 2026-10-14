@@ -2023,6 +2023,65 @@ because Google returns `REQUEST_DENIED` while billing is on hold). After billing
 catalog URL twice and confirm one `ok` row, not two. **Not done on purpose (per the brief):** the free-tier place
 view limit is unchanged, and no new paid API call was added.
 
+## Phase 1 of the campus pivot: measurement (2026-10-15)
+
+Migration applied to production on 2026-10-15 after a rolled-back rehearsal:
+[20261015_01_analytics_events.sql](src/db/migrations/20261015_01_analytics_events.sql) (also folded into `schema.sql`).
+
+**What existed, and why a new table.** `user_events` records signed-in behavior for personalization and requires a
+`user_id`, so it cannot hold a visitor who has not signed up (the students page, the start of signup) and mixing
+marketing events into it would feed the recommender. GA4 runs on the client but its data lives outside our
+database. So: one new table, `analytics_events`, allowed to have a null user. `user_events` and the old
+`/api/analytics/track` are untouched.
+
+**The 12 events** (a CHECK constraint on the table and [events.ts](src/lib/analytics/events.ts) must match; a
+test fails if they drift): `students_page_view`, `signup_started`, `signup_completed`, `edu_verified`,
+`first_place_view`, `place_saved`, `surprise_me_used`, `share_created`, `share_link_opened`, `share_to_signup`,
+`promo_redeemed`, `premium_started`. **Emitting today:** `signup_started` (client, first touch of the signup form
+or Google), `signup_completed` (database trigger at account creation, so it covers every signup path including the
+future mobile app), `first_place_view` (once per user), `place_saved`, `surprise_me_used` (with `reroll` true or
+false), `premium_started` (Stripe, once per subscription id; Digistore24, once per order). **Defined but not
+emitted yet** (the features do not exist): `students_page_view` (Phase 2, the endpoint already accepts it),
+`edu_verified` (Phase 2), `promo_redeemed` (Phase 3), `share_created` / `share_link_opened` / `share_to_signup`
+(Phase 4). A browser may send only `students_page_view` and `signup_started` to the public endpoint
+[/api/analytics/event](src/app/api/analytics/event/route.ts); every other event is recorded server-side where it
+happens, so it cannot be forged.
+
+**src and code** ([attribution.ts](src/lib/attribution.ts)): `src` is a lowercase token (where the link was placed),
+`code` an uppercase token (the campaign/promo code). The proxy ([proxy.ts](src/proxy.ts),
+[attribution-cookie.ts](src/lib/attribution-cookie.ts)) saves them from the URL into a 30-day first-party cookie
+`zolo_attr` (not httpOnly; the signup form reads it); the most recent campaign link wins; invalid values are
+ignored. Every event row records them: explicit argument, else the cookie, else (webhooks, an expired cookie) the
+attribution saved on the user's profile. **Saved on the user record at signup:** email signup passes them in
+`signUp` metadata and the `handle_new_user()` trigger writes `profiles.signup_src` / `signup_code`; Google sign-in
+cannot carry metadata, so `/auth/callback` calls the `apply_signup_attribution()` function (service role only; it
+only touches an account created in the last 30 minutes that has no attribution yet, and patches its
+`signup_completed` event too). Both are self-reported by whoever builds the link: for analysis only, never for
+access or pricing (a promo code is validated separately on the server in Phase 3).
+
+**No PII, structurally.** Each event may carry only its allowlisted property keys (`PROP_ALLOWLIST`), and every
+value must be a short `[a-z0-9_.:-]` token, a boolean, or a number, so an email, name, query or place name cannot be
+stored even by mistake. The only identifier on a row is `user_id` (null for a visitor, set null if the account is
+deleted). No IP, user agent or referrer is stored. The signup trigger wraps its analytics insert in an exception
+handler, so measurement can never block an account being created.
+
+**SQL views** (service role only; the browser's keys get HTTP 401): `v_signups_by_src_code`,
+`v_return_rates_by_src_code`, `v_saves_per_user`, `v_saves_by_src_code`, `v_event_counts`,
+`v_events_by_src_code`. **Return rate:** a user returned in week 2 if they took an action (any `user_events` row, or
+`first_place_view` / `place_saved` / `surprise_me_used` / `share_created` / `promo_redeemed`) 7 to 14 days after
+signup, week 4 if 21 to 28 days after; a user counts only once that window has fully passed (14 and 28 days), so a
+recent cohort shows "not yet". **Known limit:** opening the app and only scrolling a feed is not an action, so these
+are a floor; a once-a-day `session_start` event would fix it if you want one. Accounts that signed up before this
+shipped appear under `(none)` and have no `signup_completed` event (nothing was backfilled).
+
+**Admin page:** [/admin/analytics](src/app/admin/analytics/page.tsx) (proxy-protected for admins, and re-checked
+on the server): events, signups, return rate, saves per user, and a funnel, each by src and code.
+
+**Native equivalents for the mobile app:** send `src` / `code` in `signUp` metadata (email) and, after an OAuth
+sign-in, call an authenticated endpoint that runs `apply_signup_attribution` (the web does this in the callback
+route, which the app does not use); send the `zolo_attr` cookie value, or add `src`/`code` body fields to the public
+event endpoint, since the app has no cookie jar; deep links from posters and QR codes carry the same two params.
+
 ## Exact next steps (priority order)
 
 **Done since the last update:** deployed to production at `discoverzolo.com` (fixed a Vercel

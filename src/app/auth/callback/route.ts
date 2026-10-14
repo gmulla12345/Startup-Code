@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { attributionFromCookieHeader } from "@/lib/attribution";
+import { applySignupAttribution } from "@/lib/analytics/server";
 
 /**
  * Handles the redirect from Supabase Auth after email confirmation, OAuth
@@ -13,8 +15,14 @@ export async function GET(request: Request) {
 
   if (code) {
     const supabase = await createClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
+      // A Google sign-in cannot carry src/code in user metadata, so attach the
+      // campaign cookie to a brand-new account here. The database only applies it
+      // to an account created in the last 30 minutes with no attribution yet.
+      if (data.user) {
+        await applySignupAttribution(data.user.id, attributionFromCookieHeader(request.headers.get("cookie")));
+      }
       return NextResponse.redirect(`${origin}${redirectTo}`);
     }
   }

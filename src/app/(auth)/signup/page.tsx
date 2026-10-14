@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -11,6 +11,7 @@ import { GoogleIcon } from "@/components/shared/google-icon";
 import { createClient } from "@/lib/supabase/client";
 import { brand } from "@/lib/config/brand";
 import { gtagEvent } from "@/lib/analytics/gtag";
+import { readAttribution, sendAnalyticsEvent } from "@/lib/analytics/client";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -19,6 +20,15 @@ export default function SignupPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const startedRef = useRef(false);
+
+  // signup_started: the first time they touch the form (or choose Google), once
+  // per page load. Measurement only; it sends no names or emails.
+  function markStarted(method: "email" | "google") {
+    if (startedRef.current) return;
+    startedRef.current = true;
+    sendAnalyticsEvent("signup_started", { method });
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -31,11 +41,21 @@ export default function SignupPage() {
     setLoading(true);
     const supabase = createClient();
 
+    // The campaign this visitor arrived from (?src= / ?code=, kept in a cookie by
+    // the proxy) is saved on their account at creation: the signup trigger reads
+    // it from this metadata. Google sign-in cannot carry it; the auth callback
+    // attaches it there instead.
+    const attribution = readAttribution();
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { first_name: firstName },
+        data: {
+          first_name: firstName,
+          ...(attribution.src ? { src: attribution.src } : {}),
+          ...(attribution.code ? { code: attribution.code } : {}),
+        },
         emailRedirectTo: `${window.location.origin}/auth/callback?redirect=/onboarding`,
       },
     });
@@ -61,6 +81,7 @@ export default function SignupPage() {
   }
 
   async function handleGoogle() {
+    markStarted("google");
     setGoogleLoading(true);
     const supabase = createClient();
     // Fired on initiating the redirect, since Supabase doesn't distinguish
@@ -112,7 +133,7 @@ export default function SignupPage() {
         <div className="h-px flex-1 bg-border" />
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-3">
+      <form onSubmit={handleSubmit} onFocusCapture={() => markStarted("email")} className="space-y-3">
         <Input placeholder="First name" value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
         <Input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
         <Input

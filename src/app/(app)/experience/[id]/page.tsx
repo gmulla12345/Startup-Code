@@ -5,6 +5,8 @@ import { createClient, getCurrentUser } from "@/lib/supabase/server";
 import { safeJsonLd } from "@/lib/seo";
 import { getExperienceProvider } from "@/services/providers";
 import { usageContext } from "@/lib/usage/context";
+import { countEventsSince } from "@/lib/repositories/events";
+import { trackAnalytics } from "@/lib/analytics/server";
 import { getReviewsForExperience } from "@/lib/repositories/reviews";
 import { getSubscription, isPremium } from "@/lib/repositories/subscriptions";
 import { ExperienceGallery } from "@/components/experience/experience-gallery";
@@ -78,7 +80,13 @@ export default async function ExperienceDetailPage({ params }: PageProps<"/exper
   let match: { score: number; reasons: string[] } | null = null;
 
   if (user) {
+    // Measurement: the first place a user ever opens. Counted before this view is
+    // recorded; the dedupe key makes it once-per-user even if two tabs race.
+    const isFirstPlaceView = (await countEventsSince(supabase, user.id, "viewed_experience", new Date(0).toISOString())) === 0;
     await trackEvent(supabase, user.id, "viewed_experience", experience.id, { source: "detail_page" });
+    if (isFirstPlaceView) {
+      await trackAnalytics("first_place_view", { userId: user.id, dedupeKey: `first_place_view:${user.id}` });
+    }
     const [{ data: savedRow }, subscription, profile] = await Promise.all([
       supabase.from("saved_experiences").select("id, status").eq("user_id", user.id).eq("experience_id", experience.id).maybeSingle(),
       getSubscription(supabase, user.id),
