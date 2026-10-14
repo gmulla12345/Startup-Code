@@ -2107,12 +2107,12 @@ lookalike like `notloyola.edu` or `loyola.edu.evil.com` does not), and records t
 A `.edu` at a school we do not serve is still verified, with no campus. A Google account arrives already verified, so `handle_new_user()` runs
 the same function at creation (and `apply_signup_attribution` also patches that event's src/code afterwards). All of it is wrapped so it can
 never block an account being created or confirmed. Verified live against production through Supabase's admin API (no mail sent), then cleaned up.
-**Loyola's domain is seeded as `loyola.edu`: confirm it with the school**; add others to `campuses.email_domains`.
+**Loyola's domain `loyola.edu` is confirmed by the owner (2026-10-14)**; add any other domains to `campuses.email_domains`.
 
 **Waitlist** ([/api/waitlist](src/app/api/waitlist/route.ts), table `campus_waitlist`): an email and an optional school name, nothing else.
 Rate-limited per IP, a hidden honeypot field, lowercased and unique, and a repeat answers identically to a new one (the list cannot be probed).
 Written with the service role; no browser key can read or write the table. It records the campaign src/code so demand reads per poster.
-**This stores personal data (an email): the privacy policy should say so** (see below).
+**This stores personal data (an email): the privacy policy must say so.** A review draft of every addition Phases 1 and 2 need (campaign cookie, measurement events, usage records, school verification, waitlist) is in [docs/privacy-policy-additions-draft.md](docs/privacy-policy-additions-draft.md); it is NOT applied to the live page yet, pending the owner's approval. It also flags an existing gap: the policy does not mention Google Analytics 4 or Endorsely, which the site loads on every page.
 
 **The example output is real output, from example inputs** ([preview.ts](src/lib/students/preview.ts), [students-preview.json](src/lib/content/students-preview.json)).
 `npm run students-preview` runs the actual Surprise Me scoring and reasoning and the actual Weekend Planner (two Claude calls, a few cents) on an
