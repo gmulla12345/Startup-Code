@@ -62,6 +62,16 @@ interface EventsBySource {
   event: string;
   events: number;
 }
+interface PromoRow {
+  code: string;
+  started: number;
+  redeemed: number;
+  redeemed_7d: number;
+  last_redeemed_at: string | null;
+  month_ended: number;
+  paid_after: number;
+  paid_after_pct: number | null;
+}
 
 // The funnel, in the order a person moves through it.
 const FUNNEL = [
@@ -126,12 +136,13 @@ export default async function AdminAnalyticsPage() {
   await requireAdminPage();
   const admin = createAdminClient();
 
-  const [eventCounts, signups, returns, saves, bySource] = await Promise.all([
+  const [eventCounts, signups, returns, saves, bySource, promos] = await Promise.all([
     admin.from("v_event_counts").select("*"),
     admin.from("v_signups_by_src_code").select("*").order("signups", { ascending: false }),
     admin.from("v_return_rates_by_src_code").select("*").order("users", { ascending: false }),
     admin.from("v_saves_by_src_code").select("*").order("users", { ascending: false }),
     admin.from("v_events_by_src_code").select("*"),
+    admin.from("v_promo_redemptions_by_code").select("*").order("redeemed", { ascending: false }),
   ]);
 
   const counts = new Map(((eventCounts.data ?? []) as EventCount[]).map((r) => [r.event, r]));
@@ -148,7 +159,7 @@ export default async function AdminAnalyticsPage() {
     (a, b) => (b.byEvent.signup_completed ?? 0) - (a.byEvent.signup_completed ?? 0)
   );
 
-  const errors = [eventCounts, signups, returns, saves, bySource].map((r) => r.error?.message).filter(Boolean);
+  const errors = [eventCounts, signups, returns, saves, bySource, promos].map((r) => r.error?.message).filter(Boolean);
 
   return (
     <div>
@@ -235,6 +246,39 @@ export default async function AdminAnalyticsPage() {
       </Section>
 
       <Section
+        title="Promo codes"
+        note={
+          <>
+            Student codes, each worth one free month. <strong>Started</strong> is a verified student who reached
+            checkout with the code; <strong>redeemed</strong> is one who completed it. <strong>Month ended</strong> counts
+            redemptions at least 35 days old, and <strong>paid after</strong> is how many of those went on to pay, so a
+            recent code shows &ldquo;not yet&rdquo; rather than a falsely low rate. Who redeemed is not shown here; the
+            table is <code>promo_redemptions</code>.
+          </>
+        }
+      >
+        <Table
+          head={["Code", "Started", "Redeemed", "Last 7 days", "Latest", "Month ended", "Paid after", "Paid rate"]}
+          empty={(promos.data ?? []).length === 0}
+        >
+          {((promos.data ?? []) as PromoRow[]).map((r) => (
+            <tr key={r.code} className="border-b border-border last:border-0">
+              <td className="p-3 text-foreground">{r.code}</td>
+              <td className={td}>{r.started}</td>
+              <td className={td}>{r.redeemed}</td>
+              <td className={td}>{r.redeemed_7d}</td>
+              <td className={td}>{r.last_redeemed_at ? new Date(r.last_redeemed_at).toLocaleDateString() : "—"}</td>
+              <td className={td}>{r.month_ended}</td>
+              <td className={td}>
+                {r.paid_after} of {r.month_ended}
+              </td>
+              <td className="p-3 text-foreground whitespace-nowrap">{pct(r.paid_after_pct)}</td>
+            </tr>
+          ))}
+        </Table>
+      </Section>
+
+      <Section
         title="Saves per user"
         note="Places each user currently has saved, by the source they signed up from. Per-user rows are in the v_saves_per_user view."
       >
@@ -259,7 +303,7 @@ export default async function AdminAnalyticsPage() {
 
       <Section
         title="Funnel by source and code"
-        note="Events recorded with that source and code. Events that have not started firing yet (the students page, school verification, sharing, promo codes) show 0 until those features ship."
+        note="Events recorded with that source and code. Events that have not started firing yet (sharing) show 0 until that feature ships."
       >
         <Table head={["Source", "Code", ...FUNNEL]} empty={funnelRows.length === 0}>
           {funnelRows.map((r) => (

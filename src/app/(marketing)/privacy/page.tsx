@@ -118,6 +118,11 @@ export default function PrivacyPolicyPage() {
           and, where we recognize its domain, which school it belongs to. We do not receive student records,
           enrollment details, or grades from any school, and we do not tell any school that you use {brand.name}.
         </p>
+        <p>
+          <strong>Promo codes.</strong> If you use a promo code, we record which code, your account, and when, so that a
+          code is used once per person and so that we can see how each code performed. Student codes are available only
+          to accounts with a verified school email address, which we check on our servers before the code is applied.
+        </p>
 
         <h3>Information automatically collected</h3>
         <p>
@@ -149,7 +154,7 @@ export default function PrivacyPolicyPage() {
           <li>
             <em>Measurement events.</em> We record when certain things happen: visiting our students page, starting
             and completing signup, verifying a school email, opening your first place, saving a place, using Surprise
-            Me, and starting a Premium subscription. If you are signed in, an event is linked to your account; every
+            Me, redeeming a promo code, and starting a Premium subscription. If you are signed in, an event is linked to your account; every
             event also carries the campaign labels above. Events do not contain your name, your email address, or
             anything you type.
           </li>
@@ -235,6 +240,10 @@ export default function PrivacyPolicyPage() {
           <li>
             <strong>To keep a school waitlist.</strong> To write to people who asked to hear when we reach their
             school.
+          </li>
+          <li>
+            <strong>To apply promo codes.</strong> To confirm that a code can be used by your account (a verified school
+            address, a first subscription, one use per person) and to record that it was used.
           </li>
           <li>
             <strong>To understand where people come from.</strong> To see which links and schools bring people to{" "}
@@ -467,6 +476,10 @@ export default function PrivacyPolicyPage() {
           <li>
             <strong>Measurement events and service usage records:</strong> when you delete your account, the link to
             your account is removed, and what remains cannot be tied to you.
+          </li>
+          <li>
+            <strong>Promo code redemptions:</strong> when you delete your account, the link to your account is removed,
+            and what remains (the code and the date) cannot be tied to you.
           </li>
           <li>
             <strong>School waitlist:</strong> until we write to you about your school, or until you ask us to remove

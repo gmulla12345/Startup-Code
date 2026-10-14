@@ -18,7 +18,7 @@ export default function TermsOfServicePage() {
   return (
     <>
     <BreadcrumbJsonLd items={[{ name: "Terms of Service", path: "/terms" }]} />
-    <LegalPage title="Terms of Service" updated="August 30, 2026">
+    <LegalPage title="Terms of Service" updated="October 14, 2026">
       <p>
         These Terms of Service (&ldquo;Terms&rdquo;) form a legally binding agreement between you and{" "}
         {brand.name}, governing your access to and use of the website at{" "}
@@ -131,6 +131,15 @@ export default function TermsOfServicePage() {
           <strong>Free trial.</strong> New Premium subscriptions include a 7-day free trial. If you do not cancel
           before the trial ends, your payment method will automatically be charged the then-current Premium price,
           and your subscription will continue on a recurring monthly basis until you cancel.
+        </p>
+        <p>
+          <strong>Student promo codes.</strong> A student promo code gives one free month of monthly Premium. It is for
+          accounts with a verified school email address, for people who have not subscribed before, and may be used once
+          per person; each code also has an expiry date and a limit on how many times it can be used. Student codes
+          replace the 7-day free trial and are not combined with it. When we require a card to start the free month,
+          your card is charged the then-current Premium price when the month ends, and your subscription continues on a
+          recurring monthly basis until you cancel. When we do not, Premium ends with the month unless you add a payment
+          method before then. We may refuse or withdraw a code used against these terms.
         </p>
         <p>
           <strong>Auto-renewal and cancellation.</strong> By subscribing, you authorize us to charge your payment

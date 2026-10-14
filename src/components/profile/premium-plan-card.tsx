@@ -7,7 +7,7 @@ import { pricing, type BillingInterval } from "@/lib/config/pricing";
 import { getBillingPreference, setBillingPreference } from "@/lib/utils/billing-preference";
 import { UpgradeButton } from "./upgrade-button";
 
-export function PremiumPlanCard() {
+export function PremiumPlanCard({ savedCode, requireCard }: { savedCode?: string; requireCard?: boolean } = {}) {
   const [interval, setInterval] = useState<BillingInterval>("monthly");
 
   // Reads the choice made on the homepage pricing toggle, if any — avoids a
@@ -74,7 +74,7 @@ export function PremiumPlanCard() {
         ))}
       </ul>
 
-      <UpgradeButton billingInterval={interval} />
+      <UpgradeButton billingInterval={interval} initialCode={savedCode} requireCard={requireCard} />
       <p className="text-xs text-foreground-subtle text-center mt-3">Cancel anytime from your profile.</p>
     </div>
   );

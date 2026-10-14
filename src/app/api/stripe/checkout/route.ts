@@ -3,6 +3,7 @@ import { requireUser, withErrorHandling, ApiError } from "@/lib/api/auth";
 import { createCheckoutSession } from "@/lib/stripe/checkout";
 import { isStripeConfigured } from "@/lib/stripe/client";
 import { checkoutRequestSchema } from "@/lib/validation/schemas";
+import { checkRateLimit } from "@/lib/api/rate-limit";
 
 export async function POST(request: Request) {
   return withErrorHandling(async () => {
@@ -16,9 +17,12 @@ export async function POST(request: Request) {
     // Body is optional (older cached clients may POST with none) — an
     // empty/missing body just falls through to the "monthly" default.
     const rawBody = await request.text();
-    const { billingInterval, endorselyReferral } = checkoutRequestSchema.parse(
+    const { billingInterval, endorselyReferral, promoCode } = checkoutRequestSchema.parse(
       rawBody ? JSON.parse(rawBody) : {}
     );
+
+    // Trying codes is capped per account, so a code cannot be found by guessing.
+    if (promoCode) checkRateLimit(`promo:${user.id}`, 8, 10 * 60_000);
 
     const origin = new URL(request.url).origin;
     const url = await createCheckoutSession({
@@ -28,6 +32,7 @@ export async function POST(request: Request) {
       cancelUrl: `${origin}/profile?checkout=cancelled`,
       billingInterval,
       endorselyReferral,
+      promoCode,
     });
 
     return NextResponse.json({ url });

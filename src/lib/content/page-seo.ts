@@ -73,8 +73,8 @@ export const PAGE_SEO = {
  */
 export const OTHER_PAGE_LAST_MODIFIED = {
   home: "2026-09-23",
-  privacy: "2026-09-15",
-  terms: "2026-09-15",
+  privacy: "2026-10-14",
+  terms: "2026-10-14",
   /** All /vs/* comparison pages share content-as-data in vs-pages.ts. */
   vsPages: "2026-10-12",
   /** All /travel/* guides share the destination catalog and one page template. */

@@ -22,8 +22,10 @@ import { readAttribution, sendAnalyticsEvent } from "@/lib/analytics/client";
  * Native equivalent: the same `campuses` rows behind a platform picker.
  *
  * The promo code is prefilled from ?code= (or the campaign cookie) and is saved
- * with the account as its campaign code. It does nothing yet beyond that: the
- * redemption itself is validated on the server in a later phase.
+ * with the account as its campaign code. It grants nothing here: when the student
+ * upgrades, the server checks the code (verified school email, first-time, one use
+ * per person, not expired) before applying it at checkout, and the upgrade page
+ * fills it in if it is one they can use (see lib/stripe/promo.ts).
  *
  * Measurement: students_page_view on load, signup_started on first touch of the
  * form. Neither carries the email or any other personal data.

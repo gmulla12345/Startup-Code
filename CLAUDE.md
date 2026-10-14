@@ -2145,6 +2145,73 @@ prompt wording; tolerating a stringified `items` (parse it and carry on) would m
 `signUp` metadata, deep-link the confirmation URL, and (for Google/Apple) the verification and attribution already happen server-side. The campus
 list and waitlist are public endpoints/tables the app can call as-is.
 
+## Phase 3 of the campus pivot: student promo codes (2026-10-14)
+
+Context: one free month of Premium for verified students, by code. **Built and committed, not yet applied to production or deployed**, and the
+Stripe objects have not been created in the live account (see "State" below).
+
+**How it works.** A student code is a Stripe *promotion code* that points at ONE coupon, `zolo-student-free-month` (100% off, `duration: once`, so
+the first monthly invoice is free). Stripe keeps each code's `max_redemptions` and `expires_at`; Stripe cannot know whether the holder is a
+verified student, so **the server checks before the code is attached to a Checkout Session** ([lib/stripe/promo.ts](src/lib/stripe/promo.ts),
+`evaluatePromoCode`). In order: the code carries a redemption limit, an expiry and `first_time_transaction` (a hand-made code without them is
+*refused*, not trusted); it is not expired, used up or inactive; the plan is **monthly** (the coupon is 100% off the first invoice, so on the annual
+price it would be a free year: the server refuses annual + code); the account has `profiles.edu_verified_at`; it has not already redeemed
+(`promo_redemptions`, unique per user = one use per person); it has never subscribed or paid (`subscriptions.stripe_subscription_id`,
+`digistore24_order_id`, any paid `payments` row = not a first-time customer). Fails closed on any database error. A code pointing at any *other*
+coupon is passed through for Stripe to judge. A student is told why in plain words ([`PROMO_MESSAGES`](src/lib/stripe/promo.ts)).
+
+**Stripe's own promotion-code box is gone from Checkout** (`allow_promotion_codes` is no longer set, in [checkout.ts](src/lib/stripe/checkout.ts)):
+otherwise anyone could type a student code there and skip the verified-student check, which Stripe cannot make. Codes are entered on Zolo
+instead ([upgrade-button.tsx](src/components/profile/upgrade-button.tsx), "Have a promo code?"; the upgrade page pre-fills the code saved at signup if
+it is one the account can use) and applied by the server with `discounts`. **Anywhere else promotion codes are switched on in the Stripe Dashboard
+(Payment Links, the customer portal) would still accept a student code with no school check; keep them off there.**
+
+**A student code replaces the 7-day trial** (never stacks: first month free from the day they start). Without a code, checkout is unchanged (7-day trial).
+
+**Card flag: `STUDENT_PROMO_REQUIRE_CARD`** ([config/promo.ts](src/lib/config/promo.ts)), default **card required** (`payment_method_collection: "always"`);
+only the exact value `false` turns it off (`"if_required"`: no card collected, since the first invoice is $0). Tradeoff, as explained to the owner:
+*card required* converts to paying with no further step and makes a throwaway account supply a card, but fewer students start (a card at the door
+puts some off) and some are surprised by the first charge (complaints, chargebacks), so checkout and the Terms say plainly that it is charged when
+the month ends; *no card* gets the most students in, but when the month ends there is nothing to charge, Premium lapses unless they add a card from
+their profile, so expect far fewer to pay, and a free month is easier to collect and walk away from. The wording shown under the code field follows the flag.
+**Not yet exercised against real Stripe**: the no-card path in particular (confirm Checkout really skips the card for a 100%-off `once` coupon, and what
+the subscription does at the end of the month) should be tried in test mode before the flag is ever set to `false`.
+
+**The redemption record** (`promo_redemptions`, migration `20261019_01_promo_redemptions.sql`, mirrored in `schema.sql`): a row is created as `pending`
+when the server sends a verified student to Checkout (it reuses their abandoned row, and closes their earlier unfinished Checkout Session, so two
+cannot both complete), and becomes `redeemed`, with the time and subscription id, when Stripe's `checkout.session.completed` arrives
+([webhook-handlers.ts](src/lib/stripe/webhook-handlers.ts); the session's `promo_claim` metadata is set only by our server; Stripe retries are idempotent)
+along with one `promo_redeemed` analytics event. Server-only (no browser key can read it); `user_id` is set to null on account deletion; stores no
+email, name or address. **Gap by choice:** deleting an account and signing up again with the same school email can redeem a second free month;
+closing it would mean keeping a hash of the school address after deletion, which the "most private default" rule argues against; the owner has not been asked.
+
+**Admin:** a "Promo codes" table sits right after the return-rate (retention) section of `/admin/analytics`
+([page.tsx](src/app/admin/analytics/page.tsx)), from the view `v_promo_redemptions_by_code`: started, redeemed, last 7 days, latest, "month ended"
+(redeemed 35+ days ago) and how many of those paid after (a $0 invoice does not count as paying), with "not yet" until a code has any ended months. Counts
+only; nobody is named.
+
+**Creating codes:** `npm run promo-codes -- --prefix <SCHOOL> --names A,B,C --max 100 --expires 2027-05-31` ([scripts/create-promo-codes.ts](scripts/create-promo-codes.ts),
+rules in [promo-plan.ts](src/lib/stripe/promo-plan.ts)). Names are `<PREFIX>-<NAME>`; **`--max` and `--expires` are required and have no default**; the
+default run is a DRY RUN that prints exactly what would be sent and makes no network call. `--apply` creates them (coupon first if missing, existing codes
+left alone). **`--apply` really runs against whichever Stripe account `STRIPE_SECRET_KEY` reaches, and the script loads `.env.local` itself, which holds a
+TEST key**; a live key needs `--yes-live`. (An `--apply` was run once by mistake while testing the "no key" refusal, which does not exist because of
+that loading; see State.)
+
+**Privacy and terms** updated the same day: the policy discloses promo-code records, the `promo_redeemed` event, the "to apply promo codes" purpose and
+the retention (account deletion removes the link), and [privacy-policy.test.tsx](src/__tests__/privacy-policy.test.tsx) now requires it; the Terms
+(section 4) describe the student free month and what happens at its end for both settings of the card flag.
+
+**State (2026-10-14).** Code, migration, tests (374; six new test files, plus the admin, privacy and signup ones extended), typecheck, lint and
+a production build are clean. (One unrelated Google-photo guard test timed out once under the full parallel run and passes on its own.) The migration was rehearsed against the production database in a rolled-back transaction (constraints, one use per person,
+the view's arithmetic, no access for anon/authenticated, de-identification on account deletion) and is **not applied**. In Stripe **test mode only** the coupon
+`zolo-student-free-month` and one example code `SCHOOL-CLUB` (max 5, expires 2027-05-31) exist, created by that mistaken `--apply`; nothing exists in live
+mode, and the Stripe key production uses (hidden in Vercel) has not been inspected, so whether production is on test or live keys is **unknown**.
+To ship: apply the migration, create the coupon and codes in the account production uses, deploy; then try it end to end in test mode.
+
+**Mobile equivalent:** none of this reaches the app. Digital subscriptions bought in an iOS or Android app go through the stores, so the free month
+there is Apple offer codes / Google Play promo codes, redeemed against the app's store products; `/api/stripe/checkout` is a web path. The
+`edu_verified_at` eligibility rule and `promo_redemptions` can be reused for any server-side check. Noted in `zolo-app/CLAUDE.md`.
+
 ## Exact next steps (priority order)
 
 **Done since the last update:** deployed to production at `discoverzolo.com` (fixed a Vercel

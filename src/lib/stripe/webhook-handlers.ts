@@ -2,6 +2,7 @@ import type Stripe from "stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { SubscriptionStatus } from "@/types/database";
 import { trackAnalytics } from "@/lib/analytics/server";
+import { markPromoRedeemed } from "./promo";
 
 /**
  * All Stripe webhook business logic lives here, separate from the route
@@ -14,6 +15,14 @@ export async function handleStripeEvent(event: Stripe.Event): Promise<void> {
       const userId = session.metadata?.userId;
       if (!userId || !session.subscription) return;
       await syncSubscriptionFromStripe(userId, session.subscription as string);
+
+      // A student code that the server reserved before sending this person to
+      // Checkout is now redeemed. promo_claim is set only by our own checkout code.
+      const claimId = session.metadata?.promo_claim;
+      if (claimId) {
+        const first = await markPromoRedeemed({ claimId, userId, subscriptionId: session.subscription as string });
+        if (first) await trackAnalytics("promo_redeemed", { userId, dedupeKey: `promo_redeemed:${userId}` });
+      }
       break;
     }
     case "customer.subscription.created":

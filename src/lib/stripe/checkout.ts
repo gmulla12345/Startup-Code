@@ -1,6 +1,13 @@
 import { getStripeClient } from "./client";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { premiumPriceId, type BillingInterval } from "@/lib/config/pricing";
+import { studentPromoRequiresCard } from "@/lib/config/promo";
+import {
+  attachSessionToClaim,
+  claimStudentPromo,
+  evaluatePromoCode,
+  expireCheckoutSession,
+} from "./promo";
 
 async function getOrCreateStripeCustomer(userId: string, email: string): Promise<string> {
   const admin = createAdminClient();
@@ -34,6 +41,8 @@ export async function createCheckoutSession(params: {
   cancelUrl: string;
   billingInterval?: BillingInterval;
   endorselyReferral?: string;
+  /** A code the person typed. Checked on the server (lib/stripe/promo.ts) before it touches Stripe. */
+  promoCode?: string;
 }): Promise<string> {
   const interval = params.billingInterval ?? "monthly";
   const priceId = premiumPriceId(interval);
@@ -46,7 +55,22 @@ export async function createCheckoutSession(params: {
   }
 
   const stripe = getStripeClient();
+
+  // A code is judged before anything is created: an unusable one stops here, with
+  // a message for the person, and no customer or session is made for it.
+  const promo = params.promoCode
+    ? await evaluatePromoCode({ userId: params.userId, code: params.promoCode, interval })
+    : null;
+
   const customerId = await getOrCreateStripeCustomer(params.userId, params.email);
+
+  // A student code reserves the one free month this person gets, and closes any
+  // earlier unfinished checkout of theirs so two cannot both complete.
+  const claim =
+    promo?.kind === "student"
+      ? await claimStudentPromo({ userId: params.userId, code: promo.code, promotionCodeId: promo.promotionCodeId })
+      : null;
+  if (claim) await expireCheckoutSession(claim.previousSessionId);
 
   // Endorsely (affiliate-click tracking, see src/components/shared/endorsely.tsx)
   // asks for its referral id in the session's metadata so it can attribute
@@ -66,11 +90,25 @@ export async function createCheckoutSession(params: {
       success_url: params.successUrl,
       cancel_url: params.cancelUrl,
       subscription_data: {
-        trial_period_days: 7,
-        metadata: { userId: params.userId, ...endorselyMetadata },
+        // The free month of a student code replaces the standard 7-day trial; the
+        // two are never stacked.
+        ...(claim ? {} : { trial_period_days: 7 }),
+        metadata: { userId: params.userId, ...endorselyMetadata, ...(promo ? { promo_code: promo.code } : {}) },
       },
-      metadata: { userId: params.userId, ...endorselyMetadata },
-      allow_promotion_codes: true,
+      // promo_claim is how the webhook knows this session carried a reserved student
+      // code. Only this server can set metadata, so a customer cannot forge it.
+      metadata: {
+        userId: params.userId,
+        ...endorselyMetadata,
+        ...(promo ? { promo_code: promo.code } : {}),
+        ...(claim ? { promo_claim: claim.id } : {}),
+      },
+      // A code is applied here, by the server, after its checks. Stripe's own
+      // promotion-code box is deliberately not offered (allow_promotion_codes
+      // stays off): a student code typed into it would skip the verified-student
+      // check, which Stripe cannot make.
+      ...(promo ? { discounts: [{ promotion_code: promo.promotionCodeId }] } : {}),
+      ...(claim ? { payment_method_collection: studentPromoRequiresCard() ? ("always" as const) : ("if_required" as const) } : {}),
       // Stripe Tax: calculates and collects the right tax for the
       // customer's location automatically. Requires Stripe Tax to be
       // enabled and an origin address set in the Dashboard (Settings > Tax)
@@ -82,11 +120,13 @@ export async function createCheckoutSession(params: {
     },
     // Idempotency key: if this request is retried (network blip, double
     // click before the button disables), Stripe returns the original
-    // session instead of creating a second one for the same user+price.
-    { idempotencyKey: `checkout_${params.userId}_${priceId}_${Date.now() / 60_000 | 0}` }
+    // session instead of creating a second one for the same user+price
+    // (and code: the same key with different parameters is an error).
+    { idempotencyKey: `checkout_${params.userId}_${priceId}_${promo?.code ?? "none"}_${Date.now() / 60_000 | 0}` }
   );
 
   if (!session.url) throw new Error("Stripe did not return a checkout URL.");
+  if (claim) await attachSessionToClaim(claim.id, session.id);
   return session.url;
 }
 

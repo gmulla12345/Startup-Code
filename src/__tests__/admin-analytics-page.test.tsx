@@ -53,6 +53,10 @@ beforeEach(() => {
       { src: "poster-library", code: "CAMPUS-CLUB", event: "signup_completed", events: 7 },
       { src: "poster-library", code: "CAMPUS-CLUB", event: "place_saved", events: 11 },
     ],
+    v_promo_redemptions_by_code: [
+      { code: "SCHOOL-CLUB", started: 9, redeemed: 7, redeemed_7d: 4, last_redeemed_at: "2026-10-18T15:00:00Z", month_ended: 3, paid_after: 2, paid_after_pct: 66.7 },
+      { code: "SCHOOL-HOUSES", started: 2, redeemed: 1, redeemed_7d: 1, last_redeemed_at: "2026-10-19T15:00:00Z", month_ended: 0, paid_after: 0, paid_after_pct: null },
+    ],
   };
 });
 
@@ -104,6 +108,25 @@ describe("what it shows", () => {
     expect(html).toMatch(/7 to 14 days/);
     expect(html).toMatch(/21 to\s+28 days/);
     expect(html).toMatch(/only scrolling is not recorded/);
+  });
+
+  it("shows each promo code's redemptions, next to the return rate", async () => {
+    const html = await render();
+    expect(html).toMatch(/SCHOOL-CLUB<\/td><td[^>]*>9<\/td><td[^>]*>7<\/td><td[^>]*>4<\/td>/);
+    expect(html).toContain("2 of 3"); // went on to pay, of those whose free month has ended
+    expect(html).toContain("66.7%");
+    expect(html).toMatch(/SCHOOL-HOUSES<\/td>[\s\S]*?0 of 0[\s\S]*?not yet/); // too recent to say
+    const at = (heading: string) => html.indexOf(`>${heading}<`);
+    expect(at("Return rate")).toBeGreaterThan(-1);
+    expect(at("Promo codes")).toBeGreaterThan(at("Return rate"));
+    expect(at("Saves per user")).toBeGreaterThan(at("Promo codes"));
+  });
+
+  it("explains the promo columns, and shows counts only: nobody is named", async () => {
+    const html = await render();
+    expect(html).toMatch(/35 days/);
+    expect(html).toMatch(/Who redeemed is not shown here/);
+    expect(html).not.toMatch(/user_id|@/);
   });
 
   it("shows saves per user", async () => {

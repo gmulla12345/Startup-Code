@@ -34,6 +34,14 @@ describe("the privacy policy discloses what we collect", () => {
     expect(text).toContain(`${days} days`);
   });
 
+  it("covers promo codes: what is recorded, who may use a student code, and what happens on account deletion", () => {
+    expect(text).toMatch(/Promo codes\. If you use a promo code, we record which code, your account, and when/);
+    expect(text).toMatch(/once per person/);
+    expect(text).toMatch(/verified school email address, which we check on our servers/);
+    expect(text).toMatch(/To apply promo codes/);
+    expect(text).toMatch(/Promo code redemptions: when you delete your account, the link to your account is removed/);
+  });
+
   it("covers measurement events and service usage records", () => {
     expect(text).toMatch(/Measurement events/);
     expect(text).toMatch(/Service usage records/);
@@ -54,12 +62,12 @@ describe("the privacy policy discloses what we collect", () => {
       share_created: /sharing/,
       share_link_opened: /sharing/,
       share_to_signup: /sharing/,
-      promo_redeemed: /promo/i,
+      promo_redeemed: /redeeming a promo code/,
       premium_started: /starting a Premium subscription/,
     };
-    const live = ["students_page_view", "signup_started", "signup_completed", "edu_verified", "first_place_view", "place_saved", "surprise_me_used", "premium_started"] as const;
+    const live = ["students_page_view", "signup_started", "signup_completed", "edu_verified", "first_place_view", "place_saved", "surprise_me_used", "promo_redeemed", "premium_started"] as const;
     for (const event of live) expect(text, event).toMatch(phrases[event]);
-    // Events that do not fire yet (sharing, promo codes) must be added to the policy when they ship.
+    // Events that do not fire yet (sharing) must be added to the policy when they ship.
     expect(ANALYTICS_EVENTS).toHaveLength(12);
   });
 

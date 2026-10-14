@@ -11,6 +11,14 @@ export const checkoutRequestSchema = z.object({
   // a UUID in practice, capped well above that so a malformed value can't
   // bloat the Stripe metadata field it gets passed into.
   endorselyReferral: z.string().max(200).optional(),
+  // A promo code the person typed. Whitespace-only counts as none. Length is capped
+  // here; what a code may contain, and whether it may be used, is decided on the
+  // server in lib/stripe/promo.ts.
+  promoCode: z
+    .string()
+    .max(64)
+    .transform((value) => value.trim() || undefined)
+    .optional(),
 });
 
 export const contactMessageSchema = z.object({
