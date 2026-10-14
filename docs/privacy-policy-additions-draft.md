@@ -1,6 +1,11 @@
 # Privacy policy: proposed additions
 
-Drafted 2026-10-14. **Nothing here is live.** The live page is `src/app/(marketing)/privacy/page.tsx` and has not been edited. When you approve, I apply this to that page (and update its "Last updated" date), and it goes live with the next deploy.
+Drafted 2026-10-14. **Status: applied to `src/app/(marketing)/privacy/page.tsx` on 2026-10-14** ("Last updated" set to October 14, 2026), after the owner delegated the open decisions. The decisions taken:
+
+- **Waitlist retention [DECIDE]:** entries are deleted 24 months after they are added, enforced by a daily database job (see `src/db/migrations/20261017_01_waitlist_retention.sql`), so the policy is true.
+- **Google Analytics 4 and Endorsely:** disclosed, not removed (they are tools the business chose; the policy was simply silent about them). Endorsely wording reflects the code: the referral id is attached to the Stripe payment record.
+
+The text below is the original draft, kept for reference; the live page is authoritative.
 
 This is a draft of plain-language policy text, not legal advice. Everything stated as fact below was checked against the code and the database; items marked **[DECIDE]** need a choice from you, and the last section lists questions for a lawyer.
 

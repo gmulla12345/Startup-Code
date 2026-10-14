@@ -1095,3 +1095,19 @@ create table if not exists public.campus_waitlist (
 create unique index if not exists uniq_campus_waitlist_email on public.campus_waitlist (email);
 alter table public.campus_waitlist enable row level security;
 revoke all on public.campus_waitlist from anon, authenticated;
+
+-- =========================================================================
+-- Waitlist retention: delete entries 24 months after they were added (see
+-- migrations/20261017_01_waitlist_retention.sql)
+-- =========================================================================
+do $$
+begin
+  create extension if not exists pg_cron;
+  perform cron.schedule(
+    'campus-waitlist-retention',
+    '17 4 * * *',
+    $job$delete from public.campus_waitlist where created_at < now() - interval '24 months'$job$
+  );
+exception when others then
+  raise notice 'pg_cron is unavailable (%); the waitlist retention job was NOT scheduled.', sqlerrm;
+end $$;

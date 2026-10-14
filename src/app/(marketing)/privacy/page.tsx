@@ -17,7 +17,7 @@ export default function PrivacyPolicyPage() {
   return (
     <>
     <BreadcrumbJsonLd items={[{ name: "Privacy Policy", path: "/privacy" }]} />
-    <LegalPage title="Privacy Policy" updated="August 29, 2026">
+    <LegalPage title="Privacy Policy" updated="October 14, 2026">
       <p>
         This Privacy Notice for {brand.name} (&ldquo;we,&rdquo; &ldquo;us,&rdquo; or &ldquo;our&rdquo;) describes how
         and why we might access, collect, store, use, and/or share (&ldquo;process&rdquo;) your personal information
@@ -49,6 +49,11 @@ export default function PrivacyPolicyPage() {
           <li>
             <strong>Do we collect information from third parties?</strong> Yes — if you sign in with Google, we
             receive basic profile information from Google as part of that flow.
+          </li>
+          <li>
+            <strong>Do we collect information about your school?</strong> Only if you give us a school email address or
+            join our waitlist. We use the address to confirm that it is a school address and to record which school it
+            belongs to. We do not receive student records from any school.
           </li>
           <li>
             <strong>How do we process your information?</strong> To provide and improve the Services, communicate
@@ -83,6 +88,10 @@ export default function PrivacyPolicyPage() {
           <li>Passwords</li>
           <li>Contact or authentication data (including your Google account identifier, if you sign in with Google)</li>
           <li>Billing addresses</li>
+          <li>School email addresses, if you sign up with one</li>
+          <li>
+            If you join our school waitlist: your email address and, if you choose to give it, the name of your school
+          </li>
         </ul>
         <p>
           <strong>Sensitive information.</strong> We do not process sensitive information (racial or ethnic origin,
@@ -101,6 +110,13 @@ export default function PrivacyPolicyPage() {
           <strong>Social login data.</strong> If you register using your Google account, we receive certain profile
           information about you from Google, as described under{" "}
           <a href="#social-logins">How do we handle your social logins?</a> below.
+        </p>
+
+        <p>
+          <strong>School verification.</strong> If you sign up with an email address ending in .edu, we send a
+          confirmation link to that address. When you open it, we record that the address is a verified school address
+          and, where we recognize its domain, which school it belongs to. We do not receive student records,
+          enrollment details, or grades from any school, and we do not tell any school that you use {brand.name}.
         </p>
 
         <h3>Information automatically collected</h3>
@@ -124,6 +140,24 @@ export default function PrivacyPolicyPage() {
             <em>Location data.</em> The city and coordinates you provide during onboarding, used to personalize
             nearby recommendations. We do not track continuous or background device location. You can decline to
             provide this, though some features (like nearby discovery) may not work as well.
+          </li>
+          <li>
+            <em>Campaign link information.</em> When you arrive through a link that carries a source or campaign label
+            (for example, a poster or a club&apos;s link), we remember those labels in a cookie for 30 days and save
+            them with your account if you sign up. They describe the link, not you.
+          </li>
+          <li>
+            <em>Measurement events.</em> We record when certain things happen: visiting our students page, starting
+            and completing signup, verifying a school email, opening your first place, saving a place, using Surprise
+            Me, and starting a Premium subscription. If you are signed in, an event is linked to your account; every
+            event also carries the campaign labels above. Events do not contain your name, your email address, or
+            anything you type.
+          </li>
+          <li>
+            <em>Service usage records.</em> To keep the Services reliable and to control costs, we record each request
+            we make to our AI and places providers: which feature triggered it, how much was used, and its estimated
+            cost, linked to your account. We use these records to apply daily limits that protect the Services from
+            abuse.
           </li>
         </ul>
         <p>
@@ -193,6 +227,22 @@ export default function PrivacyPolicyPage() {
             <strong>AI-powered recommendation reasoning.</strong> We send relevant profile and context data
             (interests, budget, and location preferences) to our AI provider, Anthropic, to generate natural-language
             reasoning that explains why a specific experience was recommended to you.
+          </li>
+          <li>
+            <strong>To verify school email addresses.</strong> To confirm that an address is a school address and to
+            record which school it belongs to.
+          </li>
+          <li>
+            <strong>To keep a school waitlist.</strong> To write to people who asked to hear when we reach their
+            school.
+          </li>
+          <li>
+            <strong>To understand where people come from.</strong> To see which links and schools bring people to{" "}
+            {brand.name}, using the campaign labels and measurement events described above.
+          </li>
+          <li>
+            <strong>To keep the Services within safe limits.</strong> Using the service usage records described above,
+            we apply daily limits on AI and places requests per account.
           </li>
         </ul>
       </section>
@@ -286,7 +336,18 @@ export default function PrivacyPolicyPage() {
           <li>
             <strong>Location &amp; places data</strong> — Google Maps Platform
           </li>
+          <li>
+            <strong>Website analytics</strong> — Google Analytics (how the Services are used and how people arrive)
+          </li>
+          <li>
+            <strong>Referral tracking</strong> — Endorsely (which partner&apos;s link brought you, so the partner can
+            be credited)
+          </li>
         </ul>
+        <p>
+          Email addresses on our school waitlist are kept in our database and are not shared with schools or anyone
+          else.
+        </p>
         <p>We may also need to share your personal information in these situations:</p>
         <ul>
           <li>
@@ -304,13 +365,36 @@ export default function PrivacyPolicyPage() {
       <section id="cookies">
         <h2>5. Do we use cookies and other tracking technologies?</h2>
         <p>
-          <strong>In short:</strong> we use cookies to keep you signed in and to maintain the security of the
-          Services.
+          <strong>In short:</strong> we use cookies to keep you signed in, to maintain the security of the Services, to
+          measure how they are used, and to credit referral links.
         </p>
         <p>
           We use cookies for authentication and session management (via Supabase Auth), and similar technologies to
           maintain security, prevent crashes, and support basic site functionality. We do not use cookies for
           third-party advertising or retargeting.
+        </p>
+        <p>
+          <strong>Campaign cookie.</strong> If you arrive through a link carrying a source or campaign label, we set a
+          first-party cookie named <code>zolo_attr</code> that holds those labels for 30 days. It is used to credit the
+          link that brought you if you sign up, and to attach the same labels to the measurement events described
+          above. It does not contain your name, your email address, or any identifier of yours, and we do not use it
+          for advertising.
+        </p>
+        <p>
+          <strong>Google Analytics.</strong> We use Google Analytics 4, a service of Google, to understand how the
+          Services are used: which pages are visited, how people arrive, and whether a visit leads to signing up. It
+          sets cookies in your browser that recognize it across visits and sends usage information to Google, whose use
+          of that information is governed by Google&apos;s own privacy policy. You can block these cookies in your
+          browser settings, or use Google&apos;s{" "}
+          <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener noreferrer">
+            opt-out browser add-on
+          </a>
+          .
+        </p>
+        <p>
+          <strong>Referral tracking.</strong> If you arrive through a partner&apos;s referral link, we use Endorsely to
+          record which partner referred you, so that the partner can be credited. If you later subscribe to Premium,
+          that referral identifier is attached to your payment record with Stripe.
         </p>
       </section>
 
@@ -376,6 +460,19 @@ export default function PrivacyPolicyPage() {
           we delete or anonymize your personal data within 30 days, except where retention is required for legal,
           tax, or fraud-prevention purposes.
         </p>
+        <ul>
+          <li>
+            <strong>Campaign cookie:</strong> 30 days.
+          </li>
+          <li>
+            <strong>Measurement events and service usage records:</strong> when you delete your account, the link to
+            your account is removed, and what remains cannot be tied to you.
+          </li>
+          <li>
+            <strong>School waitlist:</strong> until we write to you about your school, or until you ask us to remove
+            your address, whichever comes first, and in any case no longer than 24 months after you joined.
+          </li>
+        </ul>
       </section>
 
       <section id="safety">
@@ -483,6 +580,11 @@ export default function PrivacyPolicyPage() {
                 ["Audio/visual information", "Photos, audio, or video recordings", "No"],
                 ["Professional/employment information", "Job history, portfolio (job applicants only)", "No"],
                 ["Education information", "Student records", "No"],
+                [
+                  "School affiliation",
+                  "That your email is a verified school address, and which school it belongs to (not student records)",
+                  "Yes",
+                ],
                 ["Inferences", "Preferences and characteristics inferred to personalize recommendations", "Yes"],
                 ["Sensitive personal information", "—", "No"],
               ].map(([cat, ex, collected]) => (
@@ -496,7 +598,9 @@ export default function PrivacyPolicyPage() {
           </table>
         </div>
         <p>
-          We retain each of these categories for as long as you have an account with us. We have not sold personal
+          We retain each of these categories for as long as you have an account with us, except where{" "}
+          <a href="#retention">How long do we keep your information?</a> above says otherwise (for example, the
+          campaign cookie and the school waitlist). We have not sold personal
           information to third parties for a business or commercial purpose in the preceding twelve months. We have
           disclosed Identifiers, California Customer Records information, Commercial information, Internet/network
           activity, and Geolocation data to our service providers (see{" "}
