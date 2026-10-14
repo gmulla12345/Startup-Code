@@ -36,10 +36,11 @@ export function isAnalyticsEvent(value: unknown): value is AnalyticsEvent {
 /**
  * Events a browser may send to the public endpoint. These are the ones that
  * happen before there is a trustworthy server-side moment (a page view, the
- * start of a signup). Everything else is recorded by the server, where it
- * actually happens, and a client cannot forge it.
+ * start of a signup, a shared link being opened: that page is built once and
+ * reused, so only the browser sees each visit). Everything else is recorded by
+ * the server, where it actually happens, and a client cannot forge it.
  */
-export const CLIENT_EVENTS: readonly AnalyticsEvent[] = ["students_page_view", "signup_started"];
+export const CLIENT_EVENTS: readonly AnalyticsEvent[] = ["students_page_view", "signup_started", "share_link_opened"];
 
 /** The only property keys each event may carry. Anything else is dropped. */
 export const PROP_ALLOWLIST: Record<AnalyticsEvent, readonly string[]> = {

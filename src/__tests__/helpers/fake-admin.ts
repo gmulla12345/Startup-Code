@@ -8,14 +8,18 @@
 
 export interface Call {
   table: string;
-  op: "select" | "insert" | "update";
+  op: "select" | "insert" | "update" | "delete";
   values?: Record<string, unknown>;
   filters: Record<string, unknown>;
+  /** The columns asked for, and any count option, of the last select(). */
+  columns?: string;
+  selectOptions?: Record<string, unknown>;
 }
 
 export interface Reply {
   data: unknown;
   error: { code?: string; message: string } | null;
+  count?: number | null;
 }
 
 export function createFakeAdmin(respond: (call: Call) => Reply, calls: Call[]) {
@@ -27,7 +31,11 @@ export function createFakeAdmin(respond: (call: Call) => Reply, calls: Call[]) {
         return Promise.resolve(respond(call));
       };
       const builder: Record<string, unknown> = {
-        select: () => builder,
+        select: (columns?: string, options?: Record<string, unknown>) => {
+          call.columns = columns;
+          call.selectOptions = options;
+          return builder;
+        },
         insert: (values: Record<string, unknown>) => {
           call.op = "insert";
           call.values = values;
@@ -36,6 +44,10 @@ export function createFakeAdmin(respond: (call: Call) => Reply, calls: Call[]) {
         update: (values: Record<string, unknown>) => {
           call.op = "update";
           call.values = values;
+          return builder;
+        },
+        delete: () => {
+          call.op = "delete";
           return builder;
         },
         eq: (column: string, value: unknown) => {
@@ -52,5 +64,5 @@ export function createFakeAdmin(respond: (call: Call) => Reply, calls: Call[]) {
   };
 }
 
-export const ok = (data: unknown = null): Reply => ({ data, error: null });
+export const ok = (data: unknown = null, count?: number): Reply => ({ data, error: null, count });
 export const fail = (message: string, code?: string): Reply => ({ data: null, error: { message, code } });

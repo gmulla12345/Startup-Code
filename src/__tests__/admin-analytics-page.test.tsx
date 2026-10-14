@@ -129,6 +129,12 @@ describe("what it shows", () => {
     expect(html).not.toMatch(/user_id|@/);
   });
 
+  it("says where shared-link signups are counted, since share_to_signup is not an event", async () => {
+    const html = await render();
+    expect(html).toMatch(/share_to_signup is not recorded as an event/);
+    expect(html).toMatch(/share-place or share-plan/);
+  });
+
   it("shows saves per user", async () => {
     const html = await render();
     expect(html).toContain("57.1%");

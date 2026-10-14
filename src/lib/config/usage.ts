@@ -28,6 +28,18 @@ export const DAILY_LIMITS = {
   premium: { ai: 60, places: 400 },
 } as const;
 
+/**
+ * Daily ceilings on Google calls made for visitors with NO account, counted across
+ * all of them, per feature. A per-user limit cannot stop a spike that comes from
+ * strangers (a shared link going around a campus), so these do. Reaching one only
+ * turns off the live Google details for the rest of the day: the page still loads,
+ * with what we hold ourselves. Counted from api_usage_events, and only cache misses
+ * reach Google at all. A starting value: change it here.
+ */
+export const ANONYMOUS_DAILY_PLACES_CAPS: Readonly<Record<string, number>> = {
+  share_preview: 200,
+};
+
 export type UsageBucket = "ai" | "places";
 export type UsagePlan = keyof typeof DAILY_LIMITS;
 
@@ -39,6 +51,9 @@ export type UsagePlan = keyof typeof DAILY_LIMITS;
 export const PLACES_COST_USD = {
   nearby_search: 0.032,
   place_details: 0.025,
+  // A shared-link preview asks only for name, address, type and photo: the Pro SKU
+  // ($17/1000) with no Contact or Atmosphere fields.
+  place_details_share: 0.017,
   place_photo: 0.007,
   geocode: 0.005,
   reverse_geocode: 0.005,

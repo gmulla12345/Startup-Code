@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { DAILY_LIMITS, USAGE_TIMEZONE, type UsageBucket } from "@/lib/config/usage";
+import { ANONYMOUS_DAILY_PLACES_CAPS, DAILY_LIMITS, USAGE_TIMEZONE, type UsageBucket } from "@/lib/config/usage";
 import type { UsageContext, UsageSnapshot } from "./context";
 
 /**
@@ -59,10 +59,21 @@ export interface UsageCheck {
   used: number;
 }
 
+async function loadAnonymousUsed(feature: string): Promise<number> {
+  const { data, error } = await createAdminClient().rpc("usage_units_for_feature_since", {
+    p_feature: feature,
+    p_since: startOfUsageDay().toISOString(),
+  });
+  if (error) throw new Error(error.message);
+  return Number(data ?? 0);
+}
+
 /**
  * Whether `units` more calls fit inside the user's remaining daily allowance.
- * Anonymous contexts are always allowed (there is no account to count against;
- * their calls are still logged). The first check in a request reads the plan
+ * An anonymous context has no account to count against, so it is held to the
+ * per-feature ceiling in ANONYMOUS_DAILY_PLACES_CAPS if its feature has one
+ * (shared-link previews do) and is otherwise allowed; either way its calls are
+ * logged. The first check in a request reads the plan
  * and today's usage once and memoizes it on the context, so a 7-way Places
  * fan-out costs one lookup, not seven.
  *
@@ -70,7 +81,18 @@ export interface UsageCheck {
  * security boundary, and a database hiccup should not take discovery down.
  */
 export async function checkUsage(ctx: UsageContext | undefined, bucket: UsageBucket, units = 1): Promise<UsageCheck> {
-  if (!ctx?.userId) return { allowed: true, limit: Infinity, used: 0 };
+  if (!ctx?.userId) {
+    const cap = ctx && bucket === "places" ? ANONYMOUS_DAILY_PLACES_CAPS[ctx.feature] : undefined;
+    if (!ctx || cap === undefined) return { allowed: true, limit: Infinity, used: 0 };
+    try {
+      ctx.anonymousUsed ??= loadAnonymousUsed(ctx.feature);
+      const used = await ctx.anonymousUsed;
+      return { allowed: used + units <= cap, limit: cap, used };
+    } catch (err) {
+      console.error("[usage] anonymous limit check failed, allowing the call:", err);
+      return { allowed: true, limit: Infinity, used: 0 };
+    }
+  }
 
   try {
     ctx.snapshot ??= loadSnapshot(ctx.userId);

@@ -636,8 +636,12 @@ create policy "own events" on public.user_events for all using (auth.uid() = use
 drop policy if exists "own recommendations" on public.recommendations;
 create policy "own recommendations" on public.recommendations for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
+-- Owner only. Plans are shared through share_links (migrations/20261020_02), which the
+-- server reads with its own key: a public-read policy here would let anyone with the
+-- public database key list every shared plan.
 drop policy if exists "own or public itineraries" on public.itineraries;
-create policy "own or public itineraries" on public.itineraries for select using (auth.uid() = user_id or is_public = true);
+drop policy if exists "own itineraries" on public.itineraries;
+create policy "own itineraries" on public.itineraries for select using (auth.uid() = user_id);
 drop policy if exists "manage own itineraries" on public.itineraries;
 create policy "manage own itineraries" on public.itineraries for insert with check (auth.uid() = user_id);
 drop policy if exists "update own itineraries" on public.itineraries;
@@ -647,7 +651,7 @@ create policy "delete own itineraries" on public.itineraries for delete using (a
 
 drop policy if exists "itinerary items via parent" on public.itinerary_items;
 create policy "itinerary items via parent" on public.itinerary_items for all using (
-  exists (select 1 from public.itineraries i where i.id = itinerary_id and (i.user_id = auth.uid() or i.is_public = true))
+  exists (select 1 from public.itineraries i where i.id = itinerary_id and i.user_id = auth.uid())
 ) with check (
   exists (select 1 from public.itineraries i where i.id = itinerary_id and i.user_id = auth.uid())
 );
@@ -1275,3 +1279,52 @@ group by code;
 
 revoke all on public.v_promo_redemptions_by_code from anon, authenticated;
 grant select on public.v_promo_redemptions_by_code to service_role;
+
+-- =========================================================================
+-- Phase 4: share links, a public unguessable page for one place or plan (see
+-- migrations/20261020_01_share_links.sql for the reasoning)
+-- =========================================================================
+create table if not exists public.share_links (
+  id uuid primary key default gen_random_uuid(),
+  token text not null unique check (token ~ '^[A-Za-z0-9_-]{22}$'),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  kind text not null check (kind in ('place', 'plan')),
+  -- (length and shape are separate checks: Postgres caps a regex repeat count at 255)
+  place_id text check (place_id is null or (char_length(place_id) between 10 and 300 and place_id ~ '^[A-Za-z0-9_-]+$')),
+  itinerary_id uuid references public.itineraries(id) on delete cascade,
+  note text check (note is null or char_length(note) between 1 and 140),
+  show_name boolean not null default false,
+  created_at timestamptz not null default now(),
+  constraint share_links_one_target check (
+    (kind = 'place' and place_id is not null and itinerary_id is null)
+    or (kind = 'plan' and itinerary_id is not null and place_id is null)
+  )
+);
+
+create unique index if not exists uniq_share_links_place on public.share_links (user_id, place_id) where kind = 'place';
+create unique index if not exists uniq_share_links_plan on public.share_links (user_id, itinerary_id) where kind = 'plan';
+create index if not exists idx_share_links_user on public.share_links (user_id);
+
+alter table public.share_links enable row level security;
+revoke all on public.share_links from anon, authenticated;
+
+-- Google calls (units) made for one feature today, across everyone, signed in or not.
+create index if not exists idx_api_usage_feature_created on public.api_usage_events (feature, created_at);
+
+create or replace function public.usage_units_for_feature_since(p_feature text, p_since timestamptz)
+returns bigint
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select coalesce(sum(e.units), 0)::bigint
+  from public.api_usage_events e
+  where e.feature = p_feature
+    and e.bucket = 'places'
+    and e.created_at >= p_since
+    and e.outcome = 'ok'
+$$;
+
+revoke all on function public.usage_units_for_feature_since(text, timestamptz) from public, anon, authenticated;
+grant execute on function public.usage_units_for_feature_since(text, timestamptz) to service_role;

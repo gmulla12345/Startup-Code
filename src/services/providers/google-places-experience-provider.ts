@@ -4,6 +4,7 @@ import { titleCase } from "@/lib/utils/format";
 import { photoProxyUrl } from "@/lib/google/photo-url";
 import { brand } from "@/lib/config/brand";
 import { fetchGoogleJson } from "@/lib/google/places-fetch";
+import { PLACE_ID_PREFIX } from "@/lib/google/place-id";
 import type { UsageContext } from "@/lib/usage/context";
 
 /**
@@ -428,7 +429,7 @@ function isValidCoordinate(latitude: number | undefined, longitude: number | und
 
 export class GooglePlacesExperienceProvider implements ExperienceProvider {
   /** Prefix namespaces Google-sourced ids/slugs so routing can tell them apart from curated catalog ids. */
-  static readonly PREFIX = "g-";
+  static readonly PREFIX = PLACE_ID_PREFIX;
 
   constructor(
     private apiKey: string,

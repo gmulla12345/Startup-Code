@@ -21,6 +21,18 @@ export const checkoutRequestSchema = z.object({
     .optional(),
 });
 
+// Creating (or updating) a share link. The note and the place are checked in
+// lib/share/input.ts; here only the shape and sizes, so nothing huge gets that far.
+const shareOptions = {
+  note: z.string().max(1000).nullish(),
+  // Private unless the person says otherwise.
+  showName: z.boolean().default(false),
+};
+export const shareRequestSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("place"), experienceId: z.string().max(400), ...shareOptions }),
+  z.object({ kind: z.literal("plan"), itineraryId: z.string().uuid(), ...shareOptions }),
+]);
+
 export const contactMessageSchema = z.object({
   name: z.string().min(1).max(100),
   email: z.string().email(),

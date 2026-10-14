@@ -42,6 +42,17 @@ describe("the privacy policy discloses what we collect", () => {
     expect(text).toMatch(/Promo code redemptions: when you delete your account, the link to your account is removed/);
   });
 
+  it("covers share links: what is stored, who sees it, what stays hidden, and how to turn it off", () => {
+    expect(text).toMatch(/Share links\. If you share a place or a plan, we store a link address/);
+    expect(text).toMatch(/Anyone who has the link can see the shared place or plan and your note, and your first name only if you chose to show it/);
+    expect(text).toMatch(/we never show your last name, email address, or account/);
+    expect(text).toMatch(/come from Google when the page is built and are not stored by us/);
+    expect(text).toMatch(/ask search engines not to index shared pages/);
+    expect(text).toMatch(/You can turn a link off at any time, which deletes it/);
+    expect(text).toMatch(/To let you share places and plans/);
+    expect(text).toMatch(/Share links: until you turn the link off, which deletes it, or you delete your account/);
+  });
+
   it("covers measurement events and service usage records", () => {
     expect(text).toMatch(/Measurement events/);
     expect(text).toMatch(/Service usage records/);
@@ -59,15 +70,18 @@ describe("the privacy policy discloses what we collect", () => {
       first_place_view: /opening your first place/,
       place_saved: /saving a place/,
       surprise_me_used: /using Surprise Me/,
-      share_created: /sharing/,
-      share_link_opened: /sharing/,
-      share_to_signup: /sharing/,
+      share_created: /creating a share link/,
+      share_link_opened: /opening a shared link/,
+      // Not recorded as an event: signups from shared links are counted by their source
+      // label (share-place, share-plan) in the signup tables instead. If it is ever
+      // recorded, it moves to the live list below and the policy must say so.
+      share_to_signup: /signup/,
       promo_redeemed: /redeeming a promo code/,
       premium_started: /starting a Premium subscription/,
     };
-    const live = ["students_page_view", "signup_started", "signup_completed", "edu_verified", "first_place_view", "place_saved", "surprise_me_used", "promo_redeemed", "premium_started"] as const;
+    const live = ["students_page_view", "signup_started", "signup_completed", "edu_verified", "first_place_view", "place_saved", "surprise_me_used", "promo_redeemed", "share_created", "share_link_opened", "premium_started"] as const;
     for (const event of live) expect(text, event).toMatch(phrases[event]);
-    // Events that do not fire yet (sharing) must be added to the policy when they ship.
+    // An event that does not fire yet (share_to_signup) must be added to the policy when it ships.
     expect(ANALYTICS_EVENTS).toHaveLength(12);
   });
 

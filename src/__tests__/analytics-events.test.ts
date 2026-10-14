@@ -25,7 +25,7 @@ describe("the event list", () => {
 
   it("gives every event an allowlist, and lets a browser send only two", () => {
     for (const event of ANALYTICS_EVENTS) expect(PROP_ALLOWLIST[event]).toBeDefined();
-    expect([...CLIENT_EVENTS]).toEqual(["students_page_view", "signup_started"]);
+    expect([...CLIENT_EVENTS]).toEqual(["students_page_view", "signup_started", "share_link_opened"]);
     expect(isAnalyticsEvent("page_view")).toBe(false);
   });
 });

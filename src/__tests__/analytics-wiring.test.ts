@@ -70,16 +70,28 @@ beforeEach(() => {
 });
 
 describe("the public event endpoint", () => {
-  it("accepts the two events a browser may send", async () => {
-    for (const event of ["students_page_view", "signup_started"]) {
-      expect((await send({ event, props: { campus: "loyola-maryland" } })).status).toBe(200);
+  it("accepts the events a browser may send", async () => {
+    for (const event of ["students_page_view", "signup_started", "share_link_opened"]) {
+      expect((await send({ event, props: { campus: "loyola-maryland", kind: "place" } })).status).toBe(200);
     }
-    expect(h.track).toHaveBeenCalledTimes(2);
+    expect(h.track).toHaveBeenCalledTimes(3);
     expect(h.track.mock.calls[0][0]).toBe("students_page_view");
   });
 
+  it("records a shared link being opened with only its kind, and nothing a person typed", async () => {
+    await send({ event: "share_link_opened", props: { kind: "plan", token: "T".repeat(22), note: "my address is 1 Main St" } });
+    expect(h.track).toHaveBeenCalledTimes(1);
+    const [event, options] = h.track.mock.calls[0];
+    expect(event).toBe("share_link_opened");
+    // The endpoint hands props to trackAnalytics, which keeps only allowlisted tokens
+    // (see analytics-events.test.ts): the allowlist for this event is the kind alone.
+    const { PROP_ALLOWLIST, sanitizeProps } = await import("@/lib/analytics/events");
+    expect(PROP_ALLOWLIST.share_link_opened).toEqual(["kind"]);
+    expect(sanitizeProps("share_link_opened", options.props)).toEqual({ kind: "plan" });
+  });
+
   it("refuses every event that belongs to the server, so it cannot be forged", async () => {
-    for (const event of ["place_saved", "premium_started", "signup_completed", "first_place_view", "promo_redeemed", "edu_verified"]) {
+    for (const event of ["place_saved", "premium_started", "signup_completed", "first_place_view", "promo_redeemed", "edu_verified", "share_created", "share_to_signup"]) {
       expect((await send({ event })).status).toBe(400);
     }
     expect(h.track).not.toHaveBeenCalled();

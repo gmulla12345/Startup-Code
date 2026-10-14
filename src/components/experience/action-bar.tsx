@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, Heart, Share2 } from "lucide-react";
+import { CheckCircle2, Heart } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { shareEntity } from "@/lib/utils/share";
+import { ShareButton } from "@/components/share/share-button";
 import { track } from "@/services/analytics/track";
 import { cn } from "@/lib/utils/cn";
 
@@ -13,7 +13,6 @@ export function ActionBar({
   experienceId,
   slug,
   title,
-  shortDescription,
   tags,
   category,
   isAuthenticated,
@@ -94,16 +93,6 @@ export function ActionBar({
     }
   }
 
-  async function handleShare() {
-    const result = await shareEntity({
-      title,
-      text: shortDescription,
-      url: `${window.location.origin}/experience/${slug}`,
-    });
-    if (result === "copied") toast.success("Link copied to clipboard.");
-    if (isAuthenticated) track("shared_experience", experienceId);
-  }
-
   function handleBook() {
     if (isAuthenticated) track("clicked_booking", experienceId);
   }
@@ -144,9 +133,12 @@ export function ActionBar({
       >
         <CheckCircle2 className={completed ? "fill-forest text-white" : ""} />
       </Button>
-      <Button variant="outline" size="icon" onClick={handleShare} aria-label="Share">
-        <Share2 />
-      </Button>
+      <ShareButton
+        target={{ kind: "place", experienceId }}
+        shareTitle={title}
+        onNeedLogin={isAuthenticated ? undefined : () => router.push(`/login?redirect=/experience/${slug}`)}
+        onCreated={() => track("shared_experience", experienceId)}
+      />
     </div>
   );
 }

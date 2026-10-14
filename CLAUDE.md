@@ -2230,6 +2230,67 @@ exists and only if it is a different session (see checkout.ts). **Not verified:*
 there is Apple offer codes / Google Play promo codes, redeemed against the app's store products; `/api/stripe/checkout` is a web path. The
 `edu_verified_at` eligibility rule and `promo_redemptions` can be reused for any server-side check. Noted in `zolo-app/CLAUDE.md`.
 
+## Phase 4 of the campus pivot: share links (2026-10-14)
+
+Context: a student can share a place or a plan as a link that looks good in iMessage, GroupMe and Instagram and brings the recipient to sign up.
+**Built and committed, not yet applied to production or deployed.** Everything below is the design as built; read "Compliance questions" before changing
+how Google data is shown or kept.
+
+**What it is.** `/s/<token>` ([page](src/app/s/[token]/page.tsx)) is a public page for one place or one plan, with its own generated preview image
+([opengraph-image.tsx](src/app/s/[token]/opengraph-image.tsx)). The sharer picks a Share button on a place (ActionBar) or a plan (trips page), which opens a small panel
+([share-button.tsx](src/components/share/share-button.tsx)): an optional 140-character note, a "Show my first name" box that is **unticked by default**, create / copy / send, and
+"Turn off this link". The recipient sees what the sharer chose and a **"Plan your own with Zolo"** button to `/signup?src=share-place` or `share-plan` (the proxy turns `?src=` into the
+campaign cookie, so signups from shared links appear in the admin "Signups by source" under those two labels).
+
+**Identity and privacy, as built.**
+- **Token:** 16 random bytes (128 bits) as 22 URL-safe characters ([token.ts](src/lib/share/token.ts)); not derived from anything, so it cannot be guessed or enumerated. A malformed token is a 404 with no database read.
+- **Table `share_links`** (migration `20261020_01_share_links.sql`): closed to every browser key (no policy, no grant); the server reads and writes it with the service role after checking ownership.
+  One live link per person per target (sharing twice updates it); at most 100 live links per person; deleted with the account or the plan (cascade).
+- **Turning a link off DELETES the row.** Off and never-existed are the same 404, nothing is kept, and sharing again makes a new address. The cached page and image are expired in the same call with `revalidateTag(tag, { expire: 0 })`
+  (no stale copy; the plain `"max"` profile would serve the old page once more). Changing the note or the name expires it the same way, so an unticked name disappears from the next visit.
+- **Name:** only the first name, only if ticked, read at build time from `profiles.first_name`. Never a surname, email or id (a test checks the public shape has none).
+- **Not indexed** (`noindex, nofollow` meta). Deliberately NOT in robots.txt `Disallow` and not in the sitemap: messaging apps fetch previews regardless of noindex, and a robots block could stop some of them.
+- **Notes** ([input.ts](src/lib/share/input.ts)): one tidy line, control and direction characters replaced, 140 characters, and **no links** (a note on a page with our name on it is a way to lend our domain to someone's message).
+- **Plan pages never show** calendar dates (a trip's dates say when someone is away), coordinates, photos, or the plan's id. They show the title, "N stops over D days", the city, each day's stops (time, name, note), at most 24 stops.
+
+**Google, and what is stored.** The link stores the `place_id` and nothing else from Google. A shared place's name, address, type and ONE photo are fetched **live when the page is built**
+([place-preview.ts](src/lib/share/place-preview.ts)) through the one cost-controlled door (`fetchGoogleJson`): a lean Place Details request (`place_id,name,formatted_address,types,photos`; no rating, reviews, hours, phone
+or website), logged as anonymous `share_preview` use, reused for an hour by place id (so every share of a place, and every viewer, shares one call). The page prints **"Powered by Google"** and the photo's
+author credit, parsed from `html_attributions` into plain text plus a link only if it points at Google Maps. The photo goes through our own `/api/place-photo` proxy. The preview image is drawn by us from words only:
+never a Google photo, never a map. If Google cannot be asked (billing hold, outage, ceiling), the page still loads with the sharer's note and the way in, and says so plainly.
+**Cost controls:** (1) page and image are on-demand static (`revalidate = 3600`, a literal Next requires, equal to `SHARE_CACHE_SECONDS`; a test keeps them equal), so non-users are served finished pages; (2) a
+Google call happens at most about once an hour per place; (3) **a daily ceiling of 200 Places units across all anonymous shared-link views** (`ANONYMOUS_DAILY_PLACES_CAPS` in
+[config/usage.ts](src/lib/config/usage.ts), counted by `usage_units_for_feature_since`); past it the live details switch off for the day. 200 is a starting value, not a measured one. (4) Plan pages make no Google call.
+
+**Analytics** (own Supabase, no PII): `share_created` is recorded on the server when a link is made (kind only). `share_link_opened` is sent by a tiny client component
+([share-view-beacon.tsx](src/components/share/share-view-beacon.tsx)), because the page is built once and reused, so a server-side count would count rebuilds, not people; it is now in `CLIENT_EVENTS`, bots are ignored by the endpoint, and it carries only `kind`.
+**`share_to_signup` is not recorded**: the same number is already in "Signups by source" under `share-place` / `share-plan`, and the only way to emit it would be to change the live signup triggers, which was not worth the risk. The admin funnel note says so.
+
+**The old way of sharing a plan was closed.** `itineraries.is_public` plus public-read policies let anyone holding the public database key list every "shared" plan and its stops (shown against the real database in a
+rolled-back rehearsal: anon saw a public plan and its items before, nothing after). Migration `20261020_02_itineraries_owner_only.sql` makes both tables owner-read-only; it touches no row (production had 0 itineraries). The legacy `/share/itinerary/[id]` page,
+the `PATCH /api/itineraries/[id]` that set `is_public`, and `ShareItineraryButton` were removed; the `is_public` / `share_slug` columns remain, unused. It is a separate file so it can be reviewed, or skipped, on its own.
+
+**API** (all work with a bearer token, so the mobile app can call them unchanged): `POST /api/shares` (make or update this person's link for a place `{kind:"place", experienceId:"g-…"}` or their own plan `{kind:"plan", itineraryId}`),
+`GET /api/shares?kind=…` (the link they already have), `DELETE /api/shares/[token]` (turn it off). Rate-limited per person (20 per 10 minutes). Only Google places can be shared (the curated catalog is empty; a curated id answers
+"This place cannot be shared as a link yet.").
+
+**Compliance questions to settle (flagged, not decided):**
+1. **Transient caching of Google-sourced fields.** The built page, the preview image and the Place Details answer are reused for up to an hour (the same transient cache the rest of the app uses for Place Details). Google bars storing Places content other than `place_id` (and lat/lng for 30 days);
+   whether a one-hour server cache of a rendered page counts is the question. The hour is one constant (`SHARE_CACHE_SECONDS`, plus the literal on the two route files) if the answer is "shorter".
+2. **The place name inside the preview image and the title tags.** It is text, shown live, with "Powered by Google" on the page and in the image; but a name rendered into a picture served from our domain could be read as a derivative. If so, `describeShare` is the one place to make place previews generic.
+3. **Photo author credit.** Shown on shared pages (required by Google). The rest of the app shows photos with no author credit: a pre-existing gap, not widened here.
+4. **Plan stop names.** A shared plan shows the stop names saved with the plan when it was made, which came from Google at that time. Showing them publicly widens the existing gray area (stored names and photo references in `itinerary_items`); the share link itself stores none. The alternative is to resolve each stop live by place id (about one lean Details call per stop per hour per plan).
+5. **Google billing is on hold today**, so a shared place page currently shows the "could not load the details" state until billing is restored (verified live against Google: the one call returned REQUEST_DENIED and was logged).
+
+**Verified (2026-10-14).** 518 unit tests, typecheck, lint, production build. The migrations were rehearsed against the production database in a rolled-back transaction: every constraint, one link per target, the closed table, the anonymous
+count, cascade on account deletion, and the owner-only policies. **That rehearsal caught a real bug**: Postgres refuses a regex repeat count above 255 when a row is checked, so a `{10,300}` place-id pattern made a table that was created fine and then rejected every place link. It is now a length check plus a shape check, and a test forbids repeat counts over 255.
+**An end-to-end run of the real built app over a local fake of the database** (33 checks, all passing) showed: a repeat visit is served from cache with no database read; ticking or unticking the name shows or removes it on the very next visit; turning a link off makes the page and the image 404 on the very next visit; another person cannot delete or share someone else's link or plan; a link that was turned off and one that never existed look identical; a place page degrades cleanly when Google refuses, and logs the call as anonymous `share_preview`; the preview image is a real 1200 by 630 PNG, cached. **Not yet exercised against the live site or the real Supabase** (the table does not exist there yet): do that with a throwaway user right after deploying.
+
+**To ship:** apply migration 1, then migration 2, then deploy (the other order makes `/s/*` answer 500 until the table exists). Then, with a throwaway account: make a plan link, open it, check the preview image, turn it off, confirm 404; clean up by exact id.
+
+**Mobile equivalent:** call the same `/api/shares` routes with the bearer token and hand the returned `url` to the system share sheet. For links to open in the app instead of the browser, the app needs Universal Links / App Links for `discoverzolo.com/s/*` (the
+`apple-app-site-association` file, as already noted in `zolo-app/CLAUDE.md`); until then a shared link opens the web page, whose button leads to signup. Nothing about the page needs to be duplicated in the app. Noted in `zolo-app/CLAUDE.md`.
+
 ## Exact next steps (priority order)
 
 **Done since the last update:** deployed to production at `discoverzolo.com` (fixed a Vercel

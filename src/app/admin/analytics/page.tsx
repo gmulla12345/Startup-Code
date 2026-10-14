@@ -303,7 +303,7 @@ export default async function AdminAnalyticsPage() {
 
       <Section
         title="Funnel by source and code"
-        note="Events recorded with that source and code. Events that have not started firing yet (sharing) show 0 until that feature ships."
+        note="Events recorded with that source and code. share_to_signup is not recorded as an event: people who sign up from a shared link are counted above, under the source share-place or share-plan."
       >
         <Table head={["Source", "Code", ...FUNNEL]} empty={funnelRows.length === 0}>
           {funnelRows.map((r) => (
