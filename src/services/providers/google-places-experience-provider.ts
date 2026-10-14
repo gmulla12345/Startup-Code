@@ -3,6 +3,8 @@ import type { ExperienceProvider, ExperienceQuery } from "./types";
 import { titleCase } from "@/lib/utils/format";
 import { photoProxyUrl } from "@/lib/google/photo-url";
 import { brand } from "@/lib/config/brand";
+import { fetchGoogleJson } from "@/lib/google/places-fetch";
+import type { UsageContext } from "@/lib/usage/context";
 
 /**
  * Live, worldwide experience data sourced directly from Google Places —
@@ -428,7 +430,10 @@ export class GooglePlacesExperienceProvider implements ExperienceProvider {
   /** Prefix namespaces Google-sourced ids/slugs so routing can tell them apart from curated catalog ids. */
   static readonly PREFIX = "g-";
 
-  constructor(private apiKey: string) {}
+  constructor(
+    private apiKey: string,
+    private usage?: UsageContext
+  ) {}
 
   private toExperience(place: GooglePlace, cityHint?: string): Experience {
     const category = inferCategory(place.name, place.types, place.rating, place.user_ratings_total);
@@ -519,19 +524,24 @@ export class GooglePlacesExperienceProvider implements ExperienceProvider {
     if (query.search) url.searchParams.set("keyword", query.search.slice(0, 80));
     url.searchParams.set("key", this.apiKey);
 
-    try {
-      const res = await fetch(url.toString(), { next: { revalidate: query.cacheSeconds ?? DEFAULT_CACHE_SECONDS } });
-      if (!res.ok) return [];
-      const data = (await res.json()) as { status: string; results: GooglePlace[] };
-      if (data.status !== "OK" && data.status !== "ZERO_RESULTS") {
-        console.error("[google places] list failed:", type, data.status);
-        return [];
-      }
-      return data.results ?? [];
-    } catch (err) {
-      console.error("[google places] list threw:", type, err);
+    const result = await fetchGoogleJson<{ status: string; results: GooglePlace[] }>({
+      operation: "nearby_search",
+      url: url.toString(),
+      cacheKey: [
+        bucketCoordinate(query.latitude!),
+        bucketCoordinate(query.longitude!),
+        String(bucketRadiusMeters(query.radiusMiles)),
+        type,
+        query.search?.slice(0, 80) ?? "",
+      ],
+      revalidate: query.cacheSeconds ?? DEFAULT_CACHE_SECONDS,
+      usage: this.usage,
+    });
+    if (!result.ok) {
+      if (!result.limited) console.error("[google places] list failed:", type, result.status);
       return [];
     }
+    return result.data?.results ?? [];
   }
 
   async list(query: ExperienceQuery): Promise<Experience[]> {
@@ -601,16 +611,17 @@ export class GooglePlacesExperienceProvider implements ExperienceProvider {
     );
     url.searchParams.set("key", this.apiKey);
 
-    try {
-      const res = await fetch(url.toString(), { next: { revalidate: 60 * 60 } });
-      if (!res.ok) return null;
-      const data = (await res.json()) as { status: string; result?: GooglePlace };
-      if (data.status !== "OK" || !data.result) return null;
-      return this.toExperience(data.result);
-    } catch (err) {
-      console.error("[google places] details threw:", err);
-      return null;
-    }
+    const result = await fetchGoogleJson<{ status: string; result?: GooglePlace }>({
+      operation: "place_details",
+      url: url.toString(),
+      // "v1" is the field list above: bump it if the fields change so old
+      // cached answers (which lack the new fields) are not reused.
+      cacheKey: ["v1", placeId],
+      revalidate: DEFAULT_CACHE_SECONDS,
+      usage: this.usage,
+    });
+    if (!result.ok || result.data?.status !== "OK" || !result.data.result) return null;
+    return this.toExperience(result.data.result);
   }
 
   async getById(id: string): Promise<Experience | null> {

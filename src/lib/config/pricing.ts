@@ -60,6 +60,12 @@ export function premiumPriceId(interval: BillingInterval): string {
 export const FREE_TIER_LIMITS = {
   recommendationsPerWeek: 5,
   surpriseMePerWeek: 1,
+  // "Not for me" on a Surprise Me pick fetches another one, which costs a Claude
+  // call and a Places lookup like the first. Free accounts get this many
+  // replacements a week on top of their weekly pick; Premium is bounded only
+  // by the daily limits in lib/config/usage.ts. (A starting value: change it
+  // here.)
+  surpriseMeRerollsPerWeek: 2,
   weekendPlannerEnabled: false,
   travelModeEnabled: false,
 } as const;

@@ -1,4 +1,8 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { estimateClaudeCost } from "@/lib/usage/costs";
+import type { UsageContext } from "@/lib/usage/context";
+import { checkUsage } from "@/lib/usage/limits";
+import { recordUsage } from "@/lib/usage/log";
 
 /**
  * Single point of contact with the Anthropic API. Nothing else in the
@@ -40,6 +44,12 @@ export const AI_MODEL = MODEL;
  * input schema — this is how we get reliable structured JSON instead of
  * parsing free text. Returns null on any failure (timeout, bad JSON,
  * network error) so callers can fall back to non-AI logic.
+ *
+ * Pass `usage` (who it is for, and which feature) so the call is logged with
+ * its model, token counts and estimated cost, and so the user's daily AI
+ * allowance applies. Over the allowance it returns null without calling
+ * Claude, exactly like any other failure, so every caller's existing
+ * fallback handles it.
  */
 export async function callStructuredTool<T>(params: {
   system: string;
@@ -50,8 +60,17 @@ export async function callStructuredTool<T>(params: {
   maxTokens?: number;
   /** Per-call timeout override — size this to what the call actually generates (see call sites). */
   timeoutMs?: number;
+  usage?: UsageContext;
 }): Promise<T | null> {
   if (!isAIConfigured()) return null;
+
+  if (params.usage) {
+    const check = await checkUsage(params.usage, "ai");
+    if (!check.allowed) {
+      recordUsage(params.usage, { provider: "anthropic", operation: "messages", model: AI_MODEL, estCostUsd: 0, outcome: "blocked" });
+      return null;
+    }
+  }
 
   try {
     const anthropic = getAnthropicClient();
@@ -73,11 +92,21 @@ export async function callStructuredTool<T>(params: {
       params.timeoutMs != null ? { timeout: params.timeoutMs } : undefined
     );
 
+    recordUsage(params.usage, {
+      provider: "anthropic",
+      operation: "messages",
+      model: AI_MODEL,
+      tokensIn: response.usage.input_tokens,
+      tokensOut: response.usage.output_tokens,
+      estCostUsd: estimateClaudeCost(AI_MODEL, response.usage.input_tokens, response.usage.output_tokens),
+    });
+
     const toolUse = response.content.find((block) => block.type === "tool_use");
     if (!toolUse || toolUse.type !== "tool_use") return null;
 
     return toolUse.input as T;
   } catch (err) {
+    recordUsage(params.usage, { provider: "anthropic", operation: "messages", model: AI_MODEL, estCostUsd: 0, outcome: "error" });
     console.error("[ai] structured tool call failed:", err);
     return null;
   }

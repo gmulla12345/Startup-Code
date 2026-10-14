@@ -7,6 +7,8 @@ import { generateTripPlan } from "@/ai/trip-plan";
 import { saveTripPlanAsItinerary } from "@/lib/repositories/itineraries";
 import { tripPlanRequestSchema } from "@/lib/validation/schemas";
 import { isAIConfigured } from "@/ai/client";
+import { usageContext } from "@/lib/usage/context";
+import { assertWithinLimit } from "@/lib/usage/limits";
 
 export async function POST(request: Request) {
   return withErrorHandling(async () => {
@@ -23,7 +25,11 @@ export async function POST(request: Request) {
 
     const body = tripPlanRequestSchema.parse(await request.json());
 
-    const provider = await getExperienceProvider();
+    const usage = usageContext(user.id, "trip_plan");
+    await assertWithinLimit(usage, "ai");
+    await assertWithinLimit(usage, "places");
+
+    const provider = await getExperienceProvider(usage);
     const candidates = await provider.list({
       city: body.destinationCity,
       latitude: body.destinationLatitude,
@@ -34,7 +40,7 @@ export async function POST(request: Request) {
       limit: 60,
     });
 
-    const plan = await generateTripPlan(body, candidates);
+    const plan = await generateTripPlan(body, candidates, usage);
     if (!plan) {
       throw new ApiError(422, "Couldn't build a plan for those dates — try again or widen your interests.");
     }

@@ -1,4 +1,6 @@
 import type { GeocodeResult, PlacesProvider } from "./types";
+import { fetchGoogleJson } from "@/lib/google/places-fetch";
+import type { UsageContext } from "@/lib/usage/context";
 
 interface GoogleGeocodeResponse {
   status: string;
@@ -12,10 +14,14 @@ interface GoogleGeocodeResponse {
 /**
  * Google Geocoding API-backed PlacesProvider. Requires MAPS_API_KEY. Used
  * automatically by the provider factory when the key is present — see
- * services/providers/index.ts.
+ * services/providers/index.ts. Every request goes through fetchGoogleJson, so
+ * it is cached where sensible, limited per user, and logged.
  */
 export class GooglePlacesProvider implements PlacesProvider {
-  constructor(private apiKey: string) {}
+  constructor(
+    private apiKey: string,
+    private usage?: UsageContext
+  ) {}
 
   isLive() {
     return true;
@@ -36,11 +42,15 @@ export class GooglePlacesProvider implements PlacesProvider {
     url.searchParams.set("address", query);
     url.searchParams.set("key", this.apiKey);
 
-    const res = await fetch(url.toString(), { next: { revalidate: 60 * 60 * 24 } });
-    if (!res.ok) return null;
-
-    const data = (await res.json()) as GoogleGeocodeResponse;
-    if (data.status !== "OK" || data.results.length === 0) return null;
+    const response = await fetchGoogleJson<GoogleGeocodeResponse>({
+      operation: "geocode",
+      url: url.toString(),
+      cacheKey: [query.trim().toLowerCase()],
+      revalidate: 60 * 60 * 24,
+      usage: this.usage,
+    });
+    const data = response.data;
+    if (!response.ok || !data || data.status !== "OK" || data.results.length === 0) return null;
 
     const result = data.results[0];
     const { city, region, country } = this.parseComponents(result);
@@ -64,11 +74,15 @@ export class GooglePlacesProvider implements PlacesProvider {
     url.searchParams.set("latlng", `${latitude},${longitude}`);
     url.searchParams.set("key", this.apiKey);
 
-    const res = await fetch(url.toString());
-    if (!res.ok) return null;
-
-    const data = (await res.json()) as GoogleGeocodeResponse;
-    if (data.status !== "OK" || data.results.length === 0) return null;
+    const response = await fetchGoogleJson<GoogleGeocodeResponse>({
+      operation: "reverse_geocode",
+      url: url.toString(),
+      cacheKey: [],
+      revalidate: false,
+      usage: this.usage,
+    });
+    const data = response.data;
+    if (!response.ok || !data || data.status !== "OK" || data.results.length === 0) return null;
 
     const result = data.results[0];
     const { city, region, country } = this.parseComponents(result);

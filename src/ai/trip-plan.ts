@@ -1,4 +1,5 @@
 import { callStructuredTool, isAIConfigured } from "./client";
+import type { UsageContext } from "@/lib/usage/context";
 import { weekendPlanSchema } from "./schema";
 import { attachImages } from "./weekend-plan";
 import { brand } from "@/lib/config/brand";
@@ -71,7 +72,11 @@ Rules:
  * isn't configured the route should refuse the request rather than hand back
  * a thin, obviously-worse plan.
  */
-export async function generateTripPlan(request: TripPlanRequest, candidates: Experience[]): Promise<TripPlan | null> {
+export async function generateTripPlan(
+  request: TripPlanRequest,
+  candidates: Experience[],
+  usage?: UsageContext
+): Promise<TripPlan | null> {
   if (!isAIConfigured() || candidates.length === 0) return null;
 
   const numDays = dayCount(request.startDate, request.endDate);
@@ -112,6 +117,7 @@ Build the full ${numDays}-day itinerary now, covering every day listed above.`;
     // this, so it's fine to give the model real room instead of the short
     // timeout tuned for the recommendation-reasoning call's tiny batches.
     timeoutMs: 45_000,
+    usage,
   });
 
   if (!result) return null;

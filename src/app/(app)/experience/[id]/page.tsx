@@ -4,6 +4,7 @@ import { Clock, MapPin, Sparkles, Star, Users } from "lucide-react";
 import { createClient, getCurrentUser } from "@/lib/supabase/server";
 import { safeJsonLd } from "@/lib/seo";
 import { getExperienceProvider } from "@/services/providers";
+import { usageContext } from "@/lib/usage/context";
 import { getReviewsForExperience } from "@/lib/repositories/reviews";
 import { getSubscription, isPremium } from "@/lib/repositories/subscriptions";
 import { ExperienceGallery } from "@/components/experience/experience-gallery";
@@ -26,7 +27,7 @@ import { brand } from "@/lib/config/brand";
 
 export async function generateMetadata({ params }: PageProps<"/experience/[id]">): Promise<Metadata> {
   const { id } = await params;
-  const provider = await getExperienceProvider();
+  const provider = await getExperienceProvider(usageContext((await getCurrentUser())?.id ?? null, "experience_detail"));
   const experience = (await provider.getBySlug(id)) ?? (await provider.getById(id));
   if (!experience) return { title: "Experience not found" };
 
@@ -60,7 +61,7 @@ export default async function ExperienceDetailPage({ params }: PageProps<"/exper
   const supabase = await createClient();
   const user = await getCurrentUser();
 
-  const provider = await getExperienceProvider();
+  const provider = await getExperienceProvider(usageContext(user?.id ?? null, "experience_detail"));
   const experience = (await provider.getBySlug(id)) ?? (await provider.getById(id));
   if (!experience) notFound();
 
@@ -234,14 +235,14 @@ export default async function ExperienceDetailPage({ params }: PageProps<"/exper
       </div>
 
       <Suspense fallback={<RelatedSkeleton />}>
-        <RelatedSection experience={experience} />
+        <RelatedSection experience={experience} userId={user?.id ?? null} />
       </Suspense>
     </div>
   );
 }
 
-async function RelatedSection({ experience }: { experience: Experience }) {
-  const provider = await getExperienceProvider();
+async function RelatedSection({ experience, userId }: { experience: Experience; userId: string | null }) {
+  const provider = await getExperienceProvider(usageContext(userId, "experience_detail"));
   const related = await provider.getRelated(experience, 4);
   if (related.length === 0) return null;
 

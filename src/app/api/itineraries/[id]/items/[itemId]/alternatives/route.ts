@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireUser, withErrorHandling, ApiError } from "@/lib/api/auth";
 import { getItineraryWithItems, getSwapCandidates } from "@/lib/repositories/itineraries";
+import { usageContext } from "@/lib/usage/context";
 
 /**
  * Real alternatives near an itinerary's destination for swapping out one
@@ -21,7 +22,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
     }
 
     const excludeIds = items.map((i) => i.experienceId).filter((id): id is string => Boolean(id));
-    const alternatives = await getSwapCandidates(itinerary, excludeIds);
+    const alternatives = await getSwapCandidates(itinerary, excludeIds, usageContext(user.id, "itinerary_swap"));
 
     return NextResponse.json({ alternatives });
   });

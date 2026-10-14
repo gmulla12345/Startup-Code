@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { noindexMetadata } from "@/lib/seo";
 import { createClient, getCurrentUser } from "@/lib/supabase/server";
+import { usageContext } from "@/lib/usage/context";
 import { getProfileByUserId } from "@/lib/repositories/profile";
 import { getRecommendations } from "@/services/recommendation/engine";
 import { SurpriseMeButton } from "@/components/home/surprise-me-button";
@@ -71,6 +72,7 @@ async function RecommendationRails({ profile }: { profile: Profile }) {
     surfaceContext: "for_you",
     limit: 24,
     useAI: false,
+    usage: usageContext(profile.userId, "home"),
   });
 
   // Every rail shows distance when we have a location to measure from, not

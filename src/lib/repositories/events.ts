@@ -17,6 +17,32 @@ export async function trackEvent(
   if (error) console.error("[events] trackEvent failed:", error.message);
 }
 
+/**
+ * How many events of one type a user has recorded since a moment, counted in
+ * the database (not by reading rows back). Optionally narrowed to events whose
+ * metadata has `key` equal to `value`. Used for server-side weekly allowances,
+ * where reading the last N events and filtering in memory could undercount.
+ */
+export async function countEventsSince(
+  client: SupabaseClient,
+  userId: string,
+  eventType: UserEventType,
+  sinceIso: string,
+  metadataMatch?: { key: string; value: string }
+): Promise<number> {
+  let query = client
+    .from("user_events")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("event_type", eventType)
+    .gte("created_at", sinceIso);
+  if (metadataMatch) query = query.eq(`metadata->>${metadataMatch.key}`, metadataMatch.value);
+
+  const { count, error } = await query;
+  if (error) console.error("[events] countEventsSince failed:", error.message);
+  return count ?? 0;
+}
+
 export async function getRecentEvents(
   client: SupabaseClient,
   userId: string,

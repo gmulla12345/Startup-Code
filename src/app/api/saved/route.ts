@@ -4,13 +4,14 @@ import { listSaved, saveExperience, setSavedStatus, unsaveExperience } from "@/l
 import { trackEvent } from "@/lib/repositories/events";
 import { getExperienceProvider } from "@/services/providers";
 import { saveExperienceSchema, updateSavedStatusSchema } from "@/lib/validation/schemas";
+import { usageContext } from "@/lib/usage/context";
 
 export async function GET() {
   return withErrorHandling(async () => {
     const { user, supabase } = await requireUser();
     const saved = await listSaved(supabase, user.id);
 
-    const provider = await getExperienceProvider();
+    const provider = await getExperienceProvider(usageContext(user.id, "saved"));
     const withExperiences = await Promise.all(
       saved.map(async (s) => ({ ...s, experience: await provider.getById(s.experienceId) }))
     );

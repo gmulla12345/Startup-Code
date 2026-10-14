@@ -5,6 +5,7 @@ import { ZodError } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@/lib/supabase/env";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
+import { UsageLimitError } from "@/lib/usage/limits";
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
@@ -68,6 +69,10 @@ export function withErrorHandling(handler: () => Promise<NextResponse>): Promise
   return handler().catch((err) => {
     if (err instanceof ApiError) {
       return NextResponse.json({ error: err.message }, { status: err.status });
+    }
+    // A daily Claude / Places allowance was reached (see lib/config/usage.ts).
+    if (err instanceof UsageLimitError) {
+      return NextResponse.json({ error: err.message, limit: err.limit }, { status: 429 });
     }
     // Every route that validates its body with schema.parse() (not
     // safeParse) throws this on bad input -- was previously falling through

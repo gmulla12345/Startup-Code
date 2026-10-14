@@ -4,6 +4,7 @@ import { checkRateLimit } from "@/lib/api/rate-limit";
 import { CATEGORY_LABELS } from "@/lib/config/categories";
 import { getExperienceProvider } from "@/services/providers";
 import type { ExperienceCategory } from "@/types/database";
+import { usageContext } from "@/lib/usage/context";
 
 function finiteOrUndefined(raw: string | null): number | undefined {
   if (raw === null || raw.trim() === "") return undefined;
@@ -38,7 +39,7 @@ export async function GET(request: Request) {
     const radius = finiteOrUndefined(params.get("radius"));
     const limit = finiteOrUndefined(params.get("limit"));
 
-    const provider = await getExperienceProvider();
+    const provider = await getExperienceProvider(usageContext(null, "catalog"));
     const results = await provider.list({
       city: params.get("city")?.slice(0, 100) ?? undefined,
       category,

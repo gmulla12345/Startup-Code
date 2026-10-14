@@ -5,6 +5,7 @@ import Image from "next/image";
 import { createClient, getCurrentUser } from "@/lib/supabase/server";
 import { getProfileByUserId } from "@/lib/repositories/profile";
 import { getExperienceProvider } from "@/services/providers";
+import { usageContext } from "@/lib/usage/context";
 import { DiscoveryMap } from "@/components/map/discovery-map";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatPrice } from "@/lib/utils/format";
@@ -29,13 +30,13 @@ export default async function MapPage() {
 
   return (
     <Suspense fallback={<MapContentSkeleton />}>
-      <MapContent center={center} />
+      <MapContent center={center} userId={user.id} />
     </Suspense>
   );
 }
 
-async function MapContent({ center }: { center: { latitude: number; longitude: number } }) {
-  const provider = await getExperienceProvider();
+async function MapContent({ center, userId }: { center: { latitude: number; longitude: number }; userId: string }) {
+  const provider = await getExperienceProvider(usageContext(userId, "map"));
   const experiences = await provider.list({
     latitude: center.latitude,
     longitude: center.longitude,

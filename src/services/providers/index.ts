@@ -8,6 +8,7 @@ import { CatalogEventsProvider } from "./events-provider";
 import { CatalogTravelProvider } from "./travel-provider";
 import { CompositeExperienceProvider } from "./composite-experience-provider";
 import type { ExperienceProvider, PlacesProvider, EventsProvider, TravelProvider } from "./types";
+import type { UsageContext } from "@/lib/usage/context";
 
 export * from "./types";
 
@@ -33,23 +34,23 @@ let mockSingleton: MockExperienceProvider | null = null;
  * blended with live Google Places results — this is what makes discovery
  * work for a user anywhere in the world, not just our hand-seeded cities.
  */
-export async function getExperienceProvider(): Promise<ExperienceProvider> {
+export async function getExperienceProvider(usage?: UsageContext): Promise<ExperienceProvider> {
   const curated = isSupabaseConfigured()
     ? new ResilientExperienceProvider(new SupabaseExperienceProvider(createPublicClient()))
     : (mockSingleton ??= new MockExperienceProvider());
 
   const mapsKey = process.env.MAPS_API_KEY;
-  return mapsKey ? new CompositeExperienceProvider(curated, mapsKey) : curated;
+  return mapsKey ? new CompositeExperienceProvider(curated, mapsKey, usage) : curated;
 }
 
-export function getPlacesProvider(): PlacesProvider {
+export function getPlacesProvider(usage?: UsageContext): PlacesProvider {
   const key = process.env.MAPS_API_KEY;
-  if (key) return new GooglePlacesProvider(key);
+  if (key) return new GooglePlacesProvider(key, usage);
   return new MockPlacesProvider();
 }
 
-export async function getEventsProvider(): Promise<EventsProvider> {
-  return new CatalogEventsProvider(await getExperienceProvider());
+export async function getEventsProvider(usage?: UsageContext): Promise<EventsProvider> {
+  return new CatalogEventsProvider(await getExperienceProvider(usage));
 }
 
 export function getTravelProvider(): TravelProvider {

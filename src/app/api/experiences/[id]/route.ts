@@ -3,6 +3,7 @@ import { withErrorHandling, ApiError } from "@/lib/api/auth";
 import { checkRateLimit } from "@/lib/api/rate-limit";
 import { getExperienceProvider } from "@/services/providers";
 import { GooglePlacesExperienceProvider } from "@/services/providers/google-places-experience-provider";
+import { usageContext } from "@/lib/usage/context";
 
 export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
   return withErrorHandling(async () => {
@@ -13,7 +14,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     checkRateLimit(`experience-detail:${ip}`, 120, 60_000);
 
     const { id } = await context.params;
-    const provider = await getExperienceProvider();
+    const provider = await getExperienceProvider(usageContext(null, "catalog"));
 
     // A Google-sourced id is both its own id and its own slug, so trying the
     // slug and then the id would send the same billed Details request twice

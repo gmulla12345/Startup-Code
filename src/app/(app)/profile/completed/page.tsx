@@ -5,6 +5,7 @@ import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { createClient, getCurrentUser } from "@/lib/supabase/server";
 import { listCompleted } from "@/lib/repositories/saved";
 import { getExperienceProvider } from "@/services/providers";
+import { usageContext } from "@/lib/usage/context";
 import { ExperienceCard } from "@/components/experience/experience-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -38,7 +39,7 @@ export default async function CompletedPage() {
 async function CompletedGrid({ userId }: { userId: string }) {
   const supabase = await createClient();
   const completed = await listCompleted(supabase, userId);
-  const provider = await getExperienceProvider();
+  const provider = await getExperienceProvider(usageContext(userId, "completed"));
 
   const withExperiences = await Promise.all(
     completed.map(async (c) => ({ completed: c, experience: await provider.getById(c.experienceId) }))

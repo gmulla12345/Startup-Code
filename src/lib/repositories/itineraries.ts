@@ -5,6 +5,7 @@ import type { TripPlan, WeekendPlan } from "@/types/ai";
 import { getExperienceProvider } from "@/services/providers";
 import { legacyPhotoToProxy } from "@/lib/google/photo-url";
 import { brand } from "@/lib/config/brand";
+import type { UsageContext } from "@/lib/usage/context";
 
 function rowToItinerary(row: Record<string, unknown>): Itinerary {
   return {
@@ -194,10 +195,14 @@ export interface SwapCandidate {
  * itinerary) — callers that need to distinguish "no destination" from
  * "no candidates found" should check destinationLatitude/Longitude first.
  */
-export async function getSwapCandidates(itinerary: Itinerary, excludeIds: string[]): Promise<SwapCandidate[]> {
+export async function getSwapCandidates(
+  itinerary: Itinerary,
+  excludeIds: string[],
+  usage?: UsageContext
+): Promise<SwapCandidate[]> {
   if (itinerary.destinationLatitude == null || itinerary.destinationLongitude == null) return [];
 
-  const provider = await getExperienceProvider();
+  const provider = await getExperienceProvider(usage);
   const candidates = await provider.list({
     city: itinerary.destinationCity ?? undefined,
     latitude: itinerary.destinationLatitude,

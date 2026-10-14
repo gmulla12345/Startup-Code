@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { ApiError } from "@/lib/api/auth";
 import { checkRateLimit } from "@/lib/api/rate-limit";
 import { PHOTO_REF_PATTERN, clampPhotoWidth } from "@/lib/google/photo-url";
+import { estimatePlacesCost } from "@/lib/usage/costs";
+import { usageContext } from "@/lib/usage/context";
+import { recordUsage } from "@/lib/usage/log";
 
 /**
  * Keyless front door for Google Place Photos. Every experience image on the
@@ -57,13 +60,25 @@ export async function GET(request: Request) {
   upstream.searchParams.set("photo_reference", ref);
   upstream.searchParams.set("key", key);
 
+  // Every request that reaches this point is a real, billed Place Photos call
+  // (the CDN answers repeats before they get here), so each one is logged.
+  const usage = usageContext(null, "photo");
   let res: Response;
   try {
     res = await fetch(upstream.toString(), { redirect: "manual", cache: "no-store" });
   } catch (err) {
+    recordUsage(usage, { provider: "google_places", operation: "place_photo", estCostUsd: 0, outcome: "error" });
     console.error("[place-photo] fetch threw:", err);
     return failed(502, "Photo unavailable.");
   }
+
+  const succeeded = (res.status >= 300 && res.status < 400 && Boolean(res.headers.get("location"))) || res.ok;
+  recordUsage(usage, {
+    provider: "google_places",
+    operation: "place_photo",
+    estCostUsd: succeeded ? estimatePlacesCost("place_photo") : 0,
+    outcome: succeeded ? "ok" : "error",
+  });
 
   const location = res.headers.get("location");
   if (res.status >= 300 && res.status < 400 && location) {

@@ -7,6 +7,7 @@ import { brand } from "@/lib/config/brand";
 import { OTHER_PAGE_LAST_MODIFIED, travelPageSeo } from "@/lib/content/page-seo";
 import { WebPageJsonLd } from "@/components/shared/webpage-jsonld";
 import { getTravelProvider, getExperienceProvider } from "@/services/providers";
+import { usageContext } from "@/lib/usage/context";
 import { ExperienceRail } from "@/components/home/experience-rail";
 import { TripPlannerModal } from "@/components/trips/trip-planner-modal";
 import { createClient, getCurrentUser } from "@/lib/supabase/server";
@@ -140,7 +141,8 @@ export default async function TravelDestinationPage({ params }: PageProps<"/trav
 }
 
 async function DestinationRails({ dest }: { dest: DestinationInfo }) {
-  const provider = await getExperienceProvider();
+  // A public guide page: not attributable to a user, but still logged.
+  const provider = await getExperienceProvider(usageContext(null, "travel_guide"));
   const experiences = await provider.list({
     city: dest.city,
     latitude: dest.latitude,

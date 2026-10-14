@@ -437,7 +437,9 @@ create table if not exists public.social_profiles (
   user_id uuid primary key references auth.users(id) on delete cascade,
   display_name text not null default '',
   handle text not null unique,
-  is_public boolean not null default true,
+  -- Default is private. Nothing in the app reads this table yet; see
+  -- migrations/20261014_01_restrict_social_exposure.sql for why.
+  is_public boolean not null default false,
   experiences_completed int not null default 0,
   follower_count int not null default 0,
   following_count int not null default 0
@@ -551,8 +553,9 @@ begin
   insert into public.subscriptions (user_id, plan_id, status)
   values (new.id, 'free', 'none');
 
-  insert into public.social_profiles (user_id, handle, display_name)
-  values (new.id, 'user_' || substr(new.id::text, 1, 8), coalesce(new.raw_user_meta_data->>'first_name', 'Zolo user'));
+  -- No social_profiles row is created at signup: nothing in the app uses one,
+  -- and a public handle + first name per user was a privacy exposure (see
+  -- migrations/20261014_01_restrict_social_exposure.sql).
 
   return new;
 end;
@@ -639,18 +642,29 @@ create policy "own subscription" on public.subscriptions for select using (auth.
 drop policy if exists "own payments" on public.payments;
 create policy "own payments" on public.payments for select using (auth.uid() = user_id);
 
+-- Social tables are owner-only. They used to be world-readable (a public
+-- handle + first name per user, and the whole follow graph); that was closed by
+-- migrations/20261014_01_restrict_social_exposure.sql. Do not re-open without
+-- reading it.
 drop policy if exists "public social profiles" on public.social_profiles;
-create policy "public social profiles" on public.social_profiles for select using (is_public = true or auth.uid() = user_id);
+drop policy if exists "own social profile" on public.social_profiles;
+create policy "own social profile" on public.social_profiles for select using (auth.uid() = user_id);
 drop policy if exists "manage own social profile" on public.social_profiles;
 create policy "manage own social profile" on public.social_profiles for update using (auth.uid() = user_id);
 
 drop policy if exists "read follows" on public.follows;
-create policy "read follows" on public.follows for select using (true);
+drop policy if exists "read own follows" on public.follows;
+create policy "read own follows" on public.follows for select using (auth.uid() = follower_id or auth.uid() = following_id);
 drop policy if exists "manage own follows" on public.follows;
 create policy "manage own follows" on public.follows for all using (auth.uid() = follower_id) with check (auth.uid() = follower_id);
 
 drop policy if exists "own shares" on public.shares;
 create policy "own shares" on public.shares for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- The logged-out role has no business on any of the three social tables.
+revoke all on public.social_profiles from anon;
+revoke all on public.follows from anon;
+revoke all on public.shares from anon;
 
 drop policy if exists "read admin allowlist" on public.admin_users;
 create policy "read admin allowlist" on public.admin_users for select using (auth.uid() = user_id);
@@ -664,3 +678,62 @@ create policy "anyone can apply" on public.job_applications for insert with chec
 -- mutations happen exclusively through server routes using the service-role
 -- client (src/lib/supabase/admin.ts), which bypasses RLS after an explicit
 -- admin check in application code.
+
+-- =========================================================================
+-- api_usage_events: every external Places / Claude call (see the migration
+-- file below for the full comments; kept identical so a fresh database matches)
+-- =========================================================================
+create table if not exists public.api_usage_events (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now(),
+  user_id uuid references auth.users(id) on delete set null,
+  provider text not null check (provider in ('anthropic', 'google_places', 'google_geocoding')),
+  -- 'ai' counts toward the daily Claude limit, 'places' toward the daily Maps limit
+  bucket text not null check (bucket in ('ai', 'places')),
+  -- messages | nearby_search | place_details | place_photo | geocode | reverse_geocode
+  operation text not null,
+  -- the product surface that triggered it: surprise_me, home, weekend_plan, ...
+  feature text not null default 'unknown',
+  model text,
+  tokens_in integer,
+  tokens_out integer,
+  units integer not null default 1,
+  est_cost_usd numeric(12, 6) not null default 0,
+  -- ok: counted toward limits. error: the provider call failed (not counted).
+  -- blocked: refused locally because a daily limit was reached (not counted).
+  outcome text not null default 'ok' check (outcome in ('ok', 'error', 'blocked'))
+);
+
+create index if not exists idx_api_usage_user_created on public.api_usage_events (user_id, created_at desc);
+create index if not exists idx_api_usage_created on public.api_usage_events (created_at desc);
+
+alter table public.api_usage_events enable row level security;
+
+drop policy if exists "read own usage" on public.api_usage_events;
+create policy "read own usage" on public.api_usage_events
+  for select using (auth.uid() = user_id);
+
+-- No insert/update/delete policy exists, so only the service role can write.
+-- Belt and braces: also remove the table privileges.
+revoke all on public.api_usage_events from anon;
+revoke insert, update, delete, truncate on public.api_usage_events from authenticated;
+
+-- Today's counted units per bucket for one user. Called by the server (service
+-- role) before an external call to enforce the daily limits.
+create or replace function public.usage_units_since(p_user uuid, p_since timestamptz)
+returns table (bucket text, units bigint)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select e.bucket, coalesce(sum(e.units), 0)::bigint
+  from public.api_usage_events e
+  where e.user_id = p_user
+    and e.created_at >= p_since
+    and e.outcome = 'ok'
+  group by e.bucket
+$$;
+
+revoke all on function public.usage_units_since(uuid, timestamptz) from public, anon, authenticated;
+grant execute on function public.usage_units_since(uuid, timestamptz) to service_role;

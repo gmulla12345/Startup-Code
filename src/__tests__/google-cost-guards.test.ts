@@ -1,4 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+// The provider now fetches through unstable_cache (so a usage row is written
+// only on a real Google call). That needs a running Next server, so here it is
+// a pass-through that records the options it was given.
+const cacheCalls = vi.hoisted(() => [] as { revalidate?: number | false }[]);
+vi.mock("next/cache", () => ({
+  unstable_cache: (fn: () => unknown, _keyParts: string[], options: { revalidate?: number | false }) => {
+    cacheCalls.push(options);
+    return fn;
+  },
+}));
+vi.mock("@/lib/usage/log", () => ({ recordUsage: vi.fn() }));
 import { GooglePlacesExperienceProvider } from "@/services/providers/google-places-experience-provider";
 import {
   PHOTO_PROXY_PATH,
@@ -81,6 +93,7 @@ describe("GooglePlacesExperienceProvider cost guards", () => {
   const fetchMock = vi.fn();
 
   beforeEach(() => {
+    cacheCalls.length = 0;
     fetchMock.mockReset();
     fetchMock.mockImplementation(async () => new Response(JSON.stringify(nearbyBody()), { status: 200 }));
     vi.stubGlobal("fetch", fetchMock);
@@ -152,7 +165,7 @@ describe("GooglePlacesExperienceProvider cost guards", () => {
   it("caches for an hour by default and keeps open-now", async () => {
     const provider = new GooglePlacesExperienceProvider(SECRET);
     const results = await provider.list({ latitude: 40, longitude: -74, category: "food_drink" });
-    expect(fetchMock.mock.calls[0][1]).toMatchObject({ next: { revalidate: 3600 } });
+    expect(cacheCalls.at(-1)).toMatchObject({ revalidate: 3600 });
     expect(results[0].isOpenNow).toBe(true);
   });
 
@@ -164,7 +177,7 @@ describe("GooglePlacesExperienceProvider cost guards", () => {
       category: "food_drink",
       cacheSeconds: 86400,
     });
-    expect(fetchMock.mock.calls[0][1]).toMatchObject({ next: { revalidate: 86400 } });
+    expect(cacheCalls.at(-1)).toMatchObject({ revalidate: 86400 });
     expect(results[0].isOpenNow).toBeNull();
     expect(results[0].availability).toBeNull();
   });

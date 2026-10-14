@@ -1,6 +1,7 @@
 import type { Experience } from "@/types/database";
 import type { ExperienceProvider, ExperienceQuery } from "./types";
 import { GooglePlacesExperienceProvider } from "./google-places-experience-provider";
+import type { UsageContext } from "@/lib/usage/context";
 
 /**
  * Blends the hand-curated catalog (Supabase or mock) with live, worldwide
@@ -13,9 +14,10 @@ export class CompositeExperienceProvider implements ExperienceProvider {
 
   constructor(
     private curated: ExperienceProvider,
-    googleApiKey: string
+    googleApiKey: string,
+    usage?: UsageContext
   ) {
-    this.google = new GooglePlacesExperienceProvider(googleApiKey);
+    this.google = new GooglePlacesExperienceProvider(googleApiKey, usage);
   }
 
   private isGoogleId(id: string): boolean {

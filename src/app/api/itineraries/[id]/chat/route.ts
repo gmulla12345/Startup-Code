@@ -5,6 +5,9 @@ import { checkRateLimit } from "@/lib/api/rate-limit";
 import { getItineraryWithItems, getSwapCandidates, deleteItineraryItem, updateItineraryItem } from "@/lib/repositories/itineraries";
 import { interpretItineraryChat, pickSwapCandidate } from "@/ai/itinerary-chat";
 import { isAIConfigured } from "@/ai/client";
+import { getSubscription, isPremium } from "@/lib/repositories/subscriptions";
+import { usageContext } from "@/lib/usage/context";
+import { assertWithinLimit } from "@/lib/usage/limits";
 
 const chatRequestSchema = z.object({ message: z.string().min(1).max(500) });
 
@@ -23,6 +26,16 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     const { user, supabase } = await requireUser();
     checkRateLimit(`itinerary-chat:${user.id}`, 20, 60_000);
 
+    // Chat editing is two Claude calls per message and was reachable by any
+    // signed-in account that owned an itinerary. It is a Premium feature like
+    // the planners that create itineraries.
+    if (!isPremium(await getSubscription(supabase, user.id))) {
+      throw new ApiError(402, "Editing a plan by chat is a Premium feature.");
+    }
+
+    const usage = usageContext(user.id, "itinerary_chat");
+    await assertWithinLimit(usage, "ai");
+
     if (!isAIConfigured()) {
       throw new ApiError(503, "Chat editing isn't available right now — try the swap/remove buttons instead.");
     }
@@ -37,7 +50,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       return NextResponse.json({ reply: "This itinerary doesn't have any activities to edit yet." });
     }
 
-    const intent = await interpretItineraryChat(body.message, itinerary, items);
+    const intent = await interpretItineraryChat(body.message, itinerary, items, usage);
     if (!intent || intent.action === "clarify" || !intent.itemId) {
       return NextResponse.json({
         reply: intent?.reply ?? "I couldn't quite understand that — try naming the day or activity directly.",
@@ -60,12 +73,12 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     }
 
     const excludeIds = items.map((i) => i.experienceId).filter((eid): eid is string => Boolean(eid));
-    const candidates = await getSwapCandidates(itinerary, excludeIds);
+    const candidates = await getSwapCandidates(itinerary, excludeIds, usageContext(user.id, "itinerary_swap"));
     if (candidates.length === 0) {
       return NextResponse.json({ reply: "I couldn't find any real alternatives nearby right now." });
     }
 
-    const pick = await pickSwapCandidate(intent.preference ?? body.message, candidates);
+    const pick = await pickSwapCandidate(intent.preference ?? body.message, candidates, usage);
     if (!pick?.experienceId) {
       return NextResponse.json({
         reply: pick?.reply ?? "Nothing nearby matched what you're looking for — try being more specific.",

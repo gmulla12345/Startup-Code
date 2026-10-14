@@ -13,6 +13,7 @@ import {
   summarizeEventsForAI,
 } from "@/lib/repositories/events";
 import { getSavedCategoryCounts, getSavedTagCounts } from "@/lib/repositories/saved";
+import type { UsageContext } from "@/lib/usage/context";
 
 export interface RankedRecommendation extends StructuredRecommendation {
   experience: Experience;
@@ -25,6 +26,8 @@ interface EngineOptions {
   limit?: number;
   useAI?: boolean;
   additionalExcludeIds?: string[];
+  /** Who this is for and which feature triggered it, for usage logging and daily limits. */
+  usage?: UsageContext;
 }
 
 interface BuiltContext {
@@ -86,7 +89,7 @@ export async function getRecommendations(
   profile: Profile,
   options: EngineOptions
 ): Promise<RankedRecommendation[]> {
-  const provider = await getExperienceProvider();
+  const provider = await getExperienceProvider(options.usage);
 
   // buildContext() (several Supabase reads + a weather call) and
   // provider.list() (for "for_you"/no-category surfaces, a 7-way parallel
@@ -148,7 +151,7 @@ export async function getRecommendations(
           recommendedTime: null,
           confidence: 0.6,
         }))
-      : await generateAIRecommendations(topCandidates, context);
+      : await generateAIRecommendations(topCandidates, context, options.usage);
 
   return recommendations
     .slice(0, options.limit ?? 10)
@@ -185,7 +188,8 @@ export async function getRecommendations(
 export async function getSurpriseMe(
   client: SupabaseClient,
   profile: Profile,
-  excludeIds: string[] = []
+  excludeIds: string[] = [],
+  usage?: UsageContext
 ): Promise<SurpriseMeResult | null> {
   const pastSurpriseIds = await getEventExperienceIds(client, profile.userId, "surprise_me_requested");
   const neverRepeatExcludes = [...new Set([...excludeIds, ...pastSurpriseIds])];
@@ -194,6 +198,7 @@ export async function getSurpriseMe(
     surfaceContext: "surprise_me",
     limit: 8,
     additionalExcludeIds: neverRepeatExcludes,
+    usage,
   });
 
   // History has covered every real candidate nearby — only now is a repeat
@@ -204,6 +209,7 @@ export async function getSurpriseMe(
       surfaceContext: "surprise_me",
       limit: 8,
       additionalExcludeIds: excludeIds,
+      usage,
     });
   }
 

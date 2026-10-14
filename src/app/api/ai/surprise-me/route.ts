@@ -3,21 +3,37 @@ import { requireUser, withErrorHandling, ApiError } from "@/lib/api/auth";
 import { checkRateLimit } from "@/lib/api/rate-limit";
 import { getProfileByUserId } from "@/lib/repositories/profile";
 import { getSubscription, isPremium } from "@/lib/repositories/subscriptions";
-import { trackEvent, getRecentEvents } from "@/lib/repositories/events";
+import { trackEvent, countEventsSince } from "@/lib/repositories/events";
 import { getSurpriseMe } from "@/services/recommendation/engine";
 import { FREE_TIER_LIMITS } from "@/lib/config/pricing";
 import { surpriseMeFeedbackSchema } from "@/lib/validation/schemas";
+import { usageContext } from "@/lib/usage/context";
+import { assertWithinLimit } from "@/lib/usage/limits";
 
-async function assertWithinFreeLimit(supabase: Awaited<ReturnType<typeof requireUser>>["supabase"], userId: string, premium: boolean) {
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+
+type Supabase = Awaited<ReturnType<typeof requireUser>>["supabase"];
+
+async function assertWithinFreeLimit(supabase: Supabase, userId: string, premium: boolean) {
   if (premium) return;
-  const events = await getRecentEvents(supabase, userId, 200);
-  const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-  const recentRequests = events.filter(
-    (e) => e.eventType === "surprise_me_requested" && new Date(e.createdAt).getTime() > oneWeekAgo
-  );
-  if (recentRequests.length >= FREE_TIER_LIMITS.surpriseMePerWeek) {
+  const used = await countEventsSince(supabase, userId, "surprise_me_requested", new Date(Date.now() - WEEK_MS).toISOString());
+  if (used >= FREE_TIER_LIMITS.surpriseMePerWeek) {
     throw new ApiError(402, "You've used your free Surprise Me for this week. Upgrade to Premium for unlimited.");
   }
+}
+
+/**
+ * "Not for me" fetches another pick, which costs a Claude call and a Places
+ * lookup exactly like the first one. Free accounts get a small number of
+ * replacements a week (FREE_TIER_LIMITS.surpriseMeRerollsPerWeek); counting
+ * happens in the database from the feedback events this route records, so a
+ * client cannot reset it by sending a different excludeIds list.
+ */
+async function countRerollsThisWeek(supabase: Supabase, userId: string): Promise<number> {
+  return countEventsSince(supabase, userId, "surprise_me_feedback", new Date(Date.now() - WEEK_MS).toISOString(), {
+    key: "feedback",
+    value: "not_for_me",
+  });
 }
 
 export async function GET(request: Request) {
@@ -33,10 +49,13 @@ export async function GET(request: Request) {
     const premium = isPremium(subscription);
     await assertWithinFreeLimit(supabase, user.id, premium);
 
+    const usage = usageContext(user.id, "surprise_me");
+    await assertWithinLimit(usage, "places");
+
     const url = new URL(request.url);
     const excludeIds = (url.searchParams.get("exclude") ?? "").split(",").filter(Boolean);
 
-    const result = await getSurpriseMe(supabase, profile, excludeIds);
+    const result = await getSurpriseMe(supabase, profile, excludeIds, usage);
     if (!result) {
       return NextResponse.json({ result: null, message: "No matching experiences yet — try widening your interests in Profile." });
     }
@@ -49,8 +68,22 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   return withErrorHandling(async () => {
     const { user, supabase } = await requireUser();
+    // The same per-minute cap as GET. This path used to have none, and it
+    // does the expensive part (a fresh pick) on every "not for me".
+    checkRateLimit(`surprise-me:${user.id}`, 20, 60_000);
+
     const body = surpriseMeFeedbackSchema.parse(await request.json());
 
+    // Decide the allowance BEFORE recording this feedback, so the event being
+    // recorded now does not count against itself. Premium is never blocked here
+    // (it is bounded by the daily limits instead).
+    let rerollBlocked = false;
+    if (body.feedback === "not_for_me" && !isPremium(await getSubscription(supabase, user.id))) {
+      rerollBlocked = (await countRerollsThisWeek(supabase, user.id)) >= FREE_TIER_LIMITS.surpriseMeRerollsPerWeek;
+    }
+
+    // The learning signal is recorded regardless: a "not for me" teaches the
+    // taste model even when it is not followed by a new pick.
     await trackEvent(supabase, user.id, "surprise_me_feedback", body.experienceId, {
       feedback: body.feedback,
       tags: body.tags,
@@ -62,11 +95,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: true });
     }
 
+    if (rerollBlocked) {
+      throw new ApiError(402, "You've used this week's free alternatives. Upgrade to Premium for unlimited.");
+    }
+
     const profile = await getProfileByUserId(supabase, user.id);
     if (!profile) throw new ApiError(404, "Profile not found.");
 
+    const usage = usageContext(user.id, "surprise_me");
+    await assertWithinLimit(usage, "places");
+
     const nextExcludeIds = [...body.excludeIds, body.experienceId];
-    const result = await getSurpriseMe(supabase, profile, nextExcludeIds);
+    const result = await getSurpriseMe(supabase, profile, nextExcludeIds, usage);
 
     return NextResponse.json({ result });
   });

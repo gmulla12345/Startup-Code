@@ -1,4 +1,5 @@
 import { callStructuredTool, isAIConfigured } from "./client";
+import type { UsageContext } from "@/lib/usage/context";
 import { recommendationBatchSchema } from "./schema";
 import { brand } from "@/lib/config/brand";
 import type { RecommendationContext, StructuredRecommendation } from "@/types/ai";
@@ -63,7 +64,8 @@ const AI_REASONING_BATCH_SIZE = 6;
  */
 export async function generateAIRecommendations(
   candidates: ScoredExperience[],
-  context: RecommendationContext
+  context: RecommendationContext,
+  usage?: UsageContext
 ): Promise<StructuredRecommendation[]> {
   const fallback = toFallback(candidates);
   if (!isAIConfigured() || candidates.length === 0) return fallback;
@@ -118,6 +120,7 @@ a specific, personal reason for each.`;
     // so this 6-candidate batch has real headroom under 12s. Home/Discover
     // are Suspense-streamed, so this only delays one rail, not the page.
     timeoutMs: 12_000,
+    usage,
   });
 
   if (!result) return fallback;

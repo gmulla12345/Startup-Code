@@ -3,6 +3,7 @@ import { itineraryChatIntentSchema, itineraryChatPickSchema, type ItineraryChatI
 import { brand } from "@/lib/config/brand";
 import type { Itinerary, ItineraryItem } from "@/types/database";
 import type { SwapCandidate } from "@/lib/repositories/itineraries";
+import type { UsageContext } from "@/lib/usage/context";
 
 const INTENT_TOOL_SCHEMA = {
   type: "object",
@@ -42,7 +43,8 @@ Rules:
 export async function interpretItineraryChat(
   message: string,
   itinerary: Itinerary,
-  items: ItineraryItem[]
+  items: ItineraryItem[],
+  usage?: UsageContext
 ): Promise<ItineraryChatIntent | null> {
   if (!isAIConfigured()) return null;
 
@@ -69,6 +71,7 @@ User's request: "${message}"`;
     inputSchema: INTENT_TOOL_SCHEMA,
     maxTokens: 300,
     timeoutMs: 10_000,
+    usage,
   });
   if (!result) return null;
 
@@ -110,7 +113,8 @@ specific, e.g. "Swapped in Joe's Pizza — cheaper and just as close." or "Nothi
  */
 export async function pickSwapCandidate(
   preference: string,
-  candidates: SwapCandidate[]
+  candidates: SwapCandidate[],
+  usage?: UsageContext
 ): Promise<ItineraryChatPick | null> {
   if (!isAIConfigured() || candidates.length === 0) return null;
 
@@ -129,6 +133,7 @@ Pick the best match.`;
     inputSchema: PICK_TOOL_SCHEMA,
     maxTokens: 200,
     timeoutMs: 10_000,
+    usage,
   });
   if (!result) return null;
 

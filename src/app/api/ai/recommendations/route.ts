@@ -5,6 +5,7 @@ import { getProfileByUserId } from "@/lib/repositories/profile";
 import { getSubscription, isPremium } from "@/lib/repositories/subscriptions";
 import { getRecommendations } from "@/services/recommendation/engine";
 import { FREE_TIER_LIMITS } from "@/lib/config/pricing";
+import { usageContext } from "@/lib/usage/context";
 
 const SURFACE_CONTEXTS = ["for_you", "nearby", "weekend", "hidden_gem", "because_you_like"] as const;
 
@@ -47,6 +48,7 @@ export async function GET(request: Request) {
       surfaceContext,
       limit: effectiveLimit,
       useAI: false,
+      usage: usageContext(user.id, "discover"),
     });
 
     return NextResponse.json({ recommendations, premium });

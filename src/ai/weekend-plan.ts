@@ -1,4 +1,5 @@
 import { callStructuredTool, isAIConfigured } from "./client";
+import type { UsageContext } from "@/lib/usage/context";
 import { weekendPlanSchema } from "./schema";
 import { brand } from "@/lib/config/brand";
 import type { Experience, Profile } from "@/types/database";
@@ -43,7 +44,8 @@ Rules:
 export async function generateWeekendPlan(
   profile: Profile,
   request: WeekendPlanRequest,
-  candidates: Experience[]
+  candidates: Experience[],
+  usage?: UsageContext
 ): Promise<WeekendPlan> {
   const fallback = fallbackPlan(request, candidates);
   if (!isAIConfigured() || candidates.length === 0) return fallback;
@@ -79,6 +81,7 @@ Build the itinerary now.`;
     // recommendation-reasoning call — give it real room rather than the
     // short timeout tuned for that call's tiny batches.
     timeoutMs: 25_000,
+    usage,
   });
 
   if (!result) return fallback;

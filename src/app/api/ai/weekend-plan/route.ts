@@ -7,6 +7,8 @@ import { getExperienceProvider } from "@/services/providers";
 import { generateWeekendPlan } from "@/ai/weekend-plan";
 import { weekendPlanRequestSchema } from "@/lib/validation/schemas";
 import { FREE_TIER_LIMITS } from "@/lib/config/pricing";
+import { usageContext } from "@/lib/usage/context";
+import { assertWithinLimit } from "@/lib/usage/limits";
 
 export async function POST(request: Request) {
   return withErrorHandling(async () => {
@@ -21,9 +23,13 @@ export async function POST(request: Request) {
     const profile = await getProfileByUserId(supabase, user.id);
     if (!profile) throw new ApiError(404, "Profile not found.");
 
+    const usage = usageContext(user.id, "weekend_plan");
+    await assertWithinLimit(usage, "ai");
+    await assertWithinLimit(usage, "places");
+
     const body = weekendPlanRequestSchema.parse(await request.json());
 
-    const provider = await getExperienceProvider();
+    const provider = await getExperienceProvider(usage);
     const candidates = await provider.list({
       city: profile.city ?? undefined,
       latitude: profile.latitude ?? undefined,
@@ -34,7 +40,7 @@ export async function POST(request: Request) {
       limit: 30,
     });
 
-    const plan = await generateWeekendPlan(profile, body, candidates);
+    const plan = await generateWeekendPlan(profile, body, candidates, usage);
     return NextResponse.json({ plan });
   });
 }

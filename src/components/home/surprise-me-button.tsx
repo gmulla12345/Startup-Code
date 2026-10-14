@@ -106,7 +106,11 @@ export function SurpriseMeButton() {
     const json = await res.json();
     setLoading(false);
 
-    if (json.result) showResult(json.result);
+    if (!res.ok) {
+      // A weekly or daily limit, with the server's own wording.
+      toast.error(json.error ?? "Something went wrong. Try again.");
+      setOpen(false);
+    } else if (json.result) showResult(json.result);
     else {
       toast.info("That's all we've got for now — check back later.");
       setOpen(false);

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient, getCurrentUser } from "@/lib/supabase/server";
 import { listSaved } from "@/lib/repositories/saved";
 import { getExperienceProvider } from "@/services/providers";
+import { usageContext } from "@/lib/usage/context";
 import { ExperienceCard } from "@/components/experience/experience-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Compass } from "lucide-react";
@@ -37,7 +38,7 @@ export default async function SavedPage() {
 async function SavedGrid({ userId }: { userId: string }) {
   const supabase = await createClient();
   const saved = await listSaved(supabase, userId);
-  const provider = await getExperienceProvider();
+  const provider = await getExperienceProvider(usageContext(userId, "saved"));
 
   const withExperiences = await Promise.all(
     saved.map(async (s) => ({ saved: s, experience: await provider.getById(s.experienceId) }))

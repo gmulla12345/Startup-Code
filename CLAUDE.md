@@ -1950,6 +1950,79 @@ The whole pre-login marketing site is now a light theme; the logged-in app and a
 - **Deleted (unused):** photo-strip, example-recommendations, product-preview, browser-frame, feature-card,
   grain-overlay, section-glow, tilt. `public/hero/urban-night-stroll.webp` is now unreferenced (left in place).
 
+## Phase 0 of the campus pivot: privacy fix, usage logging, daily limits (2026-10-14)
+
+Context: the product is moving to college students (Loyola University Maryland first); the plan is in
+[docs/campus-pivot-audit-and-plan.md](docs/campus-pivot-audit-and-plan.md). Phase 0 fixes things before any
+feature work. Migrations were applied to production on 2026-10-14 after a rolled-back rehearsal.
+
+**1. Public exposure closed** ([migration](src/db/migrations/20261014_01_restrict_social_exposure.sql)).
+Before: the logged-out API key could read every `social_profiles` row (first name, a generated handle made of
+8 characters of the account id, follower/following counts; 10 of 10 rows) and the whole `follows` table (policy
+`using (true)`), and every signup created such a row. Now: both tables are owner-only (`follows`: only the two
+people in the relationship), `anon` has no privileges on `social_profiles`/`follows`/`shares` (HTTP 401),
+`is_public` defaults to false, and `handle_new_user()` creates only `profiles` and `subscriptions`. No row was
+deleted and no table dropped; the tables still exist (nothing in the app uses them) and **dropping them is a
+separate step that needs explicit approval**. `schema.sql` was updated to match, because `npm run migrate`
+re-applies it: [schema-privacy.test.ts](src/__tests__/schema-privacy.test.ts) fails if it ever re-opens them.
+Not changed, only noted: `reviews` is public-read and exposes `user_id` and the author's first name (by design,
+1 row); `itineraries` with `is_public` are public-read (0 today); `job_applications` accepts anonymous inserts.
+
+**2. Every external call is logged** to `api_usage_events` ([migration](src/db/migrations/20261014_02_api_usage_events.sql)):
+provider, operation, feature, model, tokens in/out, units, estimated cost, outcome (`ok` | `error` | `blocked`).
+No PII (user id only; set null if the account is deleted). Service-role writes only; owners can read their own
+rows. Code: [src/lib/usage/](src/lib/usage) (`context.ts` who/what, `log.ts` the writer, `limits.ts`, `costs.ts`).
+- Writes happen in Next's `after()` (no latency; falls back to an unawaited write outside a request).
+- **Google calls go through [places-fetch.ts](src/lib/google/places-fetch.ts)** (`fetchGoogleJson`), which wraps
+  the request in `unstable_cache` so the log row is written **only when Google is really called**, not on a cache
+  hit (the old `fetch(..., {next:{revalidate}})` could not tell the difference). It also no longer caches a
+  failure: a `REQUEST_DENIED` used to be cached for an hour like any 200, delaying recovery after billing is
+  fixed. Only `OK`, `ZERO_RESULTS`, `NOT_FOUND` are reused. `unstable_cache` is documented as superseded by
+  `use cache` in Next 16 but is still supported; moving to `use cache` is a later cleanup.
+- Photos are logged in [/api/place-photo](src/app/api/place-photo/route.ts) (each request reaching the function
+  is a billed call; the CDN answers repeats). Claude calls are logged in `callStructuredTool` from `response.usage`.
+- Attribution: callers build `usageContext(userId, feature)` and pass it to `getExperienceProvider(usage)`,
+  `getPlacesProvider(usage)`, the engine options, and the AI functions. No context = anonymous (logged, unlimited).
+  Public routes (`/api/experiences*`, `/api/geocode`, the travel guides) are anonymous by design.
+- Costs are **estimates at list price** (no free-tier credit), in [config/usage.ts](src/lib/config/usage.ts).
+  The real bill is Google Cloud Billing and the Anthropic Console.
+
+**3. Per-user daily limits, configured in one place** ([config/usage.ts](src/lib/config/usage.ts) `DAILY_LIMITS`):
+free 10 Claude calls and 100 Places calls a day, Premium 60 and 400; the day resets at midnight Eastern.
+Only a real Google call counts (a cache hit is free); Claude counts every request. Over the limit: Claude returns
+`null` (every caller already has a deterministic fallback), the Places wrapper returns nothing, and the routes
+that pre-check (Surprise Me, planners, chat) answer 429 via `withErrorHandling`. Anonymous traffic has no per-user
+limit (still IP rate-limited). The check **fails open** if the usage lookup errors: it is a cost control, not a
+security boundary. Today's usage is read once per request and memoized on the context.
+
+**4. Surprise Me "not for me" hole closed** ([route](src/app/api/ai/surprise-me/route.ts)). The POST path fetched a
+fresh pick (a Claude call plus a Places fan-out) with no limit and no rate check, so a free account could chain
+unlimited picks. Now: same 20/min cap as GET; free accounts get `FREE_TIER_LIMITS.surpriseMeRerollsPerWeek`
+replacements (**2, a starting value, change it in [pricing.ts](src/lib/config/pricing.ts)**) counted in the database
+from `surprise_me_feedback` events, so a client cannot reset it by sending a different `excludeIds`; Premium is
+bounded only by the daily limits. The rejection is still recorded as a taste signal when a pick is refused.
+The weekly check also stopped reading "the last 200 events and filtering in memory" (it could undercount) and
+now counts in the database (`countEventsSince`).
+
+**5. Itinerary chat was NOT Premium-gated** (any signed-in account with an itinerary could spend two Claude
+calls per message, 20 messages a minute). It now returns 402 for free accounts and counts toward the daily AI limit.
+
+**Spend, per feature and per user** (run in the Supabase SQL editor):
+```sql
+select feature, provider, operation, count(*) calls, round(sum(est_cost_usd)::numeric, 3) est_usd
+from api_usage_events where created_at > now() - interval '7 days' and outcome = 'ok'
+group by 1,2,3 order by est_usd desc;
+
+select user_id, round(sum(est_cost_usd)::numeric, 3) est_usd, count(*) calls
+from api_usage_events where created_at > now() - interval '30 days' and outcome = 'ok' and user_id is not null
+group by 1 order by est_usd desc limit 20;
+```
+
+**Not yet verified live:** the cache-HIT path of `fetchGoogleJson` inside a running Next server (only unit-tested,
+because Google returns `REQUEST_DENIED` while billing is on hold). After billing is restored, request the same
+catalog URL twice and confirm one `ok` row, not two. **Not done on purpose (per the brief):** the free-tier place
+view limit is unchanged, and no new paid API call was added.
+
 ## Exact next steps (priority order)
 
 **Done since the last update:** deployed to production at `discoverzolo.com` (fixed a Vercel

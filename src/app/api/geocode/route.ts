@@ -3,6 +3,7 @@ import { withErrorHandling } from "@/lib/api/auth";
 import { checkRateLimit } from "@/lib/api/rate-limit";
 import { getPlacesProvider } from "@/services/providers";
 import { searchMockCities } from "@/services/providers/mock-places-provider";
+import { usageContext } from "@/lib/usage/context";
 
 /**
  * Used by onboarding's location step, any "search a city" input, and "use my
@@ -19,7 +20,7 @@ export async function GET(request: Request) {
     checkRateLimit(`geocode:${ip}`, 30, 60_000);
 
     const url = new URL(request.url);
-    const provider = getPlacesProvider();
+    const provider = getPlacesProvider(usageContext(null, "geocode"));
 
     const lat = url.searchParams.get("lat");
     const lng = url.searchParams.get("lng");
