@@ -8,6 +8,8 @@ import { LIST_TEMPLATES, type ListTemplateId, type PoolItem } from "./templates"
 export interface ListPlace extends PoolItem {
   /** The line under the place: why it is here. Null when we hold no fact worth saying. */
   why: string | null;
+  /** The owner has marked this place as a local pick (see lib/local-picks). Set after the list is built; never computed. */
+  localPick?: boolean;
 }
 
 export interface HomeList {
@@ -71,7 +73,8 @@ export function buildHomeLists(
       template: template.id,
       title: template.title,
       blurb: template.blurb,
-      places: chosen.map((p) => ({ ...p, why: whyThisPick(p.experience, profile) })),
+      // The fact that put each place on THIS list leads its line, so a place always says why it is where it is.
+      places: chosen.map((p) => ({ ...p, why: whyThisPick(p.experience, profile, { list: template.id, distanceMiles: p.distanceMiles }) })),
       shareIds: shareable ? (ids as string[]) : [],
     });
   }

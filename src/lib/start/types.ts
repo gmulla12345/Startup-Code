@@ -20,6 +20,8 @@ export interface StartPlace extends ListPlaceExperience {
   distanceMiles: number | null;
   /** The line under the place: why it is here. Null when we hold nothing worth saying. */
   why: string | null;
+  /** The owner has marked this place as a local pick (see lib/local-picks). */
+  localPick?: boolean;
 }
 
 export interface FirstList {

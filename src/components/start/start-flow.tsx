@@ -195,6 +195,7 @@ export function StartFlow() {
                 experience={p}
                 index={i}
                 why={p.why}
+                localPick={p.localPick}
                 distanceLabel={p.distanceMiles != null ? formatDistance(p.distanceMiles) : undefined}
                 onSaveRequest={() => askToKeep("place")}
               />

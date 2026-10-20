@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils/cn";
 import { formatCategoryLabel, formatPrice, withMaxWidth } from "@/lib/utils/format";
 import { track } from "@/services/analytics/track";
+import { LocalPickBadge } from "@/components/experience/local-pick-badge";
 import type { ListPlaceExperience } from "@/lib/start/types";
 
 /**
@@ -20,6 +21,7 @@ export function ListPlaceRow({
   experience,
   index,
   why,
+  localPick,
   distanceLabel,
   matchScore,
   onSaveRequest,
@@ -28,6 +30,8 @@ export function ListPlaceRow({
   /** Zero-based position in the list. */
   index: number;
   why: string | null;
+  /** The owner has marked this place as a local pick: shown as a small badge, and only then. */
+  localPick?: boolean;
   distanceLabel?: string;
   /** Shown only on the list made from the person's own tastes. */
   matchScore?: number;
@@ -100,7 +104,8 @@ export function ListPlaceRow({
             </button>
           </span>
 
-          <span className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-foreground-muted">
+          <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-foreground-muted">
+            {localPick && <LocalPickBadge />}
             {experience.isHiddenGem ? (
               <span className="inline-flex items-center gap-1 font-medium text-[color:var(--gold)]">
                 <Gem className="h-3 w-3" /> Hidden gem

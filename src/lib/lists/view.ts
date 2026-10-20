@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { getLocalPickIds } from "@/lib/local-picks";
 import { fetchPlacePreview, type PlacePreviewResult } from "@/lib/share/place-preview";
 import { isShareToken } from "@/lib/share/token";
 import { LIST_TIMEZONE } from "@/lib/config/lists";
@@ -18,6 +19,8 @@ export interface ListViewItem {
   place: PlacePreviewResult;
   /** Our own line under the place (a house list's), never Google's. */
   why: string | null;
+  /** The owner has marked this place as a local pick. */
+  localPick: boolean;
 }
 
 export interface ListView {
@@ -45,8 +48,9 @@ export const loadListView = cache(async (token: string): Promise<ListView | null
   if (state === "upcoming") return null;
   if (state === "ended") return { token, title: list.title, blurb: list.blurb, items: [], through: null, ended: true };
 
-  const items = await Promise.all(
-    list.placeIds.map(async (placeId, i) => ({ placeId, place: await fetchPlacePreview(placeId, "list_preview"), why: list.whys[i] ?? null }))
-  );
-  return { token, title: list.title, blurb: list.blurb, items, through: list.endsOn ? throughLine(list.endsOn, today) : null, ended: false };
+  const [marked, items] = await Promise.all([
+    getLocalPickIds(list.placeIds),
+    Promise.all(list.placeIds.map(async (placeId, i) => ({ placeId, place: await fetchPlacePreview(placeId, "list_preview"), why: list.whys[i] ?? null }))),
+  ]);
+  return { token, title: list.title, blurb: list.blurb, items: items.map((item) => ({ ...item, localPick: marked.has(item.placeId) })), through: list.endsOn ? throughLine(list.endsOn, today) : null, ended: false };
 });

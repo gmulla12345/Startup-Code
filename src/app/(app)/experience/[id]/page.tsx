@@ -17,6 +17,9 @@ import { PremiumLock } from "@/components/experience/premium-lock";
 import { ReviewsList } from "@/components/experience/reviews-list";
 import { ExperienceCard } from "@/components/experience/experience-card";
 import { Badge } from "@/components/ui/badge";
+import { LocalPickBadge } from "@/components/experience/local-pick-badge";
+import { getLocalPickIds, isMarked } from "@/lib/local-picks";
+import { placeIdFromExperienceId } from "@/lib/share/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCategoryLabel, formatDuration, formatPrice } from "@/lib/utils/format";
 import { trackEvent } from "@/lib/repositories/events";
@@ -103,6 +106,8 @@ export default async function ExperienceDetailPage({ params }: PageProps<"/exper
   }
 
   const locked = experience.isPremium && !userIsPremium;
+  // Set by hand by the owner, shown only where they said so (a Google place; a curated one is never marked).
+  const localPick = isMarked(experience.id, await getLocalPickIds([placeIdFromExperienceId(experience.id)]));
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -133,6 +138,7 @@ export default async function ExperienceDetailPage({ params }: PageProps<"/exper
 
       <div className="mt-6 flex flex-wrap items-center gap-2">
         <Badge variant="default">{formatCategoryLabel(experience.category)}</Badge>
+        {localPick && <LocalPickBadge />}
         {experience.isHiddenGem && <Badge variant="gold">Hidden gem</Badge>}
         {experience.isPremium && <Badge variant="primary">Premium</Badge>}
         {experience.sourceProvider === "mock" && <Badge variant="outline">Editorial pick</Badge>}

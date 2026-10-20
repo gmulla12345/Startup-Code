@@ -1,6 +1,8 @@
 import { FIRST_LIST_PLACES, FIRST_LIST_RADIUS_MILES } from "@/lib/config/start";
 import { LIST_MIN_PLACES } from "@/lib/config/lists";
 import { whyThisPick } from "@/lib/lists/reasons";
+import { getLocalPickIds, isMarked } from "@/lib/local-picks";
+import { placeIdFromExperienceId } from "@/lib/share/input";
 import { defaultPreferences, emptyPersonality } from "@/lib/repositories/profile";
 import { usageContext } from "@/lib/usage/context";
 import { distanceMiles } from "@/lib/utils/geo";
@@ -73,6 +75,12 @@ export function toStartPlace(experience: Experience, profile: Profile): StartPla
   };
 }
 
+/** Marks the places the owner has set as local picks, from one read. Nothing else about a place changes. */
+async function withLocalPicks(places: StartPlace[]): Promise<StartPlace[]> {
+  const marked = await getLocalPickIds(places.map((p) => placeIdFromExperienceId(p.id)));
+  return marked.size === 0 ? places : places.map((p) => ({ ...p, localPick: isMarked(p.id, marked) }));
+}
+
 /**
  * The first list for someone at these coordinates: the best matches among the places
  * around them. Null when there are not enough places to make a list (Google could not
@@ -96,7 +104,7 @@ export async function buildFirstList(input: {
 
   const top = rankExperiences(candidates, profile).slice(0, FIRST_LIST_PLACES);
   if (top.length < LIST_MIN_PLACES) return null;
-  return { title: TITLE, blurb: BLURB, places: top.map((r) => toStartPlace(r.experience, profile)) };
+  return { title: TITLE, blurb: BLURB, places: await withLocalPicks(top.map((r) => toStartPlace(r.experience, profile))) };
 }
 
 /**
@@ -110,5 +118,5 @@ export async function restoreFirstList(input: { outing: OutingId; budget: Budget
   const found = await Promise.all(input.ids.map((id) => provider.getById(id).catch(() => null)));
   const places = found.filter((e): e is Experience => Boolean(e)).map((e) => toStartPlace(e, profile));
   if (places.length < LIST_MIN_PLACES) return null;
-  return { title: TITLE, blurb: BLURB, places };
+  return { title: TITLE, blurb: BLURB, places: await withLocalPicks(places) };
 }

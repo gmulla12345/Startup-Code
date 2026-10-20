@@ -1,3 +1,4 @@
+import { LocalPickBadge } from "@/components/experience/local-pick-badge";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -83,6 +84,11 @@ function Row({ item, index }: { item: ListViewItem; index: number }) {
       <span className="min-w-0 flex-1">
         <span className="block font-display text-lg font-semibold leading-snug text-foreground">{place.name}</span>
         {meta && <span className="mt-0.5 block text-sm text-foreground-muted">{meta}</span>}
+        {item.localPick && (
+          <span className="mt-1 block">
+            <LocalPickBadge />
+          </span>
+        )}
         {item.why && <span className="font-reason mt-1.5 block text-[13px] leading-snug text-foreground-muted">{item.why}</span>}
         {place.photoCredit && <Credit credit={place.photoCredit} />}
       </span>

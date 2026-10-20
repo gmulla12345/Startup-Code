@@ -1550,3 +1550,23 @@ begin
       );
   end if;
 end $$;
+
+
+-- -------------------------------------------------------------------------
+-- the Local pick badge, phase 6 (migration 20261024_01_local_picks.sql): set by hand, closed to every browser key
+-- -------------------------------------------------------------------------
+
+create table if not exists public.local_picks (
+  -- (length and shape are separate checks: Postgres caps a regex repeat count at 255)
+  place_id text primary key check (char_length(place_id) between 10 and 300 and place_id ~ '^[A-Za-z0-9_-]+$'),
+  local_pick boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.local_picks enable row level security;
+revoke all on public.local_picks from anon, authenticated;
+
+drop trigger if exists trg_local_picks_updated_at on public.local_picks;
+create trigger trg_local_picks_updated_at before update on public.local_picks
+  for each row execute function public.set_updated_at();

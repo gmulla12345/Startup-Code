@@ -100,6 +100,20 @@ describe("a shared list", () => {
   });
 });
 
+describe("the Local pick badge", () => {
+  it("is on a place the owner marked, and on no other", async () => {
+    h.view = view([{ ...item(1), localPick: false }, { ...item(2), localPick: true }, { ...item(3), localPick: false }]);
+    const out = await html();
+    expect([...out.matchAll(/Local pick/g)]).toHaveLength(1);
+    expect(out.indexOf("Local pick")).toBeGreaterThan(out.indexOf("Fixture Place 2"));
+    expect(out.indexOf("Local pick")).toBeLessThan(out.indexOf("Fixture Place 3"));
+  });
+
+  it("is not there when none is marked", async () => {
+    expect(await html()).not.toContain("Local pick");
+  });
+});
+
 describe("what a link preview sees", () => {
   it("is private by default: not indexed, with the list's own title and a plain description", async () => {
     const meta = await generateMetadata(props);
