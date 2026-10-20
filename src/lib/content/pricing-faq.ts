@@ -27,7 +27,8 @@ export const PRICING_FAQ_ITEMS: FaqItem[] = [
     : []),
   {
     q: "Can I cancel Premium anytime?",
-    a: "Yes — manage or cancel your subscription anytime from your Profile. You'll keep Premium access through the end of your current billing period.",
+    // COPY: cancelling, and pausing as the alternative
+    a: "Yes — manage or cancel your subscription anytime from your Profile. You'll keep Premium access through the end of your current billing period, and everything you have saved stays in your account. If you would rather not cancel, a monthly subscription can be paused for one month instead.",
   },
   {
     q: "Do you offer refunds?",

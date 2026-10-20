@@ -157,7 +157,15 @@ export default function TermsOfServicePage() {
           <strong>Auto-renewal and cancellation.</strong> By subscribing, you authorize us to charge your payment
           method on a recurring monthly basis until you cancel. You can cancel anytime from your Profile. If you
           cancel, you keep Premium access through the end of the period you already paid for (or, if still in your
-          free trial, through the end of the trial), and you will not be charged again.
+          free trial, through the end of the trial), and you will not be charged again. Your account then moves to the
+          Free plan, and the places and lists you saved remain in it.
+        </p>
+        {/* COPY: pausing, in the terms */}
+        <p>
+          <strong>Pausing.</strong> A monthly subscription can be paused for one month from your Profile. Premium
+          continues through the end of the period you already paid for. The month after is not charged, and your
+          account is on the Free plan for that month. The subscription then continues, and the next payment is taken
+          on the date shown in your Profile. A pause can be undone before it begins.
         </p>
         <p>
           <strong>Refunds.</strong> Fees already charged are non-refundable, except where required by law. To

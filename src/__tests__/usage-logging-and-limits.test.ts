@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 // that a blocked call never reaches Google or Claude.
 
 const h = vi.hoisted(() => ({
-  plan: { plan_id: "free", status: "none" } as { plan_id: string; status: string } | null,
+  plan: { plan_id: "free", status: "none" } as { plan_id: string; status: string; paused_from?: string; paused_until?: string } | null,
   usedRows: [] as { bucket: string; units: number }[],
   rpcError: null as null | { message: string },
   rpcCalls: 0,
@@ -123,6 +123,18 @@ describe("daily limits", () => {
     h.plan = { plan_id: "premium", status: "canceled" };
     h.usedRows = [{ bucket: "ai", units: DAILY_LIMITS.free.ai }];
     expect((await checkUsage(usageContext("user-limit-canceled", "weekend_plan"), "ai")).allowed).toBe(false);
+  });
+
+  it("gives a Premium subscriber Free's limits during the one month they have paused, and Premium's before and after", async () => {
+    h.usedRows = [{ bucket: "ai", units: DAILY_LIMITS.free.ai }];
+    const day = 86_400_000;
+    const around = (from: number, until: number) => ({ plan_id: "premium", status: "active", paused_from: new Date(Date.now() + from).toISOString(), paused_until: new Date(Date.now() + until).toISOString() });
+    h.plan = around(-day, day); // the skipped month is under way
+    expect((await checkUsage(usageContext("user-limit-paused", "weekend_plan"), "ai")).allowed).toBe(false);
+    h.plan = around(day, 2 * day); // paid period still running
+    expect((await checkUsage(usageContext("user-limit-pause-scheduled", "weekend_plan"), "ai")).allowed).toBe(true);
+    h.plan = around(-2 * day, -day); // over
+    expect((await checkUsage(usageContext("user-limit-pause-over", "weekend_plan"), "ai")).allowed).toBe(true);
   });
 
   it("reads today's usage once per request, however many calls check it", async () => {

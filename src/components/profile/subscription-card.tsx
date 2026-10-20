@@ -1,21 +1,27 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { isStudentPlanConfigured, isStudentPriceId, pricing } from "@/lib/config/pricing";
+import { isStudentPlanConfigured, pricing } from "@/lib/config/pricing";
 import { brand } from "@/lib/config/brand";
 import { getBillingPreference } from "@/lib/utils/billing-preference";
 import { getEndorselyReferral } from "@/lib/analytics/endorsely";
+import { describeSubscription } from "@/lib/subscription/state";
+import { formatDay } from "@/lib/subscription/format";
 import type { Subscription } from "@/types/database";
 
 export function SubscriptionCard({ subscription }: { subscription: Subscription | null }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
-  const isPremium = subscription?.planId === "premium" && ["active", "trialing"].includes(subscription.status);
+  const view = describeSubscription(subscription);
+  // Premium in effect right now. A month paused rests on Free, but the subscription is theirs: no Upgrade button then.
+  const isPremium = view.kind === "premium" || view.kind === "ending" || view.kind === "pause_scheduled";
+  const hasSubscription = view.kind !== "free";
 
   async function handleUpgrade() {
     // Once the Student plan is on sale there is a choice to make (Premium or Student, monthly or annual),
@@ -48,6 +54,27 @@ export function SubscriptionCard({ subscription }: { subscription: Subscription 
     }
   }
 
+  /** Take back a cancellation or a pause that has not taken effect yet. */
+  async function handleUndo(action: "keep" | "unpause") {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/stripe/subscription", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error ?? "That did not go through.");
+      // COPY: said once a cancellation or a pause is taken back
+      toast.success(action === "keep" ? "Premium continues." : "The pause is undone.");
+      router.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function handleManage() {
     // Premium sold via a Digistore24 affiliate has no Stripe customer
     // behind it — DS24's own buyer-support page (cancel, refund, update
@@ -76,20 +103,43 @@ export function SubscriptionCard({ subscription }: { subscription: Subscription 
       <div className="flex items-center gap-2 mb-1">
         <Sparkles className={isPremium ? "h-5 w-5 text-primary" : "h-5 w-5 text-foreground-subtle"} />
         <h3 className="font-display text-lg font-semibold text-foreground">
-          {isPremium ? (isStudentPriceId(subscription?.stripePriceId) ? `${brand.name} Premium · Student` : `${brand.name} Premium`) : "Free Plan"}
+          {hasSubscription ? `${brand.name} Premium${view.kind === "paused" ? " · Paused" : "student" in view && view.student ? " · Student" : ""}` : "Free Plan"}
         </h3>
       </div>
       <p className="text-sm text-foreground-muted mb-4">
-        {isPremium
-          ? subscription?.cancelAtPeriodEnd
-            ? `Cancels at the end of your billing period.`
-            : `You have full access to unlimited discovery, more specific categories in Discover, and AI planning.`
-          : `Upgrade for unlimited Surprise Me, more specific categories in Discover, and AI trip planning — $${pricing.premium.priceMonthly}/mo.`}
+        {/* COPY: the profile card, in each state a subscription can be in */}
+        {view.kind === "ending"
+          ? `Premium ends on ${formatDay(view.endsOn)}. Everything you saved stays.`
+          : view.kind === "pause_scheduled"
+            ? `Premium pauses on ${formatDay(view.from)}. The month after costs nothing, and Premium returns on ${formatDay(view.until)}.`
+            : view.kind === "paused"
+              ? `Premium is paused. It returns on ${formatDay(view.until)}, and nothing is charged until then.`
+              : view.kind === "premium"
+                ? `You have full access to unlimited discovery, more specific categories in Discover, and AI planning.`
+                : `Upgrade for unlimited Surprise Me, more specific categories in Discover, and AI trip planning — $${pricing.premium.priceMonthly}/mo.`}
       </p>
-      {isPremium ? (
-        <Button variant="outline" onClick={handleManage} loading={loading}>
-          {loading ? "Loading..." : "Manage subscription"}
-        </Button>
+      {hasSubscription ? (
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+          {view.kind === "ending" && !subscription?.digistore24ManageUrl && (
+            <Button onClick={() => handleUndo("keep")} loading={loading}>
+              Keep Premium
+            </Button>
+          )}
+          {view.kind === "pause_scheduled" && (
+            <Button onClick={() => handleUndo("unpause")} loading={loading}>
+              Undo pause
+            </Button>
+          )}
+          <Button variant="outline" onClick={handleManage} loading={loading}>
+            {loading ? "Loading..." : "Manage subscription"}
+          </Button>
+          {/* COPY: the quiet way to begin cancelling (Premium bought through Digistore24 is cancelled with Digistore24) */}
+          {view.kind === "premium" && view.managedBy === "stripe" && (
+            <Link href="/profile/cancel" className="text-sm text-foreground-muted underline-offset-4 hover:text-foreground hover:underline">
+              Cancel Premium
+            </Link>
+          )}
+        </div>
       ) : (
         <Button onClick={handleUpgrade} loading={loading}>
           {loading ? "Loading..." : "Upgrade to Premium"}

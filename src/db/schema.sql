@@ -1531,3 +1531,22 @@ begin
 end $$;
 
 create index if not exists idx_lists_house_window on public.lists (starts_on, ends_on) where user_id is null;
+
+
+-- -------------------------------------------------------------------------
+-- pausing a subscription for a month, phase 5 (migration 20261023_01_subscription_pause.sql)
+-- -------------------------------------------------------------------------
+
+alter table public.subscriptions add column if not exists paused_from timestamptz;
+alter table public.subscriptions add column if not exists paused_until timestamptz;
+
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'subscriptions_pause_window') then
+    alter table public.subscriptions add constraint subscriptions_pause_window
+      check (
+        (paused_from is null and paused_until is null)
+        or (paused_from is not null and paused_until is not null and paused_until > paused_from)
+      );
+  end if;
+end $$;

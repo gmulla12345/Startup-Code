@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { getSubscription, isPremium } from "@/lib/repositories/subscriptions";
+import { getSubscription, hasSubscription } from "@/lib/repositories/subscriptions";
 import { brand } from "@/lib/config/brand";
 import { PremiumPlanCard } from "@/components/profile/premium-plan-card";
 import { noindexMetadata } from "@/lib/seo";
@@ -22,7 +22,7 @@ export default async function UpgradePage() {
   if (!user) redirect("/login");
 
   const subscription = await getSubscription(supabase, user.id);
-  if (isPremium(subscription)) redirect("/profile");
+  if (hasSubscription(subscription)) redirect("/profile"); // (including a month paused: the account rests on Free then, but the subscription is theirs)
 
   // The code they entered when they signed up, if it is one this account can use
   // (checked on the server), is filled in for them. Anything else is left blank.

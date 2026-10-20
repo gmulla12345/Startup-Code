@@ -238,7 +238,7 @@ export default function PrivacyPolicyPage() {
             changes to our terms and policies.
           </li>
           <li>
-            <strong>To fulfill and manage your orders.</strong> Including your Premium subscription, payments, and
+            <strong>To fulfill and manage your orders.</strong> Including your Premium subscription, payments, pauses, and
             cancellations.
           </li>
           <li>

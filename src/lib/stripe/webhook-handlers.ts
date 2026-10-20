@@ -4,6 +4,7 @@ import type { SubscriptionStatus } from "@/types/database";
 import { trackAnalytics } from "@/lib/analytics/server";
 import { isStudentPriceId } from "@/lib/config/pricing";
 import { releaseFoundingSlot } from "@/lib/founding/offer";
+import { readPauseMetadata } from "@/lib/subscription/pause";
 import { markPromoRedeemed } from "./promo";
 
 /**
@@ -100,9 +101,19 @@ function mapStripeStatus(status: Stripe.Subscription.Status): SubscriptionStatus
   return (known as string[]).includes(status) ? (status as SubscriptionStatus) : "none";
 }
 
-async function upsertSubscriptionRow(userId: string, subscription: Stripe.Subscription): Promise<void> {
+/**
+ * Mirrors a Stripe subscription into our row. Also used by the cancel flow (lib/stripe/cancel-flow.ts) right after it
+ * changes a subscription, so the screen is right at once rather than when the webhook arrives.
+ */
+export async function upsertSubscriptionRow(userId: string, subscription: Stripe.Subscription): Promise<void> {
   const admin = createAdminClient();
   const item = subscription.items.data[0];
+
+  // A paused month is kept in Stripe (pause_collection, with its two dates in our metadata). It is mirrored only while Stripe
+  // says collection is paused, so a pause undone, or resumed by hand in the Dashboard, stops resting the account on Free.
+  const pause = subscription.pause_collection
+    ? readPauseMetadata(subscription.metadata)
+    : { pausedFrom: null, pausedUntil: null };
 
   await admin
     .from("subscriptions")
@@ -116,6 +127,8 @@ async function upsertSubscriptionRow(userId: string, subscription: Stripe.Subscr
         ? new Date(item.current_period_end * 1000).toISOString()
         : null,
       cancel_at_period_end: subscription.cancel_at_period_end,
+      paused_from: pause.pausedFrom,
+      paused_until: pause.pausedUntil,
     })
     .eq("user_id", userId);
 

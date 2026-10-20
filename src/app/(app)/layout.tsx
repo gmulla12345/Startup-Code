@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient, getCurrentUser } from "@/lib/supabase/server";
 import { getProfileByUserId } from "@/lib/repositories/profile";
-import { getSubscription, isPremium } from "@/lib/repositories/subscriptions";
+import { getSubscription, hasSubscription } from "@/lib/repositories/subscriptions";
 import { AppShell } from "@/components/layout/app-shell";
 import { PublicHeader } from "@/components/layout/public-header";
 
@@ -32,7 +32,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   const subscription = await getSubscription(supabase, user.id);
 
   return (
-    <AppShell profile={profile} email={user.email ?? null} premium={isPremium(subscription)}>
+    <AppShell profile={profile} email={user.email ?? null} premium={hasSubscription(subscription) /* only hides the upsell: a month paused is still their subscription */}>
       {children}
     </AppShell>
   );

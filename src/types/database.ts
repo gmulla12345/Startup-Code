@@ -277,6 +277,9 @@ export interface Subscription {
   planId: "free" | "premium";
   currentPeriodEnd: ISODateString | null;
   cancelAtPeriodEnd: boolean;
+  /** A one-month pause: Premium continues until pausedFrom, rests on Free until pausedUntil, then returns. Both null when there is none. */
+  pausedFrom: ISODateString | null;
+  pausedUntil: ISODateString | null;
   /** Set only for Premium sold via a Digistore24 affiliate, never alongside Stripe fields. */
   digistore24OrderId: string | null;
   /** DS24's own buyer-support URL — there's no Stripe customer for these, so no billing portal. */

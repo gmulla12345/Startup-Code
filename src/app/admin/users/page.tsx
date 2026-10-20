@@ -1,3 +1,4 @@
+import { isInPausedMonth } from "@/lib/subscription/pause";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -19,7 +20,7 @@ export default async function AdminUsersPage() {
     .order("created_at", { ascending: false })
     .limit(100);
 
-  const { data: subs } = await admin.from("subscriptions").select("user_id, plan_id, status");
+  const { data: subs } = await admin.from("subscriptions").select("user_id, plan_id, status, paused_from, paused_until");
   const subByUser = new Map((subs ?? []).map((s) => [s.user_id, s]));
 
   return (
@@ -40,7 +41,10 @@ export default async function AdminUsersPage() {
           <tbody>
             {(profiles ?? []).map((p) => {
               const sub = subByUser.get(p.user_id);
-              const premium = sub?.plan_id === "premium" && ["active", "trialing"].includes(sub.status);
+              const subscribed = sub?.plan_id === "premium" && ["active", "trialing"].includes(sub.status);
+              // A subscriber in the one skipped month of a pause is on Free for that month.
+              const paused = subscribed && isInPausedMonth({ pausedFrom: sub?.paused_from ?? null, pausedUntil: sub?.paused_until ?? null });
+              const premium = subscribed && !paused;
               return (
                 <tr key={p.user_id} className="border-b border-border last:border-0">
                   <td className="p-3 text-foreground">{p.first_name || "—"}</td>
@@ -51,7 +55,7 @@ export default async function AdminUsersPage() {
                     </Badge>
                   </td>
                   <td className="p-3">
-                    <Badge variant={premium ? "primary" : "default"}>{premium ? "Premium" : "Free"}</Badge>
+                    <Badge variant={premium ? "primary" : "default"}>{premium ? "Premium" : paused ? "Paused" : "Free"}</Badge>
                   </td>
                   <td className="p-3 text-foreground-muted">{new Date(p.created_at).toLocaleDateString()}</td>
                 </tr>

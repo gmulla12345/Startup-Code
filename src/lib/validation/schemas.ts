@@ -36,6 +36,10 @@ export const shareRequestSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("plan"), itineraryId: z.string().uuid(), ...shareOptions }),
 ]);
 
+/** What a subscriber may ask of their own subscription (see lib/stripe/cancel-flow.ts). The server decides whether it is allowed. */
+export const SUBSCRIPTION_ACTIONS = ["student", "pause", "cancel", "keep", "unpause"] as const;
+export const subscriptionActionSchema = z.object({ action: z.enum(SUBSCRIPTION_ACTIONS) });
+
 export const contactMessageSchema = z.object({
   name: z.string().min(1).max(100),
   email: z.string().email(),

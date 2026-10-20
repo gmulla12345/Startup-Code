@@ -46,6 +46,15 @@ async function getOrCreateStripeCustomer(userId: string, email: string): Promise
   return customer.id;
 }
 
+/**
+ * A second subscription is never started for someone who has one: not even while it is paused for a month (the account
+ * rests on Free then, which could otherwise look like having none). They change it from their profile instead.
+ */
+async function assertNoLiveSubscription(userId: string): Promise<void> {
+  const { data } = await createAdminClient().from("subscriptions").select("status, plan_id").eq("user_id", userId).maybeSingle();
+  if (data?.plan_id === "premium" && ["active", "trialing"].includes(data.status)) throw new ApiError(409, "You already have Premium.");
+}
+
 export async function createCheckoutSession(params: {
   userId: string;
   email: string;
@@ -60,6 +69,7 @@ export async function createCheckoutSession(params: {
 }): Promise<string> {
   const interval = params.billingInterval ?? "monthly";
   const plan = params.plan ?? "premium";
+  await assertNoLiveSubscription(params.userId);
 
   // The student price is judged before anything is created: an account that cannot have
   // it, or a plan that is not on sale yet, stops here, with a message, and no customer

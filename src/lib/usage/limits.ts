@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ANONYMOUS_DAILY_PLACES_CAPS, DAILY_LIMITS, USAGE_TIMEZONE, type UsageBucket } from "@/lib/config/usage";
+import { isInPausedMonth } from "@/lib/subscription/pause";
 import type { UsageContext, UsageSnapshot } from "./context";
 
 /**
@@ -38,12 +39,15 @@ export function startOfUsageDay(now: Date = new Date()): Date {
 async function loadSnapshot(userId: string): Promise<UsageSnapshot> {
   const admin = createAdminClient();
   const [subscription, usage] = await Promise.all([
-    admin.from("subscriptions").select("plan_id, status").eq("user_id", userId).maybeSingle(),
+    admin.from("subscriptions").select("plan_id, status, paused_from, paused_until").eq("user_id", userId).maybeSingle(),
     admin.rpc("usage_units_since", { p_user: userId, p_since: startOfUsageDay().toISOString() }),
   ]);
 
+  // Premium, except in the one skipped month of a pause (the account rests on Free then, with Free's daily limits).
   const premium =
-    subscription.data?.plan_id === "premium" && ["active", "trialing"].includes(subscription.data?.status ?? "");
+    subscription.data?.plan_id === "premium" &&
+    ["active", "trialing"].includes(subscription.data?.status ?? "") &&
+    !isInPausedMonth({ pausedFrom: subscription.data?.paused_from ?? null, pausedUntil: subscription.data?.paused_until ?? null });
 
   const used: Record<UsageBucket, number> = { ai: 0, places: 0 };
   for (const row of (usage.data ?? []) as { bucket: string; units: number | string }[]) {
