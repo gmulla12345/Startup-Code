@@ -13,6 +13,7 @@ export const STUDENT_PLAN_MESSAGES = {
   unavailable: "The student price is not available yet.",
   monthlyOnly: "The student price is monthly. Choose monthly to use it.",
   notVerified: "The student price is for verified school email addresses. Confirm yours from the link we sent, then try again.",
+  full: "The founding student rate is full.",
 } as const;
 
 /** Throws an ApiError, with words fit to show the person, unless this account has a verified school email. Fails closed. */

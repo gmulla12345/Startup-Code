@@ -9,6 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Magnetic } from "@/components/marketing/magnetic";
 import { isStudentPlanConfigured, pricing, studentPricing, type BillingInterval } from "@/lib/config/pricing";
 import { getBillingPreference, setBillingPreference } from "@/lib/utils/billing-preference";
+import { FoundingNote } from "@/components/pricing/founding-note";
+import { FOUNDING_STATUS_PATH } from "@/lib/config/founding";
+import type { PublicFoundingStatus } from "@/lib/founding/offer";
 
 /**
  * The billing toggle + free/premium card layout, shared between the
@@ -18,10 +21,29 @@ import { getBillingPreference, setBillingPreference } from "@/lib/utils/billing-
 export function PricingCards() {
   const [interval, setInterval] = useState<BillingInterval>("monthly");
   const reduceMotion = useReducedMotion();
+  // The student price may have a limit. Asked live (the page itself is built once and reused), so the offer is
+  // never shown after it is gone, and a number is shown only when it is the real one and the owner wants it shown.
+  const [founding, setFounding] = useState<PublicFoundingStatus | null>(null);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- reads localStorage after mount to avoid an SSR hydration mismatch
     setInterval(getBillingPreference());
+  }, []);
+
+  useEffect(() => {
+    if (!isStudentPlanConfigured()) return;
+    let cancelled = false;
+    fetch(FOUNDING_STATUS_PATH)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((status) => {
+        if (!cancelled && status) setFounding(status);
+      })
+      .catch(() => {
+        /* the card is shown as it was built, without a note */
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   function choose(next: BillingInterval) {
@@ -44,7 +66,8 @@ export function PricingCards() {
   const annualSavingsPercent = Math.floor((annualSavings / monthlyPaidYearly) * 100);
 
   // The Student plan is shown only once it can actually be bought (its Stripe Price is set).
-  const showStudent = isStudentPlanConfigured();
+  // And it is hidden once its spots are gone: an offer that has ended is not shown.
+  const showStudent = isStudentPlanConfigured() && founding?.open !== false;
 
   return (
     <div>
@@ -172,6 +195,7 @@ export function PricingCards() {
           // real regular price (the same one on the Premium card), not an invented reference.
           <div className="rounded-[var(--radius-lg)] border border-primary bg-surface p-8">
             {/* COPY: the Student plan card */}
+            <FoundingNote capped={Boolean(founding?.capped)} remaining={founding?.remaining ?? null} />
             <h3 className="font-display text-xl font-semibold text-foreground">{studentPricing.name}</h3>
             <div className="mt-2 mb-1 flex items-baseline gap-2 flex-wrap">
               <span className="text-lg text-foreground-subtle line-through decoration-2">${pricing.premium.priceMonthly}</span>

@@ -15,6 +15,8 @@ const h = vi.hoisted(() => ({
   sessionExpire: vi.fn(),
   customerCreate: vi.fn(),
   configured: true,
+  reserve: vi.fn(),
+  release: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase/admin", async () => {
@@ -31,6 +33,7 @@ vi.mock("@/lib/stripe/client", () => ({
     checkout: { sessions: { create: h.sessionCreate, expire: h.sessionExpire } },
   }),
 }));
+vi.mock("@/lib/founding/offer", () => ({ reserveFoundingSlot: h.reserve, releaseFoundingSlot: h.release }));
 vi.mock("@/lib/config/pricing", async (importOriginal) => {
   const original = await importOriginal<typeof import("@/lib/config/pricing")>();
   return {
@@ -42,6 +45,8 @@ vi.mock("@/lib/config/pricing", async (importOriginal) => {
 });
 
 import { createCheckoutSession } from "@/lib/stripe/checkout";
+import { ApiError } from "@/lib/api/auth";
+import { FOUNDING_SESSION_MINUTES } from "@/lib/config/founding";
 import { STUDENT_PLAN_MESSAGES } from "@/lib/stripe/student-plan";
 import { STUDENT_COUPON_ID } from "@/lib/config/promo";
 
@@ -68,6 +73,8 @@ const nothingCreated = () => {
 beforeEach(() => {
   h.calls.length = 0;
   h.configured = true;
+  h.reserve.mockReset().mockResolvedValue({ capped: false });
+  h.release.mockReset().mockResolvedValue(undefined);
   delete process.env.STUDENT_PROMO_REQUIRE_CARD;
   h.stripeList.mockReset().mockResolvedValue({ data: [stripeCode()] });
   h.sessionCreate.mockReset().mockResolvedValue({ id: "cs_new", url: "https://checkout.stripe.test/cs_new" });
@@ -196,5 +203,76 @@ describe("Premium, unchanged", () => {
     h.configured = false;
     await createCheckoutSession({ ...base });
     expect(created().line_items).toEqual([{ price: "price_monthly", quantity: 1 }]);
+  });
+});
+
+describe("the founding limit on the student price", () => {
+  const minute = () => (Date.now() / 60_000) | 0;
+
+  it("holds a spot for the person before anything is created, when the price has a limit", async () => {
+    h.reserve.mockResolvedValue({ capped: true });
+    await createCheckoutSession({ ...base, plan: "student" });
+    expect(h.reserve).toHaveBeenCalledWith("u1");
+    expect(h.reserve.mock.invocationCallOrder[0]).toBeLessThan(h.customerCreate.mock.invocationCallOrder[0] ?? Infinity);
+    expect(h.reserve.mock.invocationCallOrder[0]).toBeLessThan(h.sessionCreate.mock.invocationCallOrder[0]);
+  });
+
+  it("makes the checkout page close by itself, a little over thirty minutes on, so the spot it holds is given back", async () => {
+    h.reserve.mockResolvedValue({ capped: true });
+    await createCheckoutSession({ ...base, plan: "student" });
+    const expiresAt = created().expires_at as number;
+    const now = Math.floor(Date.now() / 1000);
+    expect(expiresAt).toBeGreaterThanOrEqual(now + 30 * 60); // Stripe's minimum
+    expect(expiresAt).toBeLessThanOrEqual(now + (FOUNDING_SESSION_MINUTES + 1) * 60);
+    expect(expiresAt).toBe((minute() + FOUNDING_SESSION_MINUTES) * 60);
+  });
+
+  it("sends exactly the same closing time for a retry within the minute, which Stripe needs for an idempotent request", async () => {
+    h.reserve.mockResolvedValue({ capped: true });
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-10-20T12:00:05Z"));
+    await createCheckoutSession({ ...base, plan: "student" });
+    vi.setSystemTime(new Date("2026-10-20T12:00:50Z"));
+    await createCheckoutSession({ ...base, plan: "student" });
+    vi.useRealTimers();
+    expect(h.sessionCreate.mock.calls[0][0].expires_at).toBe(h.sessionCreate.mock.calls[1][0].expires_at);
+    expect(h.sessionCreate.mock.calls[0][1].idempotencyKey).toBe(h.sessionCreate.mock.calls[1][1].idempotencyKey);
+  });
+
+  it("adds nothing to the checkout when the price has no limit", async () => {
+    await createCheckoutSession({ ...base, plan: "student" });
+    expect(created().expires_at).toBeUndefined();
+    expect(h.release).not.toHaveBeenCalled();
+  });
+
+  it("creates nothing at all when the spots are gone: no customer, no session, no reservation", async () => {
+    h.reserve.mockRejectedValue(new ApiError(409, STUDENT_PLAN_MESSAGES.full));
+    await expect(createCheckoutSession({ ...base, plan: "student" })).rejects.toMatchObject({ status: 409, message: STUDENT_PLAN_MESSAGES.full });
+    nothingCreated();
+  });
+
+  it("refuses an unverified account before it ever takes a spot", async () => {
+    h.db.profiles = () => ok({ edu_verified_at: null });
+    await expect(createCheckoutSession({ ...base, plan: "student" })).rejects.toMatchObject({ status: 403 });
+    expect(h.reserve).not.toHaveBeenCalled();
+  });
+
+  it("gives the spot back if Stripe cannot make the checkout", async () => {
+    h.reserve.mockResolvedValue({ capped: true });
+    h.sessionCreate.mockRejectedValue(new Error("Stripe is down"));
+    await expect(createCheckoutSession({ ...base, plan: "student" })).rejects.toThrow("Stripe is down");
+    expect(h.release).toHaveBeenCalledWith("u1");
+  });
+
+  it("does not give a spot back when Stripe fails and the price has no limit", async () => {
+    h.sessionCreate.mockRejectedValue(new Error("Stripe is down"));
+    await expect(createCheckoutSession({ ...base, plan: "student" })).rejects.toThrow("Stripe is down");
+    expect(h.release).not.toHaveBeenCalled();
+  });
+
+  it("never looks at a founding spot for Premium", async () => {
+    await createCheckoutSession({ ...base });
+    await createCheckoutSession({ ...base, plan: "premium", billingInterval: "annual" });
+    expect(h.reserve).not.toHaveBeenCalled();
   });
 });

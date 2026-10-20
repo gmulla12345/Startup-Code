@@ -21,7 +21,7 @@ export const PRICING_FAQ_ITEMS: FaqItem[] = [
         {
           // COPY: the student price, in the pricing questions
           q: "Is there a student price?",
-          a: `Yes. Students with a verified school email can have everything in Premium for $${studentPricing.priceMonthly} a month, monthly only. We check your school email once, when you start, and your rate stays the same for as long as you stay subscribed. Make an account with your school email on the students page, then choose Student in your profile. A student promo code works with it: the free month comes first, then the student price.`,
+          a: `Yes. Students with a verified school email can have everything in Premium for $${studentPricing.priceMonthly} a month, monthly only. We check your school email once, when you start, and your rate stays the same for as long as you stay subscribed. Make an account with your school email on the students page, then choose Student in your profile. A student promo code works with it: the free month comes first, then the student price. The student price may be offered to a limited number of students; if its spots are taken it is no longer offered to new subscribers, and anyone already on it keeps their rate.`,
         },
       ]
     : []),

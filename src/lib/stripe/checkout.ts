@@ -11,6 +11,8 @@ import {
   type CheckoutPlan,
 } from "@/lib/config/pricing";
 import { studentPromoRequiresCard } from "@/lib/config/promo";
+import { FOUNDING_SESSION_MINUTES } from "@/lib/config/founding";
+import { releaseFoundingSlot, reserveFoundingSlot } from "@/lib/founding/offer";
 import { assertVerifiedStudent, STUDENT_PLAN_MESSAGES } from "./student-plan";
 import {
   attachSessionToClaim,
@@ -67,6 +69,9 @@ export async function createCheckoutSession(params: {
     if (interval !== "monthly") throw new ApiError(400, STUDENT_PLAN_MESSAGES.monthlyOnly);
     await assertVerifiedStudent(params.userId);
   }
+  // The student price may have a limit (see lib/founding/offer.ts). If it does, a spot is held for this person while they
+  // check out, in one step with the count, so the last one cannot be sold twice; if it is full this throws and nothing is made.
+  const founding = plan === "student" ? (await reserveFoundingSlot(params.userId)).capped : false;
 
   const priceId = plan === "student" ? studentPriceId() : premiumPriceId(interval);
   if (!priceId) {
@@ -102,6 +107,9 @@ export async function createCheckoutSession(params: {
   const endorselyMetadata: Record<string, string> = params.endorselyReferral
     ? { endorsely_referral: params.endorselyReferral }
     : {};
+
+  // One minute bucket for the whole request: the idempotency key below and, for a founding checkout, its closing time.
+  const minute = (Date.now() / 60_000) | 0;
 
   const sessionParams: Stripe.Checkout.SessionCreateParams = {
     customer: customerId,
@@ -143,6 +151,9 @@ export async function createCheckoutSession(params: {
     automatic_tax: { enabled: true },
     billing_address_collection: "required",
     customer_update: { name: "auto", address: "auto" },
+    // A founding checkout closes on its own, so the spot it holds is given back. Computed from the minute bucket, not the clock, so a
+    // retry within the minute sends exactly the same request (Stripe refuses a repeated key with different parameters).
+    ...(founding ? { expires_at: (minute + FOUNDING_SESSION_MINUTES) * 60 } : {}),
   };
 
   // Idempotency key, derived from the request itself: a retry of the SAME request
@@ -151,9 +162,16 @@ export async function createCheckoutSession(params: {
   // that differs in any way (another code, plan, or setting) gets a new session
   // instead of Stripe's "same key, different parameters" error.
   const fingerprint = createHash("sha256").update(JSON.stringify(sessionParams)).digest("hex").slice(0, 32);
-  const session = await stripe.checkout.sessions.create(sessionParams, {
-    idempotencyKey: `checkout_${fingerprint}_${(Date.now() / 60_000) | 0}`,
-  });
+  let session: Stripe.Checkout.Session;
+  try {
+    session = await stripe.checkout.sessions.create(sessionParams, {
+      idempotencyKey: `checkout_${fingerprint}_${minute}`,
+    });
+  } catch (err) {
+    // No checkout was made, so the spot held for it is given back.
+    if (founding) await releaseFoundingSlot(params.userId);
+    throw err;
+  }
 
   if (!session.url) throw new Error("Stripe did not return a checkout URL.");
 

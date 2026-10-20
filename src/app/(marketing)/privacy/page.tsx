@@ -279,6 +279,11 @@ export default function PrivacyPolicyPage() {
             address, a first subscription, one use per person) and to record that it was used.
           </li>
           <li>
+            <strong>To hold a founding student spot.</strong> When the student price is limited to a number of students,
+            we record that your account is checking out for one, so the last spot is not sold twice. It is held for
+            about half an hour and then released, or becomes your subscription.
+          </li>
+          <li>
             <strong>To understand where people come from.</strong> To see which links and schools bring people to{" "}
             {brand.name}, using the campaign labels and measurement events described above.
           </li>
@@ -531,6 +536,10 @@ export default function PrivacyPolicyPage() {
           <li>
             <strong>Promo code redemptions:</strong> when you delete your account, the link to your account is removed,
             and what remains (the code and the date) cannot be tied to you.
+          </li>
+          <li>
+            <strong>Founding student spots:</strong> about 36 minutes, unless the checkout is completed, in which case
+            your subscription holds the spot; a held spot is removed with your account.
           </li>
           <li>
             <strong>School waitlist:</strong> until we write to you about your school, or until you ask us to remove

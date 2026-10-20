@@ -208,3 +208,98 @@ describe("the profile", () => {
     expect(h.push).not.toHaveBeenCalled();
   });
 });
+
+describe("the founding offer on the pricing page", () => {
+  const answer = (body: unknown, ok = true) => h.fetch.mockResolvedValue(new Response(JSON.stringify(body), { status: ok ? 200 : 500 }));
+
+  it("asks how the offer stands, from the page, since the page itself is built once and reused", async () => {
+    answer({ open: true, capped: false, remaining: null });
+    const { PricingCards } = await load(true);
+    render(<PricingCards />);
+    await waitFor(() => expect(h.fetch).toHaveBeenCalledWith("/api/pricing/founding"));
+  });
+
+  it("does not ask at all while the student plan is not on sale", async () => {
+    const { PricingCards } = await load(false);
+    render(<PricingCards />);
+    await new Promise((r) => setTimeout(r, 20));
+    expect(h.fetch).not.toHaveBeenCalled();
+  });
+
+  it("calls the price a founding rate when it has a limit, and gives no number while there are many spots", async () => {
+    answer({ open: true, capped: true, remaining: null });
+    const { PricingCards } = await load(true);
+    render(<PricingCards />);
+    expect(await screen.findByText("Founding student rate")).toBeTruthy();
+    expect(screen.queryByText(/founding spots? left/)).toBeNull();
+  });
+
+  it("gives the number of spots left only when the owner's threshold sent one, with the right grammar", async () => {
+    answer({ open: true, capped: true, remaining: 7 });
+    const { PricingCards } = await load(true);
+    const { unmount } = render(<PricingCards />);
+    expect(await screen.findByText("7 founding spots left")).toBeTruthy();
+    unmount();
+    answer({ open: true, capped: true, remaining: 1 });
+    render(<PricingCards />);
+    expect(await screen.findByText("1 founding spot left")).toBeTruthy();
+  });
+
+  it("says nothing about a founding rate, or a number, when the price has no limit", async () => {
+    answer({ open: true, capped: false, remaining: null });
+    const { PricingCards } = await load(true);
+    render(<PricingCards />);
+    await waitFor(() => expect(h.fetch).toHaveBeenCalled());
+    await new Promise((r) => setTimeout(r, 20));
+    expect(screen.queryByText("Founding student rate")).toBeNull();
+    expect(screen.getByText("Verify your school email")).toBeTruthy();
+  });
+
+  it("takes the Student card away once the spots are gone: an offer that has ended is not shown", async () => {
+    answer({ open: false, capped: true, remaining: null });
+    const { PricingCards } = await load(true);
+    render(<PricingCards />);
+    await waitFor(() => expect(screen.queryByText("Verify your school email")).toBeNull());
+    expect(screen.getByText("Start Premium")).toBeTruthy(); // Premium and Free stay
+    expect(screen.getByText("Get started")).toBeTruthy();
+  });
+
+  it("shows the card as built, without a note, when the status cannot be read", async () => {
+    answer({}, false);
+    const { PricingCards } = await load(true);
+    render(<PricingCards />);
+    await waitFor(() => expect(h.fetch).toHaveBeenCalled());
+    await new Promise((r) => setTimeout(r, 20));
+    expect(screen.getByText("Verify your school email")).toBeTruthy();
+    expect(screen.queryByText("Founding student rate")).toBeNull();
+  });
+
+  it("says the same on the upgrade chooser once Student is chosen, from the real count the server passed", async () => {
+    const { PremiumPlanCard } = await load(true);
+    render(<PremiumPlanCard student={{ eligible: true, capped: true, remaining: 3 }} />);
+    expect(screen.queryByText("Founding student rate")).toBeNull(); // not while Premium is chosen
+    fireEvent.click(screen.getByRole("button", { name: "Student" }));
+    expect(screen.getByText("Founding student rate")).toBeTruthy();
+    expect(screen.getByText("3 founding spots left")).toBeTruthy();
+  });
+
+  it("is worded in the brand's voice: no exclamation points, no urgency words, no emoji", async () => {
+    answer({ open: true, capped: true, remaining: 2 });
+    const { PricingCards } = await load(true);
+    render(<PricingCards />);
+    await screen.findByText("2 founding spots left");
+    const text = document.body.textContent ?? "";
+    expect(text).not.toMatch(/!/);
+    expect(text).not.toMatch(/hurry|last chance|ending soon|don't miss|act now|only \d+ left/i);
+    expect(text).not.toMatch(/\p{Extended_Pictographic}/u);
+  });
+
+  it("states in the FAQ and the Terms that the price may be limited, and that those already on it keep their rate", async () => {
+    const { PRICING_FAQ_ITEMS, TermsPage } = await load(true);
+    const faq = PRICING_FAQ_ITEMS.find((i) => i.q === "Is there a student price?")!.a;
+    expect(faq).toMatch(/may be offered to a limited number of students/);
+    expect(faq).toMatch(/anyone already on it keeps their rate/);
+    const terms = renderToStaticMarkup(<TermsPage />).replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
+    expect(terms).toMatch(/may be offered to a limited number of students; when its spots are taken it is no longer offered to new subscribers, and a subscriber already on it keeps their rate/);
+  });
+});

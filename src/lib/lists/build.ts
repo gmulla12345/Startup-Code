@@ -11,7 +11,12 @@ export interface ListPlace extends PoolItem {
 }
 
 export interface HomeList {
-  template: ListTemplateId;
+  /** Unique among the lists on a screen: the template's id, or "house-" and the token of a list we wrote. */
+  key: string;
+  /** Which rule made it, or "house" for a list we wrote ourselves (see lists/house.ts). */
+  template: ListTemplateId | "house";
+  /** The quiet line under the copy of a list that ends ("Through Sunday"). */
+  through?: string | null;
   title: string;
   blurb: string;
   places: ListPlace[];
@@ -62,6 +67,7 @@ export function buildHomeLists(
     const shareable = ids.length >= LIST_MIN_PLACES && ids.every((id): id is string => id != null);
 
     lists.push({
+      key: template.id,
       template: template.id,
       title: template.title,
       blurb: template.blurb,

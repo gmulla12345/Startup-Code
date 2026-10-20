@@ -131,3 +131,38 @@ describe("caching", () => {
     }
   });
 });
+
+describe("a list with dates, and our own lines", () => {
+  it("shows the quiet end-date line under its copy", async () => {
+    h.view = { ...view(), through: "Through Sunday", ended: false };
+    const out = await html();
+    expect(out).toContain("Through Sunday");
+  });
+
+  it("shows our own line under a place, in the quiet italic voice, and nothing where we wrote none", async () => {
+    h.view = view([{ ...item(1), why: "Warm, with room to sit" }, { ...item(2), why: null }, item(3)]);
+    const out = await html();
+    expect(out).toContain("Warm, with room to sit");
+    expect(out).toMatch(/font-reason[^>]*>Warm, with room to sit/);
+    expect([...out.matchAll(/font-reason/g)].length).toBe(3 + 1); // the three numerals, plus the one line we wrote
+  });
+
+  it("says only that it has ended once its last day has passed: no places, no Google credit, and the title still names it", async () => {
+    h.view = { ...view([]), ended: true, through: null };
+    const out = await html();
+    expect(out).toContain("This list has ended.");
+    expect(out).toContain("Close by");
+    expect(out).not.toContain("We could not load the places");
+    expect(out).not.toContain("Powered by Google");
+    expect(out).toContain('href="/signup?src=share-list"'); // an ended list still leads somewhere
+  });
+
+  it("tells a link preview it has ended, and is not found at all before it opens", async () => {
+    h.list = { title: "Close by", blurb: null, placeIds: ["a", "b", "c"], whys: [null, null, null], startsOn: "2020-01-01", endsOn: "2020-01-31", house: true };
+    expect((await generateMetadata(props)).description).toBe("This list has ended.");
+    h.list = { title: "Close by", blurb: null, placeIds: ["a", "b", "c"], whys: [null, null, null], startsOn: "2999-01-01", endsOn: "2999-01-31", house: true };
+    const upcoming = await generateMetadata(props);
+    expect(upcoming.title).toBe("Link not found");
+    expect(upcoming.robots).toEqual({ index: false, follow: false });
+  });
+});

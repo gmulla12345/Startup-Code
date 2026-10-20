@@ -28,6 +28,7 @@ const exp = (n: number): Experience =>
   }) as unknown as Experience;
 
 const list = (over: Partial<HomeList> = {}): HomeList => ({
+  key: "for-you",
   template: "for-you",
   title: "Chosen for you",
   blurb: "Drawn from what you told us you like.",
@@ -67,6 +68,31 @@ describe("a list on Home", () => {
 
   it("shows the distance the place is from the person when it is known", () => {
     expect(renderToStaticMarkup(<ListSection list={list()} />)).toContain("0.5 mi");
+  });
+});
+
+describe("a list we wrote ourselves, on Home", () => {
+  const house = (over: Partial<HomeList> = {}) => list({ key: "house-abc", template: "house", title: "Wet weather", blurb: "Somewhere dry.", through: "Through Sunday", shareIds: [], ...over });
+
+  it("shows the quiet end-date line under its copy", () => {
+    const out = renderToStaticMarkup(<ListSection list={house()} />);
+    expect(out).toContain("Wet weather");
+    expect(out).toContain("Through Sunday");
+  });
+
+  it("shows no end-date line when it has no end", () => {
+    expect(renderToStaticMarkup(<ListSection list={house({ through: null })} />)).not.toContain("Through");
+  });
+
+  it("never offers to share it, even if it were handed place ids: it is already a page of its own", () => {
+    expect(renderToStaticMarkup(<ListSection list={house({ shareIds: ["ChIJ-aaaaaaaa", "ChIJ-bbbbbbbb", "ChIJ-cccccccc"] })} />)).not.toContain("Share the list");
+  });
+
+  it("gives each list its own heading id, so two lists on a screen never share one", () => {
+    const a = renderToStaticMarkup(<ListSection list={house({ key: "house-one" })} />);
+    const b = renderToStaticMarkup(<ListSection list={house({ key: "house-two" })} />);
+    expect(a).toContain('id="list-house-one"');
+    expect(b).toContain('id="list-house-two"');
   });
 });
 

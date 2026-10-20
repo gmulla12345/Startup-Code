@@ -15,6 +15,7 @@ const h = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/analytics/server", () => ({ trackAnalytics: h.track, applySignupAttribution: vi.fn() }));
+vi.mock("@/lib/founding/offer", () => ({ releaseFoundingSlot: vi.fn(async () => undefined), reserveFoundingSlot: vi.fn(async () => ({ capped: false })) }));
 vi.mock("@/lib/config/pricing", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/config/pricing")>()),
   isStudentPriceId: (id: string | null | undefined) => id === "price_student",

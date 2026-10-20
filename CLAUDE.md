@@ -2460,6 +2460,35 @@ Test-mode leftovers (harmless, in the TEST account only): the student price, the
 
 **Mobile equivalent:** none of this reaches the app: a digital subscription bought in an iOS or Android app goes through the stores, so a student price there is an Apple/Google offer or product, with the same `edu_verified_at` rule checked server-side. Noted in `zolo-app/CLAUDE.md`.
 
+## Influence-principles work, Phase 4: honest scarcity (2026-10-20)
+
+**Built and committed locally. NOT deployed, and the two migrations are NOT applied** (both only rehearsed, see below). It is off by default: nothing changes for a visitor until the owner sets a number or writes a list.
+
+**Two parts.** (A) A founding-student cap with an honest "spots left" count. (B) Dated "this week's" lists that drop off Home on their own.
+
+**A. Founding student spots.** The numbers are the owner's, kept in the `app_config` table (Supabase SQL editor, no deploy; the snippet is in [config/founding.ts](src/lib/config/founding.ts)):
+`founding_student_cap` (how many students may hold the student price at once) and `founding_student_show_below` (show "N spots left" only when FEWER than N remain; strict `<`).
+- No cap row = no limit and no "founding" wording. A cap that is present but not a whole number of at least 1 **fails closed** (the offer shows as full; it never opens to everyone by mistake). A bad threshold never shows a number.
+- A spot is held by a live subscription at the student price (active, trialing, past_due) or an unexpired checkout reservation. [offer.ts](src/lib/founding/offer.ts) reads it; the public answer `GET /api/pricing/founding` is `{open, capped, remaining}` and gives out the number only below the threshold (never the cap, never a raw count above it). Cached 30 s, rate-limited per address.
+- **Last-spot race:** `reserve_founding_slot()` counts and reserves under one `pg_advisory_xact_lock`, so two people cannot take the last spot. A reservation lasts 36 minutes (`FOUNDING_RESERVATION_MINUTES`); the Stripe session lasts 31 (Stripe's minimum is 30), computed per minute so Stripe's idempotency still works. The slot is released if the session fails to create, on `checkout.session.expired`, and when the student subscription goes live. **Enable the `checkout.session.expired` event on the Stripe webhook endpoint**; if it is missing the 36-minute hold still frees the spot, just later.
+- Full: checkout answers 409 "The founding student rate is full."; the pricing page and upgrade page hide the Student plan (the Free and Premium plans are unaffected); someone already on the student price keeps it. The pricing FAQ and Terms say the price may be limited and what happens if it is full.
+- Privacy: the policy and its test disclose the reservation (what, why, 36 minutes).
+
+**B. Dated house lists.** A "house list" is one of ours: no owner, no template, a title, a line of copy, 3 to 10 places, an optional line from us under each place (`list_places.why`), and an optional first and last day (`lists.starts_on`, `ends_on`).
+- Dates are calendar days read in `LIST_TIMEZONE` (America/New_York, [config/lists.ts](src/lib/config/lists.ts)), shown through the whole last day. Home shows up to `HOUSE_LISTS_ON_HOME` (2) open ones above the lists made for each person, with "Through Sunday" / "Through today" / "Through November 1" under the copy ([window.ts](src/lib/lists/window.ts)); the day after the end they are simply gone. Never a countdown, never a "hurry" word.
+- Public page `/l/<token>`: 404 before the start; "This list has ended." after the end (no Google calls); our own line under each place in the quiet italic voice. A cached page can lag its end by up to an hour (ISR 3600).
+- **Make one:** `npm run house-list -- --title "..." --blurb "..." --place "<google place id>=<our line>" ... --starts 2026-10-26 --ends 2026-11-01` (dry run; add `--apply` to write). **`--apply` writes to PRODUCTION**; never run it as a test. Needs Google place ids (Google's Place ID Finder). Voice warnings flag exclamation points, emoji and marketing words.
+- Google's terms: only `place_id` is stored; names, photos and ratings are fetched when the page is built. The "why" lines are our own words, so they may be stored. While Google billing is on hold a house list resolves to nothing on Home (it needs 3 resolved places) and the public page says it could not load the places.
+
+**Migrations (NOT applied):** [20261022_01_founding_student_spots.sql](src/db/migrations/20261022_01_founding_student_spots.sql) (`app_config`, `founding_reservations`, `founding_counts`, `reserve_founding_slot`; closed to every browser key, functions executable by the service role only) and [20261022_02_dated_house_lists.sql](src/db/migrations/20261022_02_dated_house_lists.sql) (`lists.user_id` nullable, `starts_on`/`ends_on`, three checks). Additive, idempotent, no row changed. Mirrored in `schema.sql`; [schema-phase4.test.ts](src/__tests__/schema-phase4.test.ts) guards them. **Rehearsed against production in a rolled-back transaction: 36 checks passed, nothing left behind.**
+**Deploy order matters: apply both migrations BEFORE deploying.** The new code reads `app_config`, writes `founding_reservations` from the webhook, and selects the new `lists` columns; without the migrations those would error.
+
+**Verified locally:** 842 tests (62 files), typecheck, lint, production build; mutation checks (breaking a rule makes a test fail) on the cap rules, the date rules and the pricing display; the real API route and the pricing page against a fake database with cap 10 / threshold 20 (the page showed "Founding student rate" and "10 founding spots left" via the real code path). **Not verified:** anything against live Stripe or the live database after applying; a real house list with real places (Google billing is still on hold).
+
+**Owner-owned numbers, do not guess:** the founding cap, the "show below N" threshold, and (Phase 7) the minimum save count. The student plan itself still needs its live Stripe Price (Phase 3 step) before any of this is visible.
+
+**Mobile equivalent:** none needed for the cap (the app sells through the stores). The app could show house lists by calling the same data; it has no lists yet.
+
 ## Exact next steps (priority order)
 
 **Done since the last update:** deployed to production at `discoverzolo.com` (fixed a Vercel

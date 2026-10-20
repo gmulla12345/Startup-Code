@@ -9,6 +9,7 @@ import { getRecommendations } from "@/services/recommendation/engine";
 import { SurpriseMeButton } from "@/components/home/surprise-me-button";
 import { ListSection } from "@/components/lists/list-section";
 import { buildHomeLists } from "@/lib/lists/build";
+import { loadHouseHomeLists } from "@/lib/lists/house";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Profile } from "@/types/database";
 
@@ -69,14 +70,18 @@ async function HomeLists({ profile }: { profile: Profile }) {
   //
   // One request, many lists: every list below is a rule over these same ranked
   // places (lib/lists/templates.ts), so adding lists adds no Google or AI cost.
-  const recommendations = await getRecommendations(supabase, profile, {
-    surfaceContext: "for_you",
-    limit: 24,
-    useAI: false,
-    usage: usageContext(profile.userId, "home"),
-  });
+  // This week's lists (ones we wrote, open today) come first; they do not wait on the recommendations, nor the reverse.
+  const [recommendations, houseLists] = await Promise.all([
+    getRecommendations(supabase, profile, {
+      surfaceContext: "for_you",
+      limit: 24,
+      useAI: false,
+      usage: usageContext(profile.userId, "home"),
+    }),
+    loadHouseHomeLists(profile),
+  ]);
 
-  const lists = buildHomeLists(recommendations, profile);
+  const lists = [...houseLists, ...buildHomeLists(recommendations, profile)];
 
   if (lists.length === 0) {
     const hasLocation = profile.latitude != null && profile.longitude != null;
@@ -92,7 +97,7 @@ async function HomeLists({ profile }: { profile: Profile }) {
   return (
     <div className="space-y-6">
       {lists.map((list) => (
-        <ListSection key={list.template} list={list} showMatch={list.template === "for-you"} />
+        <ListSection key={list.key} list={list} showMatch={list.template === "for-you"} />
       ))}
 
       {/* COPY: the quiet way to the planners, now that lists come first */}

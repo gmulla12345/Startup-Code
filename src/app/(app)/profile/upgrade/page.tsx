@@ -10,6 +10,7 @@ import { isStripeConfigured } from "@/lib/stripe/client";
 import { previewPromoCode } from "@/lib/stripe/promo";
 import { studentPromoRequiresCard } from "@/lib/config/promo";
 import { isStudentPlanConfigured } from "@/lib/config/pricing";
+import { getFoundingStatus, publicFoundingStatus, type PublicFoundingStatus } from "@/lib/founding/offer";
 
 export const metadata = noindexMetadata;
 
@@ -30,9 +31,16 @@ export default async function UpgradePage() {
   // This only shapes what the page says; the server decides who may have the price, at checkout.
   const studentOffered = isStudentPlanConfigured();
   let eduVerified = false;
+  // The student price may have a limit; once its spots are gone the choice is not offered at all.
+  let founding: PublicFoundingStatus = { open: true, capped: false, remaining: null };
   if (studentOffered) {
     const { data } = await supabase.from("profiles").select("edu_verified_at").eq("user_id", user.id).maybeSingle();
     eduVerified = Boolean(data?.edu_verified_at);
+    try {
+      founding = publicFoundingStatus(await getFoundingStatus());
+    } catch (err) {
+      console.error("[founding] status unavailable on the upgrade page:", err); // shown without a note; checkout decides
+    }
   }
   if (isStripeConfigured()) {
     const { data: profile } = await supabase.from("profiles").select("signup_code").eq("user_id", user.id).maybeSingle();
@@ -54,7 +62,7 @@ export default async function UpgradePage() {
         <PremiumPlanCard
           savedCode={savedCode}
           requireCard={studentPromoRequiresCard()}
-          student={studentOffered ? { eligible: eduVerified } : undefined}
+          student={studentOffered && founding.open ? { eligible: eduVerified, capped: founding.capped, remaining: founding.remaining } : undefined}
         />
       </div>
     </div>

@@ -110,10 +110,10 @@ describe("getPublicList", () => {
     expect(await getPublicList(TOKEN)).toBeNull();
 
     h.from
-      .mockReturnValueOnce(chain({ data: { id: "l1", title: "Close by", blurb: "Nearest first." }, error: null }))
+      .mockReturnValueOnce(chain({ data: { id: "l1", title: "Close by", blurb: "Nearest first.", starts_on: null, ends_on: null, user_id: "u1" }, error: null }))
       .mockReturnValueOnce({
-        select: () => ({ eq: () => ({ order: async () => ({ data: [{ place_id: "ChIJ-aaaaaaaa", position: 1 }, { place_id: "ChIJ-bbbbbbbb", position: 2 }], error: null }) }) }),
+        select: () => ({ eq: () => ({ order: async () => ({ data: [{ place_id: "ChIJ-aaaaaaaa", position: 1, why: null }, { place_id: "ChIJ-bbbbbbbb", position: 2, why: null }], error: null }) }) }),
       });
-    expect(await getPublicList(TOKEN)).toEqual({ title: "Close by", blurb: "Nearest first.", placeIds: ["ChIJ-aaaaaaaa", "ChIJ-bbbbbbbb"] });
+    expect(await getPublicList(TOKEN)).toEqual({ title: "Close by", blurb: "Nearest first.", placeIds: ["ChIJ-aaaaaaaa", "ChIJ-bbbbbbbb"], whys: [null, null], startsOn: null, endsOn: null, house: false });
   });
 });

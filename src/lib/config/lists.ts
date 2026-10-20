@@ -45,6 +45,15 @@ export const LIST_CACHE_SECONDS = 3600;
 /** Making or turning off list links, per account, so a script cannot churn them. */
 export const LIST_WRITE_LIMIT = { max: 20, windowMs: 10 * 60_000 } as const;
 
+/** The most lists we wrote ourselves ("this week's lists") shown on Home at once, newest first. A starting value. */
+export const HOUSE_LISTS_ON_HOME = 2;
+
+/**
+ * The time zone in which a list's start and end dates are read: "Through Sunday" means through the end of Sunday here. A
+ * starting value (the same zone the daily usage limits use): change it here.
+ */
+export const LIST_TIMEZONE = "America/New_York";
+
 export function listPath(token: string): string {
   return `${LIST_PATH}/${token}`;
 }

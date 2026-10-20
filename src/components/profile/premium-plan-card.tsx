@@ -6,6 +6,7 @@ import { Check } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { pricing, studentPricing, type BillingInterval, type CheckoutPlan } from "@/lib/config/pricing";
 import { getBillingPreference, setBillingPreference } from "@/lib/utils/billing-preference";
+import { FoundingNote } from "@/components/pricing/founding-note";
 import { UpgradeButton } from "./upgrade-button";
 
 /**
@@ -20,7 +21,12 @@ export function PremiumPlanCard({
   savedCode,
   requireCard,
   student,
-}: { savedCode?: string; requireCard?: boolean; student?: { eligible: boolean } } = {}) {
+}: {
+  savedCode?: string;
+  requireCard?: boolean;
+  /** Passed only while the Student plan is on sale. `capped` and `remaining` come from the real count (see lib/founding/offer.ts). */
+  student?: { eligible: boolean; capped?: boolean; remaining?: number | null };
+} = {}) {
   const [interval, setInterval] = useState<BillingInterval>("monthly");
   const [plan, setPlan] = useState<CheckoutPlan>("premium");
 
@@ -64,6 +70,7 @@ export function PremiumPlanCard({
               Student
             </button>
           </div>
+          {plan === "student" && <div className="mt-3"><FoundingNote capped={Boolean(student.capped)} remaining={student.remaining ?? null} /></div>}
           {blocked && (
             <p role="status" className="mt-3 text-sm text-foreground-muted">
               {/* COPY: shown when the person's account has no verified school email */}

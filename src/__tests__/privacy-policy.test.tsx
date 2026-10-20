@@ -6,6 +6,7 @@ import PrivacyPolicyPage from "@/app/(marketing)/privacy/page";
 import { ATTRIBUTION_COOKIE, ATTRIBUTION_MAX_AGE_SECONDS } from "@/lib/attribution";
 import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
 import { FIRST_LIST_MAX_AGE_DAYS } from "@/lib/config/start";
+import { FOUNDING_RESERVATION_MINUTES, FOUNDING_SESSION_MINUTES } from "@/lib/config/founding";
 
 // A privacy policy that does not match what the system does is worse than none.
 // These tests tie the page to the code and the database: each data practice we
@@ -80,6 +81,19 @@ describe("the privacy policy discloses what we collect", () => {
   it("keeps what it says about the first list equal to what the code does", () => {
     // The policy says 30 days; the code forgets a kept list at the same age.
     expect(FIRST_LIST_MAX_AGE_DAYS).toBe(30);
+  });
+
+  it("covers holding a founding student spot: what is recorded, why, and for how long", () => {
+    expect(text).toMatch(/To hold a founding student spot. When the student price is limited to a number of students/);
+    expect(text).toMatch(/we record that your account is checking out for one, so the last spot is not sold twice/);
+    expect(text).toMatch(/held for about half an hour and then released, or becomes your subscription/);
+    expect(text).toMatch(/Founding student spots: about 36 minutes, unless the checkout is completed/);
+    expect(text).toMatch(/a held spot is removed with your account/);
+  });
+
+  it("keeps the 36 minutes the policy states equal to what the code holds a spot for", () => {
+    expect(FOUNDING_RESERVATION_MINUTES).toBe(36);
+    expect(FOUNDING_RESERVATION_MINUTES).toBeGreaterThan(FOUNDING_SESSION_MINUTES);
   });
 
   it("covers measurement events and service usage records", () => {

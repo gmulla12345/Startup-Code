@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import type { SubscriptionStatus } from "@/types/database";
 import { trackAnalytics } from "@/lib/analytics/server";
 import { isStudentPriceId } from "@/lib/config/pricing";
+import { releaseFoundingSlot } from "@/lib/founding/offer";
 import { markPromoRedeemed } from "./promo";
 
 /**
@@ -26,6 +27,13 @@ export async function handleStripeEvent(event: Stripe.Event): Promise<void> {
       }
       break;
     }
+    case "checkout.session.expired": {
+      // A founding checkout that was not paid: the spot it held goes back.
+      const session = event.data.object as Stripe.Checkout.Session;
+      if (session.metadata?.plan === "student" && session.metadata?.userId) await releaseFoundingSlot(session.metadata.userId);
+      break;
+    }
+
     case "customer.subscription.created":
     case "customer.subscription.updated":
     case "customer.subscription.deleted": {
@@ -110,6 +118,9 @@ async function upsertSubscriptionRow(userId: string, subscription: Stripe.Subscr
       cancel_at_period_end: subscription.cancel_at_period_end,
     })
     .eq("user_id", userId);
+
+  // A live subscription at the student price now holds its own founding spot, so the one held for the checkout is released.
+  if (isStudentPriceId(item?.price.id) && ["active", "trialing"].includes(subscription.status)) await releaseFoundingSlot(userId);
 
   // Measurement: the moment a subscription becomes live (paid or trialing). The
   // dedupe key is the Stripe subscription id, so the several events Stripe sends

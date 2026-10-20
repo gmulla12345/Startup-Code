@@ -17,6 +17,13 @@ export interface PublicList {
   blurb: string | null;
   /** Google place ids, in order. The only Google value we keep. */
   placeIds: string[];
+  /** A line of our own under each place, in the same order (a house list's; null when there is none). Never Google's words. */
+  whys: (string | null)[];
+  /** The first and last day the list is shown, when it has them (a house list, see lists/window.ts). */
+  startsOn: string | null;
+  endsOn: string | null;
+  /** A list we wrote ourselves, with no owner. */
+  house: boolean;
 }
 
 /** The cache tag for everything a list page is built from; turning a list off expires it. */
@@ -82,17 +89,21 @@ class ListNotFound extends Error {}
 
 async function loadPublicList(token: string): Promise<PublicList> {
   const admin = createAdminClient();
-  const { data: list, error } = await admin.from("lists").select("id, title, blurb").eq("token", token).maybeSingle();
+  const { data: list, error } = await admin.from("lists").select("id, title, blurb, starts_on, ends_on, user_id").eq("token", token).maybeSingle();
   if (error) throw new Error(`[lists] could not read the list: ${error.message}`);
   if (!list) throw new ListNotFound();
 
-  const { data: places, error: placesError } = await admin.from("list_places").select("place_id, position").eq("list_id", list.id).order("position", { ascending: true });
+  const { data: places, error: placesError } = await admin.from("list_places").select("place_id, position, why").eq("list_id", list.id).order("position", { ascending: true });
   if (placesError) throw new Error(`[lists] could not read the places: ${placesError.message}`);
 
   return {
     title: list.title as string,
     blurb: (list.blurb as string | null) ?? null,
     placeIds: (places ?? []).map((p) => p.place_id as string),
+    whys: (places ?? []).map((p) => (p.why as string | null) ?? null),
+    startsOn: (list.starts_on as string | null) ?? null,
+    endsOn: (list.ends_on as string | null) ?? null,
+    house: list.user_id == null,
   };
 }
 

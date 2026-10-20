@@ -1,6 +1,8 @@
 import { ImageResponse } from "next/og";
 import { brand } from "@/lib/config/brand";
+import { LIST_TIMEZONE } from "@/lib/config/lists";
 import { getPublicList } from "@/lib/lists/store";
+import { todayIn, windowState } from "@/lib/lists/window";
 
 /**
  * The picture a shared list shows in iMessage, GroupMe, Instagram and the rest: drawn
@@ -37,10 +39,12 @@ export default async function Image({ params }: { params: Promise<{ token: strin
   const { token } = await params;
   const list = await getPublicList(token);
   // A list that is off and one that never existed look the same: no picture.
-  if (!list) return new Response(null, { status: 404 });
+  const state = list ? windowState(list, todayIn(LIST_TIMEZONE)) : "upcoming";
+  if (!list || state === "upcoming") return new Response(null, { status: 404 });
 
   const title = clip(list.title, 60);
-  const count = list.placeIds.length;
+  // COPY: the small line under the title on a shared list's preview image (and when the list is over)
+  const detail = state === "ended" ? "This list has ended" : `${list.placeIds.length} places`;
 
   return new ImageResponse(
     (
@@ -65,7 +69,7 @@ export default async function Image({ params }: { params: Promise<{ token: strin
           {/* COPY: the small line above the title on a shared list's preview image */}
           <div style={{ display: "flex", fontSize: 24, letterSpacing: 4, textTransform: "uppercase", color: MUTED }}>A list</div>
           <div style={{ display: "flex", marginTop: 20, fontSize: title.length <= 24 ? 104 : 80, fontWeight: 700, lineHeight: 1.06, letterSpacing: -2 }}>{title}</div>
-          <div style={{ display: "flex", marginTop: 24, fontSize: 32, color: MUTED }}>{`${count} places`}</div>
+          <div style={{ display: "flex", marginTop: 24, fontSize: 32, color: MUTED }}>{detail}</div>
         </div>
 
         <div style={{ display: "flex", height: 6, width: 160, background: TEAL }} />

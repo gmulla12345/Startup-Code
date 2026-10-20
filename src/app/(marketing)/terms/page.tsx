@@ -150,7 +150,7 @@ export default function TermsOfServicePage() {
             re-checked and does not end because you leave school. If you cancel and later return, the terms and price in
             force then apply, and the student price needs a verified school email again. A student promo code may be
             used with the Student plan: the free month comes first, and your card is charged the student price when it
-            ends. We may refuse or withdraw the student price where it is used against these terms.
+            ends. The student price may be offered to a limited number of students; when its spots are taken it is no longer offered to new subscribers, and a subscriber already on it keeps their rate. We may refuse or withdraw the student price where it is used against these terms.
           </p>
         )}
         <p>

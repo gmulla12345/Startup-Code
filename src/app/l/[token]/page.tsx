@@ -5,11 +5,12 @@ import { Logo } from "@/components/shared/logo";
 import { Button } from "@/components/ui/button";
 import { ShareViewBeacon } from "@/components/share/share-view-beacon";
 import { brand } from "@/lib/config/brand";
-import { LIST_SRC, listPath } from "@/lib/config/lists";
+import { LIST_SRC, LIST_TIMEZONE, listPath } from "@/lib/config/lists";
 import { photoProxyUrl } from "@/lib/google/photo-url";
 import { canonical } from "@/lib/seo";
 import { getPublicList } from "@/lib/lists/store";
 import { loadListView, type ListViewItem } from "@/lib/lists/view";
+import { todayIn, windowState } from "@/lib/lists/window";
 
 /**
  * The public page for a shared list: a title, one line of copy, and the places on it,
@@ -39,10 +40,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { token } = await params;
   // Only our own words are needed for the title and the preview, so no Google call is made here.
   const list = await getPublicList(token);
-  if (!list) return { title: "Link not found", robots: { index: false, follow: false } };
+  const state = list ? windowState(list, todayIn(LIST_TIMEZONE)) : "upcoming";
+  // A list that has not opened yet does not exist as far as anyone can tell, like one that was turned off.
+  if (!list || state === "upcoming") return { title: "Link not found", robots: { index: false, follow: false } };
 
-  // COPY: the description a link preview shows under a shared list's title
-  const description = `${list.placeIds.length} places to try, chosen with ${brand.name}.`;
+  // COPY: the description a link preview shows under a shared list's title (and when the list is over)
+  const description = state === "ended" ? "This list has ended." : `${list.placeIds.length} places to try, chosen with ${brand.name}.`;
   return {
     title: list.title,
     description,
@@ -80,6 +83,7 @@ function Row({ item, index }: { item: ListViewItem; index: number }) {
       <span className="min-w-0 flex-1">
         <span className="block font-display text-lg font-semibold leading-snug text-foreground">{place.name}</span>
         {meta && <span className="mt-0.5 block text-sm text-foreground-muted">{meta}</span>}
+        {item.why && <span className="font-reason mt-1.5 block text-[13px] leading-snug text-foreground-muted">{item.why}</span>}
         {place.photoCredit && <Credit credit={place.photoCredit} />}
       </span>
       {place.photoRef && (
@@ -120,8 +124,12 @@ export default async function SharedListPage({ params }: Props) {
           <p className="text-xs font-medium uppercase tracking-[0.14em] text-foreground-subtle">A list, shared with you</p>
           <h1 className="mt-3 font-display text-3xl font-semibold leading-tight text-foreground sm:text-4xl">{view.title}</h1>
           {view.blurb && <p className="mt-2 text-foreground-muted">{view.blurb}</p>}
+          {view.through && <p className="mt-1 text-sm text-foreground-subtle">{view.through}</p>}
 
-          {shown.length > 0 ? (
+          {view.ended ? (
+            // COPY: shown in place of a list whose last day has passed
+            <p className="mt-6 text-foreground-muted">This list has ended.</p>
+          ) : shown.length > 0 ? (
             <ol className="mt-6 divide-y divide-border border-y border-border">
               {shown.map((item, i) => (
                 <Row key={item.placeId} item={item} index={i} />
@@ -132,7 +140,7 @@ export default async function SharedListPage({ params }: Props) {
             <p className="mt-6 text-foreground-muted">We could not load the places on this list just now. Try again in a little while.</p>
           )}
 
-          <p className="mt-6 text-xs text-foreground-subtle">Powered by Google</p>
+          {!view.ended && <p className="mt-6 text-xs text-foreground-subtle">Powered by Google</p>}
         </article>
 
         <div className="mt-8 text-center">

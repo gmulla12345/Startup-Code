@@ -15,6 +15,7 @@
     "students-preview": "tsx scripts/generate-students-preview.ts",
     "promo-codes": "tsx scripts/create-promo-codes.ts",
     "student-price": "tsx scripts/create-student-price.ts",
+    "house-list": "tsx scripts/create-house-list.ts",
     "postinstall": "node scripts/copy-maplibre-worker.mjs"
   },
   "dependencies": {
