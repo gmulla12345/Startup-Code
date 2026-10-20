@@ -162,3 +162,106 @@ describe("no component brings back the old palette", () => {
     expect(offenders).toEqual([]);
   });
 });
+
+
+// ---------------------------------------------------------------------------------------------------
+// The pre-login pages wear the logo's orange. The owner did not like the teal on the landing page and asked for
+// Zolo's own colors there; the inside keeps the teal. The "How Zolo works" band was to stay exactly as it was.
+
+describe("the pre-login pages wear the logo's own orange", () => {
+  const AA_FOR_TEST = 4.5;
+  const regexEscape = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const blockOf = (selector: string): Record<string, string> => {
+    const block = css.match(new RegExp(`${regexEscape(selector)} \\{([\\s\\S]*?)\\n\\}`))?.[1] ?? "";
+    return Object.fromEntries([...block.matchAll(/--([a-z-]+):\s*([^;]+);/g)].map((m) => [m[1], m[2].trim()]));
+  };
+  const zolo = blockOf('[data-palette="zolo"]');
+  const keep = blockOf('[data-palette="zolo"] [data-keep-palette]');
+  const marketingLayout = readFileSync(join(src, "app/(marketing)/layout.tsx"), "utf-8");
+  const howItWorks = readFileSync(join(src, "components/marketing/how-it-works.tsx"), "utf-8");
+
+  const hueOf = (hex: string) => {
+    const [r, g, b] = rgb(hex);
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    if (max === min) return -1;
+    const d = max - min;
+    const h = max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    return (h * 60 + 360) % 360;
+  };
+  const satOf = (hex: string) => {
+    const channels = rgb(hex);
+    const max = Math.max(...channels);
+    return max === 0 ? 0 : (max - Math.min(...channels)) / max;
+  };
+
+  it("is set on the marketing layout, and nowhere else, so the inside keeps its teal", () => {
+    expect(marketingLayout).toMatch(/<div data-palette="zolo" /); // on the element itself, not just in a comment
+    for (const file of ["app/(app)/layout.tsx", "app/layout.tsx", "app/(auth)/layout.tsx"]) {
+      expect(readFileSync(join(src, file), "utf-8"), file).not.toMatch(/data-palette/);
+    }
+    expect(t.primary).toBe("#0f766e");
+  });
+
+  it("uses the orange read from the app icon, with the logo's own value", () => {
+    expect(t["zolo-orange"]).toBe("#ff6a2f");
+    expect(zolo["zolo-gradient"]).toContain("#ff6a2f");
+  });
+
+  it("has no green or teal in what the pages wear: links, labels, chips and tints are navy or warm", () => {
+    for (const name of ["primary", "primary-strong", "primary-soft", "forest", "forest-strong", "forest-soft", "ring", "on-primary"]) {
+      const value = zolo[name];
+      expect(value, name).toMatch(/^#[0-9a-f]{6}$/);
+      const hue = hueOf(value);
+      expect(hue >= 90 && hue <= 195 && satOf(value) > 0.04, `${name} ${value} is green or teal`).toBe(false);
+    }
+  });
+
+  it("keeps the brand band warm on these pages: no teal or sky end", () => {
+    const band = css.match(/\[data-palette="zolo"\] \.mk-gradient \{([\s\S]*?)\n\}/)?.[1] ?? "";
+    expect(band).toMatch(/linear-gradient/);
+    expect(band).not.toMatch(/#2fc4a3|#5ccdf5/i);
+  });
+
+  it("puts navy, not white, on the orange: white on the logo orange is under 3 to 1", () => {
+    expect(contrast([255, 255, 255], rgb("#ff6a2f"))).toBeLessThan(3);
+    const navy = rgb(zolo["on-primary"]);
+    const stops = [...zolo["zolo-gradient"].matchAll(/#[0-9a-f]{6}/gi)].map((m) => m[0]);
+    expect(stops.length).toBeGreaterThanOrEqual(2);
+    for (const stop of stops) expect(contrast(navy, rgb(stop)), `navy on ${stop}`).toBeGreaterThanOrEqual(AA_FOR_TEST);
+    // and the middle of the fade, where the two ends blend
+    const mid = over(rgb(stops[0]), rgb(stops[stops.length - 1]), 0.5);
+    expect(contrast(navy, mid), "navy on the middle of the fade").toBeGreaterThanOrEqual(AA_FOR_TEST);
+    // the button rule paints the fade and writes in navy; the pricing toggle's label reads the same token
+    expect(css).toMatch(/\[data-palette="zolo"\] \.bg-primary \{[^}]*background-image: var\(--zolo-gradient\);[^}]*color: var\(--foreground\);/);
+    expect(readFileSync(join(src, "components/marketing/pricing-cards.tsx"), "utf-8")).toMatch(/text-\[var\(--on-primary\)\]/);
+  });
+
+  it("keeps links and small labels readable: navy on white and on the warm tints", () => {
+    expect(contrast(rgb(zolo.primary), [255, 255, 255])).toBeGreaterThanOrEqual(AA_FOR_TEST);
+    expect(contrast(rgb(zolo["primary-strong"]), [255, 255, 255])).toBeGreaterThanOrEqual(AA_FOR_TEST); // hover
+    expect(contrast(rgb(zolo.primary), rgb(zolo["primary-soft"]))).toBeGreaterThanOrEqual(AA_FOR_TEST);
+    expect(contrast(rgb(zolo["forest-strong"]), rgb(zolo["forest-soft"]))).toBeGreaterThanOrEqual(AA_FOR_TEST);
+  });
+
+  it("leaves the How Zolo works band exactly as it was: fenced off, with the inside's teal restored", () => {
+    expect(howItWorks).toMatch(/id="how-it-works"\s+data-keep-palette/);
+    for (const name of ["primary", "primary-strong", "primary-soft", "forest", "forest-strong", "forest-soft", "on-primary"]) {
+      expect(keep[name], `${name} restored`).toBe(t[name]);
+    }
+    expect(keep.ring).toBe(t.primary);
+    // its own colors are still the teal and the dark band
+    expect(howItWorks).toMatch(/bg-\[#0a2540\]/);
+    expect(howItWorks).toMatch(/bg-\[#2fc4a3\]/);
+    // the button and band rules are undone inside it
+    expect(css).toMatch(/\[data-keep-palette\] \.bg-primary \{[^}]*background-image: none;[^}]*color: #ffffff;/);
+    expect(css).toMatch(/\[data-keep-palette\] \.mk-gradient \{[^}]*#2fc4a3[^}]*#5ccdf5/);
+    // and the shared tile that swaps colors outside it takes the teal back inside it
+    expect(keep["tile-outdoor-from"]).toBe("initial");
+    expect(keep["tile-outdoor-to"]).toBe("initial");
+  });
+
+  it("gave the band none of the new colors: the only change to its markup is the fence", () => {
+    expect(howItWorks).not.toMatch(/zolo-orange|zolo-gradient|ff6a2f/);
+  });
+});

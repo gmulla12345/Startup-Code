@@ -281,6 +281,7 @@ export function HowItWorks() {
     <section
       ref={sectionRef}
       id="how-it-works"
+      data-keep-palette
       className="relative overflow-hidden bg-[#0a2540] text-white"
     >
       {/* Decorative: the brand gradient bleeding in from the corners, plus a

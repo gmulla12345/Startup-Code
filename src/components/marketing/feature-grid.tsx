@@ -88,10 +88,10 @@ const panel = "rounded-2xl border border-border bg-surface-sunken p-4";
 function ReasoningVisual() {
   const [first, ...rest] = MOCK_PICKS;
   return (
-    <div aria-hidden className={cn(panel, "bg-gradient-to-br from-[#e8f7f4] via-white to-[#f0f5ff] p-5")}>
+    <div aria-hidden className={cn(panel, "bg-gradient-to-br from-[var(--primary-soft)] via-white to-[#f0f5ff] p-5")}>
       <p className="mb-3 text-[11px] font-semibold text-foreground-muted">For you tonight</p>
       <PickRow pick={first} />
-      <div className="my-3 rounded-xl border border-dashed border-[#a6dcd2] bg-[var(--primary-soft)]/60 p-3.5">
+      <div className="my-3 rounded-xl border border-dashed border-[#ffcfae] bg-[var(--primary-soft)]/60 p-3.5">
         <p className="flex items-center gap-1.5 text-[11px] font-semibold text-primary">
           <Sparkles className="h-3.5 w-3.5" /> Why this pick
         </p>

@@ -8,9 +8,9 @@ import { getTravelProvider } from "@/services/providers";
 const WASHES = [
   "from-[#ffb199] to-[#ff4f93]",
   "from-[#ffd37a] to-[#ff8a5c]",
-  "from-[#7be0c8] to-[#4cc9f0]",
+  "from-[#9adcf8] to-[#5ccdf5]",
   "from-[#b5a8ff] to-[#ff7ab6]",
-  "from-[#8fd6ff] to-[#7be0c8]",
+  "from-[#8fd6ff] to-[#b5a8ff]",
 ];
 
 // The sitemap has always listed all 10 Travel Mode destination guides, but

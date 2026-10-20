@@ -82,7 +82,7 @@ export function PricingCards() {
               pill without needing explicit z-index. */}
           <button
             onClick={() => choose("monthly")}
-            className={cn("relative px-4 py-3 rounded-full text-sm font-medium transition-colors active:scale-[0.97]", !isAnnual ? "text-white" : "text-foreground-muted")}
+            className={cn("relative px-4 py-3 rounded-full text-sm font-medium transition-colors active:scale-[0.97]", !isAnnual ? "text-[var(--on-primary)]" : "text-foreground-muted")}
           >
             {!isAnnual && (
               <motion.span
@@ -97,7 +97,7 @@ export function PricingCards() {
             onClick={() => choose("annual")}
             className={cn(
               "relative px-4 py-3 rounded-full text-sm font-medium transition-colors inline-flex items-center gap-1.5 active:scale-[0.97]",
-              isAnnual ? "text-white" : "text-foreground-muted"
+              isAnnual ? "text-[var(--on-primary)]" : "text-foreground-muted"
             )}
           >
             {isAnnual && (

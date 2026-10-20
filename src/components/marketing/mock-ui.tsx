@@ -68,7 +68,10 @@ export const MOCK_PICKS: MockPick[] = [
 export const TONE_GRADIENT: Record<MockTone, string> = {
   night: "from-[#6d5dfc] to-[#ff4f93]",
   arts: "from-[#ffb340] to-[#ff6a45]",
-  outdoor: "from-[#1fb89a] to-[#4cc9f0]",
+  // The outdoor tile is teal-to-sky by default. The pre-login pages swap it for sky-to-blue (--tile-outdoor-*, set in
+  // globals.css for data-palette="zolo"); the "How Zolo works" band, which keeps its palette, resets them and so
+  // keeps the teal.
+  outdoor: "from-[color:var(--tile-outdoor-from,#1fb89a)] to-[color:var(--tile-outdoor-to,#4cc9f0)]",
 };
 
 export function PickTile({

@@ -32,6 +32,8 @@
   --primary: #0f766e;
   --primary-strong: #0b5c56;
   --primary-soft: #e6f6f3;
+  /* What is written on a filled primary shape that is not itself a button: white on the teal */
+  --on-primary: #ffffff;
   --forest: #0f5c4c;
   --forest-strong: #0a4438;
   --forest-soft: #e3f4ef;
@@ -44,6 +46,9 @@
   --brand-gold: #ffb340;
   --brand-teal: #2fc4a3;
   --brand-sky: #5ccdf5;
+  /* The logo's own orange (read from the app icon), and a deeper step of it for small icons and dots */
+  --zolo-orange: #ff6a2f;
+  --zolo-orange-deep: #f0541a;
 
   /* Semantic */
   --success: #15803d;
@@ -57,6 +62,68 @@
 
   --shadow-card: 0 0 0 1px rgba(10, 37, 64, 0.04), 0 2px 5px -1px rgba(50, 50, 93, 0.08), 0 1px 3px -1px rgba(0, 0, 0, 0.06);
   --shadow-raised: 0 30px 60px -12px rgba(50, 50, 93, 0.22), 0 18px 36px -18px rgba(0, 0, 0, 0.28);
+}
+
+/* The pre-login pages (data-palette="zolo", set on the marketing layout) wear the logo's own orange
+   instead of the inside's teal. Nothing there is a flat orange behind white text (white on this
+   orange is ~2.8:1): the primary button is the logo orange fading to gold with NAVY text on it
+   (navy on either end is above 5:1), and links, labels and chips are navy, with warm tints. The
+   inside of the product keeps the teal. The "How Zolo works" band is fenced off with
+   data-keep-palette and keeps the teal it always had, on purpose. */
+[data-palette="zolo"] {
+  --primary: #0a2540;
+  --primary-strong: #1d4170;
+  --primary-soft: #fff1e6;
+  --on-primary: #0a2540;
+  --forest: #0a2540;
+  --forest-strong: #0a2540;
+  --forest-soft: #fff3da;
+  --ring: #0a2540;
+  --logo-dot: var(--zolo-orange);
+  --zolo-gradient: linear-gradient(135deg, #ff6a2f 0%, #ffb340 100%);
+  --tile-outdoor-from: #5ccdf5;
+  --tile-outdoor-to: #3b82f6;
+}
+/* The brand band, warm only on these pages: the orange, pink and gold, with no teal or green end. */
+[data-palette="zolo"] .mk-gradient {
+  background-image: linear-gradient(100deg, #ffd2c2 0%, #ff9468 14%, #ff6a2f 30%, #ff4f93 46%, #ffb340 62%, #ff9468 80%, #ffd2c2 100%);
+}
+[data-palette="zolo"] .bg-primary {
+  background-image: var(--zolo-gradient);
+  color: var(--foreground);
+  box-shadow: 0 1px 2px rgba(10, 37, 64, 0.12), 0 8px 18px -8px rgba(255, 106, 47, 0.6);
+}
+[data-palette="zolo"] .bg-primary:hover {
+  filter: brightness(1.05) saturate(1.08);
+}
+[data-palette="zolo"] .border-primary {
+  border-color: var(--zolo-orange);
+}
+[data-palette="zolo"] [data-keep-palette] {
+  --primary: #0f766e;
+  --primary-strong: #0b5c56;
+  --primary-soft: #e6f6f3;
+  --on-primary: #ffffff;
+  --forest: #0f5c4c;
+  --forest-strong: #0a4438;
+  --forest-soft: #e3f4ef;
+  --ring: #0f766e;
+  --tile-outdoor-from: initial;
+  --tile-outdoor-to: initial;
+}
+[data-palette="zolo"] [data-keep-palette] .mk-gradient {
+  background-image: linear-gradient(100deg, #ffd2c2 0%, #ff9468 16%, #ff4e2b 30%, #ff4f93 46%, #ffb340 62%, #2fc4a3 80%, #5ccdf5 100%);
+}
+[data-palette="zolo"] [data-keep-palette] .bg-primary {
+  background-image: none;
+  color: #ffffff;
+  box-shadow: none;
+}
+[data-palette="zolo"] [data-keep-palette] .bg-primary:hover {
+  filter: none;
+}
+[data-palette="zolo"] [data-keep-palette] .border-primary {
+  border-color: var(--primary);
 }
 
 /* Headlines are Inter with a touch of negative tracking. The serif face is kept for

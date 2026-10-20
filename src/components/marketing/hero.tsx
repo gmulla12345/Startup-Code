@@ -41,7 +41,7 @@ export function Hero() {
             className="mk-rise inline-flex items-center gap-2 rounded-full border border-border bg-surface/80 px-3 py-1 text-xs font-medium text-foreground-muted backdrop-blur"
             style={{ ["--d" as string]: "0s" }}
           >
-            <span className="h-1.5 w-1.5 rounded-full bg-success" aria-hidden />
+            <span className="h-1.5 w-1.5 rounded-full bg-[var(--zolo-orange-deep)]" aria-hidden />
             Personalized discovery, free to start
           </div>
 
@@ -80,7 +80,7 @@ export function Hero() {
             style={{ ["--d" as string]: "0.3s" }}
           >
             {/* COPY: the line under the hero buttons */}
-            <Check className="h-4 w-4 text-success" aria-hidden /> No account needed for your first list
+            <Check className="h-4 w-4 text-[var(--zolo-orange-deep)]" aria-hidden /> No account needed for your first list
           </p>
         </div>
 
