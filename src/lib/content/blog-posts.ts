@@ -509,6 +509,10 @@ export const BLOG_POSTS: BlogPost[] = [
       },
     ],
     readingMinutes: 10,
+    heroImage: {
+      src: "https://images.unsplash.com/photo-1561497268-131821f92985?auto=format&fit=crop&w=1600&q=80",
+      alt: "A person holding a coffee cup at a café table with a slice of cake, seen through a rain-streaked window",
+    },
     sections: [
       {
         paragraphs: [

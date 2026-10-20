@@ -2342,7 +2342,7 @@ Added to [blog-posts.ts](src/lib/content/blog-posts.ts) at the owner's request (
 - **Sources are the two the post actually relies on:** the National Weather Service and CDC lightning-safety pages (both fetched and checked: go indoors at thunder, wait 30 minutes). The draft's Sources list named Google's content guidance and a Search Engine Journal article; those back the SEO notes, not the post, so they are not shown as its sources.
 - The FAQ renders as plain text and goes raw into the FAQPage JSON-LD, so no markdown link in an FAQ answer (the lightning answer names the NWS without a link; the link is under Sources).
 - Internal links added per the notes: the fall date ideas post, the New York weekend post, `/students`, and the home page. Fixed the inline-link pattern in [blog/[slug]/page.tsx](src/app/(marketing)/blog/[slug]/page.tsx) so a bare `(/)` link renders (it used to print the markdown).
-- No hero image yet (the notes ask for original photos; only the site's default share image is used). Not done from the notes: a city or campus version of the post, and Search Console follow-up after indexing.
+- Hero image added at the owner's request: an Unsplash stock photo (`photo-1561497268-131821f92985`, a person with a coffee and cake seen through a rain-streaked café window), the same Unsplash pattern the other posts use; it is also the post's share image. It is stock, not an original photo, so the notes' advice to use photos from places actually visited still stands. Not done from the notes: a city or campus version of the post, and Search Console follow-up after indexing.
 
 ## Exact next steps (priority order)
 
