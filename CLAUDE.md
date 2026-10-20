@@ -2344,6 +2344,42 @@ Added to [blog-posts.ts](src/lib/content/blog-posts.ts) at the owner's request (
 - Internal links added per the notes: the fall date ideas post, the New York weekend post, `/students`, and the home page. Fixed the inline-link pattern in [blog/[slug]/page.tsx](src/app/(marketing)/blog/[slug]/page.tsx) so a bare `(/)` link renders (it used to print the markdown).
 - Hero image added at the owner's request: an Unsplash stock photo (`photo-1561497268-131821f92985`, a person with a coffee and cake seen through a rain-streaked café window), the same Unsplash pattern the other posts use; it is also the post's share image. It is stock, not an original photo, so the notes' advice to use photos from places actually visited still stands. Not done from the notes: a city or campus version of the post, and Search Console follow-up after indexing.
 
+## Influence-principles work, Phase 1: lists are the core experience (2026-10-19/20)
+
+The owner's brief (seven phases applying persuasion principles, and a shift from itineraries to curated lists) was planned first, then built one phase at a time with a commit and a pause
+for review after each. **Decisions taken (owner said "go with recommendations"):** school names stay only as data (the picker and the verification domains) and are out of copy, comments, tests and docs;
+Phase 1 launches with *generated* lists, rule-based and made for each viewer (editorial lists you curate come later); public user-made lists will be unlisted by default; "pause" in the cancel flow drops
+to Free for the month and returns on its own. **Still to be answered by the owner before they are needed:** the student-plan details (does the free-month code stack on the $9.99 price; what happens when a
+student's school email stops working), and the numbers for Phases 4 and 7 (founding-spot cap, the "show remaining below N" threshold, the minimum save count). Do not guess these.
+
+**Cleanup commit first** (`f68cbf4`): the pilot school's name removed from code comments, test fixtures and docs. [campus-neutral.test.ts](src/__tests__/campus-neutral.test.ts) fails if the pilot school, or any school in
+the directory, is named in app, component, content or library files. What remains by design is data: the `campuses` seed rows, [campus-directory.ts](src/lib/campus-directory.ts), and the tests that assert the picker's options.
+
+**What a list is.** A title, one line of copy and 3 to 10 places. On Home they are made from the SAME single set of 24 recommendations the rails used, so adding lists adds no Google or AI call. Six rules in
+[templates.ts](src/lib/lists/templates.ts): *Chosen for you*, *Close by* (within `CLOSE_BY_MILES`, a starting value), *After dark*, *Light on the wallet* (free and low), *Under a roof*, *Less obvious*. A rule may use only what we
+know about a place; "quiet" or "open late" are never claimed (no data), and a test proves every "why" line is built only from phrases we can back. A list with fewer than 3 places is left out, never padded.
+Home shows up to 6 places per list. **The "why this pick" line** ([reasons.ts](src/lib/lists/reasons.ts)) is computed when the list is drawn and **never stored**, because part of it comes from Google's data (price level, rating),
+which we may not keep. Phase 6 extends it (a "Local pick" flag, optional Claude wording).
+
+**Google's terms shape everything.** Google lets us keep only `place_id`. So a shared list stores the template's name and the place ids, nothing else from Google; names, addresses and photos are fetched when the page is
+built, through the same door as share links ([place-preview.ts](src/lib/share/place-preview.ts), now taking a `feature`), cached an hour per place and counted against its own anonymous daily ceiling
+(`list_preview: 400` in [usage.ts](src/lib/config/usage.ts), a starting value). **While Google billing is on hold, a shared list page shows its title and "We could not load the places on this list just now."** The preview image
+is drawn from our own words only (title and count), so it makes no Google call and shows no place name.
+
+**Sharing.** Home shows a Share button on any list whose places are all Google places. `POST /api/lists` makes the link (or updates the one the person already has for that kind of list, so it is one link per person per
+template); the title and copy are read from the template on the server, never from the request, so nobody can publish their own words under a Zolo list. `GET /api/lists?template=` looks it up and `DELETE /api/lists/[token]` turns it
+off (deletes it; the cached page is expired at once). Public page: [/l/[token]](src/app/l/[token]/page.tsx), noindex, no sharer name or id, signup button carries `src=share-list`. Analytics reuse `share_created`,
+`share_link_opened` with `kind: "list"` (no new event, so no database change). Works with a bearer token, so the iOS app can call the same routes and hand `url` to the share sheet.
+
+**Database** (migration [20261021_01_lists.sql](src/db/migrations/20261021_01_lists.sql), mirrored in `schema.sql`, guarded by [schema-lists.test.ts](src/__tests__/schema-lists.test.ts)): `lists` and `list_places`, closed to every
+browser key (no policy, no grant), removed with the account; `save_shared_list()` makes or updates a list and its places in one transaction and enforces 3 to 10 distinct places and the per-person limit (`MAX_SHARED_LISTS`, 50).
+**Rehearsed against production in a rolled-back transaction (23 checks, nothing left behind); NOT yet applied.** Until it is applied the Share button returns an error; Home itself does not depend on it.
+
+**Navigation.** Trips is out of the main bar (now 5 items) and is a quiet "secondary" link in the sidebar; it stays in the account menu and at the end of Home. Home's rails are gone; `ExperienceRail` remains for Travel Mode pages.
+Privacy policy and its test now cover shared lists (what is stored, who sees it, retention, the event wording).
+
+**Mobile equivalent:** call the same `/api/lists` routes with the bearer token; show the same six rules over the same ranked places; the app has no lists yet.
+
 ## Exact next steps (priority order)
 
 **Done since the last update:** deployed to production at `discoverzolo.com` (fixed a Vercel

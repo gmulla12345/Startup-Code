@@ -131,6 +131,13 @@ export default function PrivacyPolicyPage() {
           name, address, and photo on a shared page come from Google when the page is built and are not stored by us. We
           ask search engines not to index shared pages. You can turn a link off at any time, which deletes it.
         </p>
+        <p>
+          <strong>Shared lists.</strong> If you share one of your lists, we store a link address that only we can create,
+          which kind of list it is, the Google identifiers of the places on it, and when. Anyone who has the link can see
+          the list and its places; we never show your name, email address, or account. The place names, addresses, and
+          photos on a shared list come from Google when the page is built and are not stored by us. We ask search engines
+          not to index shared lists. You can turn a list&apos;s link off at any time, which deletes it.
+        </p>
 
         <h3>Information automatically collected</h3>
         <p>
@@ -162,7 +169,7 @@ export default function PrivacyPolicyPage() {
           <li>
             <em>Measurement events.</em> We record when certain things happen: visiting our students page, starting
             and completing signup, verifying a school email, opening your first place, saving a place, using Surprise
-            Me, redeeming a promo code, creating a share link, opening a shared link, and starting a Premium
+            Me, redeeming a promo code, creating a share or list link, opening a shared link, and starting a Premium
             subscription. If you are signed in, an event is linked to your account; every
             event also carries the campaign labels above. Events do not contain your name, your email address, or
             anything you type.
@@ -251,7 +258,7 @@ export default function PrivacyPolicyPage() {
             school.
           </li>
           <li>
-            <strong>To let you share places and plans.</strong> To make the link you ask for, show what you chose to
+            <strong>To let you share places, plans and lists.</strong> To make the link you ask for, show what you chose to
             share to the people you give it to, and take it down when you turn it off.
           </li>
           <li>
@@ -493,6 +500,10 @@ export default function PrivacyPolicyPage() {
           <li>
             <strong>Share links:</strong> until you turn the link off, which deletes it, or you delete your account,
             which deletes all of your links.
+          </li>
+          <li>
+            <strong>Shared lists:</strong> until you turn the list&apos;s link off, which deletes it, or you delete your
+            account, which deletes all of your lists.
           </li>
           <li>
             <strong>Promo code redemptions:</strong> when you delete your account, the link to your account is removed,

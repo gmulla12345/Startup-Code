@@ -36,8 +36,11 @@ export const nav = {
     { label: "Home", href: "/home", icon: "home" },
     { label: "Discover", href: "/discover", icon: "compass" },
     { label: "Map", href: "/map", icon: "map" },
-    { label: "Trips", href: "/trips", icon: "briefcase" },
     { label: "Saved", href: "/saved", icon: "bookmark" },
     { label: "Profile", href: "/profile", icon: "user" },
   ],
+  // The planners stay, one step back: lists are the product now, so trips are not in the
+  // bottom bar. The sidebar shows them as a quiet link, and the account menu and the end
+  // of Home link to them on every screen size.
+  secondary: [{ label: "Trips", href: "/trips", icon: "briefcase" }],
 } as const;

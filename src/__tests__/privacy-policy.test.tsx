@@ -49,8 +49,18 @@ describe("the privacy policy discloses what we collect", () => {
     expect(text).toMatch(/come from Google when the page is built and are not stored by us/);
     expect(text).toMatch(/ask search engines not to index shared pages/);
     expect(text).toMatch(/You can turn a link off at any time, which deletes it/);
-    expect(text).toMatch(/To let you share places and plans/);
+    expect(text).toMatch(/To let you share places, plans and lists/);
     expect(text).toMatch(/Share links: until you turn the link off, which deletes it, or you delete your account/);
+  });
+
+  it("covers shared lists: what is stored, who sees it, what stays hidden, and how to turn it off", () => {
+    expect(text).toMatch(/Shared lists. If you share one of your lists, we store a link address/);
+    expect(text).toMatch(/which kind of list it is, the Google identifiers of the places on it, and when/);
+    expect(text).toMatch(/we never show your name, email address, or account/);
+    expect(text).toMatch(/come from Google when the page is built and are not stored by us/);
+    expect(text).toMatch(/ask search engines not to index shared lists/);
+    expect(text).toMatch(/turn a list.s link off at any time, which deletes it/);
+    expect(text).toMatch(/Shared lists: until you turn the list.s link off, which deletes it, or you delete your account/);
   });
 
   it("covers measurement events and service usage records", () => {
@@ -70,7 +80,7 @@ describe("the privacy policy discloses what we collect", () => {
       first_place_view: /opening your first place/,
       place_saved: /saving a place/,
       surprise_me_used: /using Surprise Me/,
-      share_created: /creating a share link/,
+      share_created: /creating a share or list link/,
       share_link_opened: /opening a shared link/,
       // Not recorded as an event: signups from shared links are counted by their source
       // label (share-place, share-plan) in the signup tables instead. If it is ever

@@ -11,7 +11,7 @@ export function BottomNav() {
 
   return (
     <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-border bg-surface/95 backdrop-blur-sm pb-[env(safe-area-inset-bottom)]">
-      <div className="grid grid-cols-6 h-16">
+      <div className="grid grid-cols-5 h-16">
         {nav.primary.map((item) => {
           const Icon = NAV_ICONS[item.icon];
           const active = pathname === item.href || pathname.startsWith(item.href + "/");

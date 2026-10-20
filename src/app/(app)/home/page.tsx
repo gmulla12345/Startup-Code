@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { noindexMetadata } from "@/lib/seo";
 import { createClient, getCurrentUser } from "@/lib/supabase/server";
@@ -6,10 +7,9 @@ import { usageContext } from "@/lib/usage/context";
 import { getProfileByUserId } from "@/lib/repositories/profile";
 import { getRecommendations } from "@/services/recommendation/engine";
 import { SurpriseMeButton } from "@/components/home/surprise-me-button";
-import { ExperienceRail, type RailItem } from "@/components/home/experience-rail";
+import { ListSection } from "@/components/lists/list-section";
+import { buildHomeLists } from "@/lib/lists/build";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatDistance } from "@/lib/utils/format";
-import { distanceMiles } from "@/lib/utils/geo";
 import type { Profile } from "@/types/database";
 
 export const metadata = noindexMetadata;
@@ -42,34 +42,33 @@ export default async function HomePage() {
       <SurpriseMeButton />
 
       {/*
-       * The rails below need AI-reasoned recommendations (a live Claude call
-       * plus a Google Places fetch) — that chain alone can take seconds.
-       * Streaming it behind Suspense means the greeting and Surprise Me
-       * button paint immediately on every navigation to Home instead of the
-       * whole page waiting on the slowest data source.
+       * The lists below need recommendations (a Google Places fetch, and the scoring
+       * that ranks them) — that chain alone can take seconds. Streaming it behind
+       * Suspense means the greeting and Surprise Me button paint immediately on every
+       * navigation to Home instead of the whole page waiting on the slowest data source.
        */}
-      <Suspense fallback={<RailsSkeleton />}>
-        <RecommendationRails profile={profile} />
+      <Suspense fallback={<ListsSkeleton />}>
+        <HomeLists profile={profile} />
       </Suspense>
     </div>
     </div>
   );
 }
 
-async function RecommendationRails({ profile }: { profile: Profile }) {
+async function HomeLists({ profile }: { profile: Profile }) {
   const supabase = await createClient();
   // useAI: false — the AI reasoning call is a non-streamed request that has
   // to finish generating its entire batch before anything comes back
   // (measured directly against the API: ~10s for 10 candidates), and it sat
-  // on Home's critical path even behind Suspense, since the whole rails
-  // section waits on this one call. Measured live on a fresh, uncached
-  // location: 8.8s before content appeared. Now that scoreExperience's
-  // deterministic reasons are grounded in real derived tags (see the
-  // taste-learning fix — they used to be empty for all Google Places
-  // content), the fallback reasoning ("Matches your interests: history,
-  // food. Fits your usual budget.") is accurate and specific, not the
-  // generic filler it used to be — not worth a multi-second wait on every
-  // single login for a more naturally-phrased version of the same facts.
+  // on Home's critical path even behind Suspense, since the whole section
+  // waits on this one call. Measured live on a fresh, uncached location: 8.8s
+  // before content appeared. Now that scoreExperience's deterministic reasons
+  // are grounded in real derived tags (see the taste-learning fix), a list's
+  // plain "why this pick" line (lib/lists/reasons.ts) is accurate and
+  // specific, not worth a multi-second wait on every login.
+  //
+  // One request, many lists: every list below is a rule over these same ranked
+  // places (lib/lists/templates.ts), so adding lists adds no Google or AI cost.
   const recommendations = await getRecommendations(supabase, profile, {
     surfaceContext: "for_you",
     limit: 24,
@@ -77,91 +76,52 @@ async function RecommendationRails({ profile }: { profile: Profile }) {
     usage: usageContext(profile.userId, "home"),
   });
 
-  // Every rail shows distance when we have a location to measure from, not
-  // just "Nearby" — a recommendation 17 miles away (a real, correctly-
-  // matched place, just genuinely far) looked indistinguishable from
-  // something downtown without this, which is exactly what caused real
-  // confusion (a Baltimore-based profile getting a Hanover, MD result with
-  // no distance shown to explain why it didn't feel local).
-  const toItems = (recs: typeof recommendations): RailItem[] =>
-    recs.map((r) => ({
-      experience: r.experience,
-      matchScore: r.matchScore,
-      reasoning: r.reasoning,
-      distanceLabel:
-        profile.latitude != null && profile.longitude != null
-          ? formatDistance(
-              distanceMiles(profile.latitude, profile.longitude, r.experience.latitude, r.experience.longitude)
-            )
-          : undefined,
-    }));
+  const lists = buildHomeLists(recommendations, profile);
 
-  const forYou = recommendations.slice(0, 8);
-
-  const nearby =
-    profile.latitude != null && profile.longitude != null
-      ? [...recommendations]
-          .sort(
-            (a, b) =>
-              distanceMiles(profile.latitude!, profile.longitude!, a.experience.latitude, a.experience.longitude) -
-              distanceMiles(profile.latitude!, profile.longitude!, b.experience.latitude, b.experience.longitude)
-          )
-          .slice(0, 8)
-      : [];
-
-  const hiddenGems = recommendations.filter((r) => r.experience.isHiddenGem).slice(0, 8);
-
-  const topInterest = profile.interests[0];
-  const becauseYouLike = topInterest
-    ? recommendations.filter((r) => r.experience.tags.includes(topInterest)).slice(0, 8)
-    : [];
-
-  const weekend = [...recommendations].reverse().slice(0, 8);
+  if (lists.length === 0) {
+    const hasLocation = profile.latitude != null && profile.longitude != null;
+    return (
+      <p className="text-foreground-muted">
+        {hasLocation
+          ? /* COPY: shown when no list could be made */ "Your lists are not ready just now. Try again in a little while."
+          : /* COPY: shown when the person has not set a location */ "Add your location in your profile, and your lists will appear here."}
+      </p>
+    );
+  }
 
   return (
-    <div className="space-y-10">
-      <ExperienceRail title="For You" subtitle="Picked for who you are" items={toItems(forYou)} seeAllHref="/discover" />
+    <div className="space-y-6">
+      {lists.map((list) => (
+        <ListSection key={list.template} list={list} showMatch={list.template === "for-you"} />
+      ))}
 
-      <ExperienceRail
-        title="Nearby"
-        subtitle={profile.city ? `Close to ${profile.city}` : undefined}
-        items={profile.latitude != null && profile.longitude != null ? toItems(nearby) : []}
-        seeAllHref="/map"
-        emptyMessage="Add your location in Profile to see what's nearby."
-      />
-
-      <ExperienceRail title="This Weekend" subtitle="Worth planning around" items={toItems(weekend)} seeAllHref="/trips" />
-
-      <ExperienceRail
-        title="Hidden Gems"
-        subtitle="Less obvious, more memorable"
-        items={toItems(hiddenGems)}
-        seeAllHref="/discover?hiddenGemsOnly=true"
-        emptyMessage="Explore more to unlock hidden gems near you."
-      />
-
-      {topInterest && (
-        <ExperienceRail
-          title={`Because you like ${topInterest}`}
-          items={toItems(becauseYouLike)}
-          emptyMessage=""
-        />
-      )}
+      {/* COPY: the quiet way to the planners, now that lists come first */}
+      <p className="pt-2 text-sm text-foreground-muted">
+        Planning further ahead?{" "}
+        <Link href="/trips" className="text-primary hover:underline">
+          Open your trips
+        </Link>
+        .
+      </p>
     </div>
   );
 }
 
-function RailsSkeleton() {
+function ListsSkeleton() {
   return (
-    <div className="space-y-10">
-      {Array.from({ length: 3 }).map((_, railIndex) => (
-        <div key={railIndex} className="space-y-4">
+    <div className="space-y-6">
+      {Array.from({ length: 2 }).map((_, listIndex) => (
+        <div key={listIndex} className="space-y-4 rounded-[var(--radius-lg)] border border-border bg-surface p-5">
           <Skeleton className="h-6 w-40" />
-          <div className="flex gap-4 overflow-hidden">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-48 w-64 shrink-0" />
-            ))}
-          </div>
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="flex gap-4">
+              <Skeleton className="h-20 w-20 shrink-0" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-3 w-1/2" />
+              </div>
+            </div>
+          ))}
         </div>
       ))}
     </div>

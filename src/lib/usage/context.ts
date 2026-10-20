@@ -21,6 +21,7 @@ export type UsageFeature =
   | "photo"
   | "geocode"
   | "share_preview"
+  | "list_preview"
   | "unknown";
 
 export interface UsageSnapshot {

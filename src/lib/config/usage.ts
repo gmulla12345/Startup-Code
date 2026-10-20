@@ -38,6 +38,8 @@ export const DAILY_LIMITS = {
  */
 export const ANONYMOUS_DAILY_PLACES_CAPS: Readonly<Record<string, number>> = {
   share_preview: 200,
+  // A shared list shows up to ten places, so one opened link can be ten calls (about once an hour).
+  list_preview: 400,
 };
 
 export type UsageBucket = "ai" | "places";

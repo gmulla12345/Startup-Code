@@ -36,6 +36,27 @@ export function Sidebar({ premium }: { premium: boolean }) {
             </Link>
           );
         })}
+
+        {/* The planners, one step back from the lists. */}
+        <div className="mt-4 border-t border-border pt-4">
+          {nav.secondary.map((item) => {
+            const Icon = NAV_ICONS[item.icon];
+            const active = pathname === item.href || pathname.startsWith(item.href + "/");
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex items-center gap-3 rounded-full px-4 py-2 text-sm transition-colors",
+                  active ? "bg-[var(--primary-soft)] font-medium text-[var(--primary-strong)]" : "text-foreground-subtle hover:bg-surface-sunken hover:text-foreground"
+                )}
+              >
+                <Icon className="h-4 w-4" strokeWidth={active ? 2.5 : 2} />
+                {item.label}
+              </Link>
+            );
+          })}
+        </div>
       </nav>
 
       {!premium && (

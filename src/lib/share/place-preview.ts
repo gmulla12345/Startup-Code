@@ -115,7 +115,7 @@ export type PlacePreviewResult =
  * every share of the same place, and every viewer, shares one call), counted
  * against the anonymous daily ceiling for shared-link previews, and logged.
  */
-export async function fetchPlacePreview(placeId: string): Promise<PlacePreviewResult> {
+export async function fetchPlacePreview(placeId: string, feature: "share_preview" | "list_preview" = "share_preview"): Promise<PlacePreviewResult> {
   const key = process.env.MAPS_API_KEY;
   if (!key) return { status: "unavailable" };
 
@@ -130,7 +130,7 @@ export async function fetchPlacePreview(placeId: string): Promise<PlacePreviewRe
     // "v1" is the field list above: bump it if the fields change.
     cacheKey: ["share-v1", placeId],
     revalidate: SHARE_CACHE_SECONDS,
-    usage: usageContext(null, "share_preview"),
+    usage: usageContext(null, feature),
   });
 
   if (!result.ok) return { status: "unavailable" };
