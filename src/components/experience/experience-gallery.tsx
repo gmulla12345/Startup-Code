@@ -21,7 +21,7 @@ export function ExperienceGallery({ images, title }: { images: string[]; title: 
               onClick={() => setActive(i)}
               className={cn(
                 "relative h-16 w-24 shrink-0 rounded-[var(--radius-sm)] overflow-hidden border-2",
-                active === i ? "border-ember" : "border-transparent opacity-70"
+                active === i ? "border-primary" : "border-transparent opacity-70"
               )}
             >
               <Image src={img} alt="" fill sizes="96px" className="object-cover" />

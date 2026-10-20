@@ -19,25 +19,30 @@ export function Avatar({
     .join("")
     .toUpperCase();
 
+  // A thin ring in the brand gradient: one of the small signatures that make the inside Zolo's own.
   if (src) {
     return (
-      <Image
-        src={src}
-        alt={name}
-        width={size}
-        height={size}
-        className={cn("rounded-full object-cover", className)}
-        style={{ width: size, height: size }}
-      />
+      <span className={cn("ring-brand inline-block shrink-0", className)}>
+        <Image
+          src={src}
+          alt={name}
+          width={size}
+          height={size}
+          className="rounded-full object-cover"
+          style={{ width: size - 4, height: size - 4 }}
+        />
+      </span>
     );
   }
 
   return (
-    <div
-      className={cn("rounded-full bg-forest text-white flex items-center justify-center font-semibold", className)}
-      style={{ width: size, height: size, fontSize: size * 0.4 }}
-    >
-      {initials || "?"}
-    </div>
+    <span className={cn("ring-brand inline-block shrink-0", className)}>
+      <span
+        className="flex items-center justify-center rounded-full bg-foreground font-semibold text-background"
+        style={{ width: size - 4, height: size - 4, fontSize: size * 0.38 }}
+      >
+        {initials || "?"}
+      </span>
+    </span>
   );
 }

@@ -117,7 +117,7 @@ export default async function TravelDestinationPage({ params }: PageProps<"/trav
           <ul className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-2 text-sm">
             {otherDestinations.map((d) => (
               <li key={d.slug}>
-                <Link href={`/travel/${d.slug}`} className="text-ember hover:underline">
+                <Link href={`/travel/${d.slug}`} className="text-primary hover:underline">
                   {d.city} travel guide
                 </Link>
               </li>
@@ -125,11 +125,11 @@ export default async function TravelDestinationPage({ params }: PageProps<"/trav
           </ul>
           <p className="mt-4 text-sm text-foreground-muted">
             Planning a trip? See{" "}
-            <Link href="/faq" className="text-ember hover:underline">
+            <Link href="/faq" className="text-primary hover:underline">
               how Travel Mode works
             </Link>
             , or compare the{" "}
-            <Link href="/pricing" className="text-ember hover:underline">
+            <Link href="/pricing" className="text-primary hover:underline">
               Free and Premium plans
             </Link>{" "}
             — the AI Trip Planner is part of Premium.

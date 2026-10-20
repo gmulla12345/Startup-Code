@@ -42,13 +42,13 @@ export function BeforeYouGo({ experience }: { experience: Experience }) {
             href={experience.website}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm text-ember hover:underline inline-flex items-center gap-1"
+            className="text-sm text-primary hover:underline inline-flex items-center gap-1"
           >
             Official website <ArrowUpRight className="h-3.5 w-3.5" />
           </a>
         )}
         {experience.phone && (
-          <a href={`tel:${experience.phone}`} className="text-sm text-ember hover:underline">
+          <a href={`tel:${experience.phone}`} className="text-sm text-primary hover:underline">
             {experience.phone}
           </a>
         )}
@@ -57,7 +57,7 @@ export function BeforeYouGo({ experience }: { experience: Experience }) {
             href={mapsUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm text-ember hover:underline inline-flex items-center gap-1"
+            className="text-sm text-primary hover:underline inline-flex items-center gap-1"
           >
             View on Google Maps <ArrowUpRight className="h-3.5 w-3.5" />
           </a>

@@ -61,7 +61,7 @@ function PanelOnboarding() {
 
   return (
     <div className="p-5 sm:p-6">
-      <p className="text-xs font-semibold text-ember">Step 1 of 3 · Your interests</p>
+      <p className="text-xs font-semibold text-primary">Step 1 of 3 · Your interests</p>
       <p className="mt-1 font-display text-xl font-semibold text-foreground">What do you want more of?</p>
       <div className="mt-4 flex flex-wrap gap-2">
         {INTERESTS.map((label) => {
@@ -106,7 +106,7 @@ function PanelOnboarding() {
 
       <div className="mt-7 flex items-center justify-between">
         <span className="text-xs text-foreground-subtle">{picked.size} selected</span>
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-ember px-4 py-2 text-sm font-medium text-white">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-medium text-white">
           Continue <ArrowRight className="h-3.5 w-3.5" aria-hidden />
         </span>
       </div>
@@ -120,7 +120,7 @@ function PanelMatched() {
     <div className="p-5 sm:p-6">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold text-ember">Matched for you</p>
+          <p className="text-xs font-semibold text-primary">Matched for you</p>
           <p className="mt-1 font-display text-xl font-semibold text-foreground">3 picks, each with a reason</p>
         </div>
         <span className="hidden shrink-0 items-center gap-1 rounded-full border border-border bg-surface-sunken px-2.5 py-1 text-[11px] font-medium text-foreground-muted sm:inline-flex">
@@ -158,7 +158,7 @@ function PanelDiscover() {
   const pick = MOCK_PICKS[1];
   return (
     <div className="p-5 sm:p-6">
-      <p className="text-xs font-semibold text-ember">Discover</p>
+      <p className="text-xs font-semibold text-primary">Discover</p>
       <p className="mt-1 font-display text-xl font-semibold text-foreground">Save it, skip it, or go</p>
 
       <div className="mt-4 rounded-2xl border border-border bg-surface p-4 shadow-[var(--shadow-card)]">
@@ -185,7 +185,7 @@ function PanelDiscover() {
             aria-pressed={saved}
             className={cn(
               "inline-flex items-center justify-center gap-1.5 rounded-full border py-2 text-sm font-medium transition-all active:scale-95",
-              saved ? "border-transparent bg-[var(--ember-soft)] text-ember" : "border-border text-foreground"
+              saved ? "border-transparent bg-[var(--primary-soft)] text-primary" : "border-border text-foreground"
             )}
           >
             <Heart className={cn("h-3.5 w-3.5", saved && "fill-current")} aria-hidden /> {saved ? "Saved" : "Save"}
@@ -198,7 +198,7 @@ function PanelDiscover() {
 
       <div className="mt-3 flex items-center justify-between rounded-xl border border-dashed border-border-strong bg-surface-sunken px-4 py-3">
         <span className="inline-flex items-center gap-2 text-sm font-medium text-foreground">
-          <Shuffle className="h-4 w-4 text-ember" aria-hidden /> Surprise Me
+          <Shuffle className="h-4 w-4 text-primary" aria-hidden /> Surprise Me
         </span>
         <span className="text-xs text-foreground-subtle">Something unexpected</span>
       </div>
@@ -228,14 +228,14 @@ function PanelLearning() {
 
   return (
     <div className="p-5 sm:p-6">
-      <p className="text-xs font-semibold text-ember">Learning from you</p>
+      <p className="text-xs font-semibold text-primary">Learning from you</p>
       <p className="mt-1 font-display text-xl font-semibold text-foreground">Your picks re-rank as you go</p>
 
       <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-medium">
         <span className="inline-flex items-center gap-1 rounded-full bg-[var(--forest-soft)] px-2.5 py-1 text-forest">
           <Heart className="h-3 w-3 fill-current" aria-hidden /> Saved: pottery class
         </span>
-        <span className="inline-flex items-center gap-1 rounded-full bg-[var(--ember-soft)] px-2.5 py-1 text-ember">
+        <span className="inline-flex items-center gap-1 rounded-full bg-[var(--primary-soft)] px-2.5 py-1 text-primary">
           <X className="h-3 w-3" aria-hidden /> Skipped: rooftop jazz bar
         </span>
       </div>
@@ -323,7 +323,7 @@ export function HowItWorks() {
                   <span
                     className={cn(
                       "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border text-sm font-semibold transition-colors duration-300",
-                      isActive ? "border-transparent bg-[#ff6a45] text-white" : "border-white/20 text-[#a9b8cc]"
+                      isActive ? "border-transparent bg-[#2fc4a3] text-[#0a2540]" : "border-white/20 text-[#a9b8cc]"
                     )}
                   >
                     {step.number}
@@ -345,7 +345,7 @@ export function HowItWorks() {
                     <span aria-hidden className="absolute inset-x-4 bottom-0 h-px overflow-hidden bg-white/10">
                       <span
                         key={active}
-                        className="block h-full origin-left bg-[#ff6a45]"
+                        className="block h-full origin-left bg-[#2fc4a3]"
                         style={{ animation: `mk-progress ${STEP_MS}ms linear forwards` }}
                       />
                     </span>

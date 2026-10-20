@@ -83,7 +83,7 @@ export default async function ProfilePage() {
         <StatCard href="/trips" icon={Briefcase} value={tripsCountRes.count ?? 0} label="Trips" />
       </div>
 
-      <div className="rounded-[var(--radius-lg)] border border-border bg-[linear-gradient(160deg,var(--ember-soft),var(--surface))] p-6 mb-8">
+      <div className="rounded-[var(--radius-lg)] border border-border bg-[linear-gradient(160deg,var(--primary-soft),var(--surface))] p-6 mb-8">
         <p className="text-xs uppercase tracking-wide text-foreground-subtle mb-1">Your Experience Profile</p>
         <h2 className="font-display text-2xl font-semibold text-foreground mb-2">You&apos;re a {archetype.label}.</h2>
         <p className="text-sm text-foreground-muted">{archetype.description}</p>
@@ -135,7 +135,7 @@ function StatCard({
       href={href}
       className="rounded-[var(--radius-lg)] border border-border bg-surface p-4 text-center transition-shadow hover:shadow-[var(--shadow-card)]"
     >
-      <Icon className="h-5 w-5 text-ember mx-auto mb-2" />
+      <Icon className="h-5 w-5 text-primary mx-auto mb-2" />
       <div className="font-display text-2xl font-semibold text-foreground">{value}</div>
       <div className="text-xs text-foreground-muted">{label}</div>
     </Link>

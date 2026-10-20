@@ -48,7 +48,7 @@ export async function DestinationsSection() {
                 />
                 <ArrowUpRight
                   aria-hidden
-                  className="relative ml-auto h-4 w-4 text-foreground-subtle transition-colors group-hover:text-ember"
+                  className="relative ml-auto h-4 w-4 text-foreground-subtle transition-colors group-hover:text-primary"
                 />
                 <span className="relative block">
                   <span className="block font-display text-base font-semibold leading-tight text-foreground">{dest.city}</span>

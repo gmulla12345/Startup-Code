@@ -33,7 +33,7 @@ export function ExperienceRail({
           {subtitle && <p className="text-sm text-foreground-muted mt-0.5">{subtitle}</p>}
         </div>
         {seeAllHref && items.length > 0 && (
-          <Link href={seeAllHref} className="text-sm font-medium text-ember inline-flex items-center gap-0.5 shrink-0">
+          <Link href={seeAllHref} className="text-sm font-medium text-primary inline-flex items-center gap-0.5 shrink-0">
             See all <ChevronRight className="h-3.5 w-3.5" />
           </Link>
         )}

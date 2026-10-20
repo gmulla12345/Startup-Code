@@ -54,10 +54,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#faf7f2" },
-    { media: "(prefers-color-scheme: dark)", color: "#14120f" },
-  ],
+  themeColor: "#ffffff",
   width: "device-width",
   initialScale: 1,
 };
@@ -67,7 +64,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="en" className={`${inter.variable} ${fraunces.variable} h-full antialiased`} suppressHydrationWarning>
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <noscript>
-          <div className="bg-ember px-4 py-3 text-center text-sm font-medium text-white">
+          <div className="bg-primary px-4 py-3 text-center text-sm font-medium text-white">
             {brand.name} works best with JavaScript enabled. Please enable it in your browser for the full
             experience.
           </div>

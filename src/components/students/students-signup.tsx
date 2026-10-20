@@ -340,7 +340,7 @@ export function StudentsSignup({ campuses }: { campuses: Campus[] }) {
 
       <p className="mt-6 text-center text-sm text-foreground-muted">
         Already have an account?{" "}
-        <Link href="/login" className="font-medium text-ember hover:underline">
+        <Link href="/login" className="font-medium text-primary hover:underline">
           Log in
         </Link>
       </p>

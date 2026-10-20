@@ -159,13 +159,13 @@ export default function FaqPage() {
       <BreadcrumbJsonLd items={[{ name: "FAQ", path: "/faq" }]} />
       <section>
         <div className="mx-auto max-w-3xl px-4 sm:px-6 pt-20 pb-14 text-center">
-          <p className="text-sm font-medium text-ember mb-4">Support</p>
+          <p className="text-sm font-medium text-primary mb-4">Support</p>
           <h1 className="font-display text-4xl sm:text-5xl font-semibold text-foreground leading-tight">
             Frequently asked questions
           </h1>
           <p className="mt-4 text-lg text-foreground-muted">
             Everything you need to know about {brand.name}. Can&apos;t find it here?{" "}
-            <a href={`mailto:${brand.supportEmail}`} className="text-ember hover:underline">
+            <a href={`mailto:${brand.supportEmail}`} className="text-primary hover:underline">
               Email us
             </a>
             .

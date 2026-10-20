@@ -53,11 +53,11 @@ function renderWithLinks(text: string): ReactNode[] {
     const href = match[2];
     nodes.push(
       href.startsWith("/") ? (
-        <Link key={key++} href={href} className="text-ember hover:underline">
+        <Link key={key++} href={href} className="text-primary hover:underline">
           {match[1]}
         </Link>
       ) : (
-        <a key={key++} href={href} rel="noopener noreferrer" target="_blank" className="text-ember hover:underline">
+        <a key={key++} href={href} rel="noopener noreferrer" target="_blank" className="text-primary hover:underline">
           {match[1]}
         </a>
       )
@@ -116,7 +116,7 @@ export default async function BlogPostPage({ params }: PageProps<"/blog/[slug]">
       <p className="text-xs text-foreground-subtle mb-3">
         {author && (
           <>
-            <Link href={`/author/${author.slug}`} className="text-ember hover:underline">
+            <Link href={`/author/${author.slug}`} className="text-primary hover:underline">
               By {author.name}
             </Link>{" "}
             ·{" "}
@@ -199,7 +199,7 @@ export default async function BlogPostPage({ params }: PageProps<"/blog/[slug]">
           <ol className="list-decimal list-outside pl-5 space-y-3 text-sm text-foreground-muted leading-relaxed">
             {post.sources.map((source) => (
               <li key={source.url}>
-                <a href={source.url} rel="noopener noreferrer" target="_blank" className="text-ember hover:underline">
+                <a href={source.url} rel="noopener noreferrer" target="_blank" className="text-primary hover:underline">
                   {source.label}
                 </a>
                 <span> — {source.note}</span>

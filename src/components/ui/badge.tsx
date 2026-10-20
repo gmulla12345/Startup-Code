@@ -6,7 +6,7 @@ const badgeVariants = cva("inline-flex items-center gap-1 rounded-full px-2.5 py
   variants: {
     variant: {
       default: "bg-surface-sunken text-foreground-muted",
-      ember: "bg-[var(--ember-soft)] text-[var(--ember-strong)]",
+      primary: "bg-[var(--primary-soft)] text-[var(--primary-strong)]",
       forest: "bg-[var(--forest-soft)] text-[var(--forest-strong)]",
       gold: "bg-[var(--gold-soft)] text-[color:var(--gold)]",
       outline: "border border-border-strong text-foreground-muted",

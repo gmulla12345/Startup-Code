@@ -19,7 +19,7 @@ export function Switch({
       onClick={() => onChange(!checked)}
       className={cn(
         "relative inline-flex h-7 w-12 items-center rounded-full transition-colors",
-        checked ? "bg-ember" : "bg-surface-sunken border border-border-strong",
+        checked ? "bg-primary" : "bg-surface-sunken border border-border-strong",
         className
       )}
     >

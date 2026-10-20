@@ -222,7 +222,7 @@ export function ItineraryDetail({ itinerary, items: initialItems }: { itinerary:
 
       <div className="mt-10 border-t border-border pt-6">
         <div className="flex items-center gap-2 mb-3">
-          <Sparkles className="h-4 w-4 text-ember" />
+          <Sparkles className="h-4 w-4 text-primary" />
           <h2 className="font-display text-lg font-semibold text-foreground">Ask for changes</h2>
         </div>
         <p className="text-sm text-foreground-muted mb-4">
@@ -236,7 +236,7 @@ export function ItineraryDetail({ itinerary, items: initialItems }: { itinerary:
                 <div
                   className={`max-w-[85%] rounded-[var(--radius-md)] px-3.5 py-2 text-sm ${
                     msg.role === "user"
-                      ? "bg-forest text-white"
+                      ? "bg-foreground text-background"
                       : "bg-surface-sunken text-foreground"
                   }`}
                 >
@@ -332,7 +332,7 @@ export function ItineraryDetail({ itinerary, items: initialItems }: { itinerary:
               {activeItem.experienceId && (
                 <Link
                   href={`/experience/${activeItem.experienceId}`}
-                  className="text-sm text-ember font-medium hover:underline block mb-4"
+                  className="text-sm text-primary font-medium hover:underline block mb-4"
                 >
                   View full details
                 </Link>

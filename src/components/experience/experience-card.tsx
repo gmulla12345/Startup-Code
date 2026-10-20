@@ -6,6 +6,7 @@ import Link from "next/link";
 import { CheckCircle2, Heart, MapPin, Star, Gem } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { MatchBadge } from "@/components/experience/match-badge";
 import { cn } from "@/lib/utils/cn";
 import { formatPrice, formatDuration, formatCategoryLabel, withMaxWidth } from "@/lib/utils/format";
 import type { Experience } from "@/types/database";
@@ -91,7 +92,7 @@ export function ExperienceCard({
       href={`/experience/${experience.slug}`}
       onClick={() => track("viewed_experience", experience.id, { source: "card" })}
       className={cn(
-        "group block rounded-[var(--radius-lg)] overflow-hidden border border-border bg-surface transition-shadow hover:shadow-[var(--shadow-raised)]",
+        "group block rounded-[var(--radius-lg)] overflow-hidden border border-border bg-surface shadow-[var(--shadow-card)] transition-shadow hover:shadow-[var(--shadow-raised)]",
         className
       )}
     >
@@ -108,30 +109,16 @@ export function ExperienceCard({
           />
         )}
 
-        {/*
-         * Every badge/button in this photo overlay sits on its own fixed
-         * white chip, not a themed surface -- so its colors are hardcoded
-         * hex, not the theme-variable classes (text-foreground, the Badge
-         * variants' CSS-var colors, etc.) used everywhere else in this
-         * file. Those variables flip in dark mode (e.g. --foreground goes
-         * near-white), which made this row invisible or low-contrast
-         * against its always-white chip once dark mode was force-enabled
-         * on the marketing pages -- the save heart was rendering
-         * literally white-on-white. A white chip's required contrast
-         * doesn't change with the app's theme, so its colors shouldn't
-         * either.
-         */}
+        {/* Everything laid over the photo sits on its own white chip. */}
         {matchScore != null && (
           <div className="absolute top-3 left-3">
-            <Badge className="bg-white/95 text-[#e63f1d] font-semibold shadow-sm">
-              {Math.round(matchScore)}% match
-            </Badge>
+            <MatchBadge score={matchScore} />
           </div>
         )}
 
         {matchScore == null && completed && (
           <div className="absolute top-3 left-3">
-            <Badge className="bg-white/95 text-[#0a4438] font-semibold shadow-sm">
+            <Badge className="bg-white/95 text-[var(--forest-strong)] font-semibold shadow-sm">
               <CheckCircle2 className="h-3 w-3" /> Completed
             </Badge>
           </div>
@@ -142,7 +129,7 @@ export function ExperienceCard({
           aria-label={isSaved ? "Unsave" : "Save"}
           className="absolute top-2 right-2 h-11 w-11 rounded-full bg-white/90 flex items-center justify-center transition-colors hover:bg-white"
         >
-          <Heart className={cn("h-4 w-4", isSaved ? "fill-[#ff4e2b] text-[#ff4e2b]" : "text-[#1b1712]")} />
+          <Heart className={cn("h-4 w-4", isSaved ? "fill-[var(--brand-pink)] text-[var(--brand-pink)]" : "text-foreground")} />
         </button>
       </div>
 
@@ -180,7 +167,7 @@ export function ExperienceCard({
         <p className="font-semibold text-foreground pt-0.5">{formatPrice(experience.priceEstimate, experience.priceLevel)}</p>
 
         {reasoning && (
-          <p className="text-xs text-foreground-muted line-clamp-2 pt-1">{reasoning}</p>
+          <p className="font-reason text-[13px] leading-snug text-foreground-muted line-clamp-2 pt-1">{reasoning}</p>
         )}
       </div>
     </Link>

@@ -21,7 +21,7 @@ export default function GlobalError({
           <div style={{ textAlign: "center" }}>
             <h1 style={{ fontSize: 24, fontWeight: 600, marginBottom: 8 }}>Something went wrong</h1>
             <p style={{ color: "#666", marginBottom: 16 }}>We&apos;ve been notified and are looking into it.</p>
-            <button onClick={reset} style={{ padding: "8px 16px", borderRadius: 8, background: "#ff4e2b", color: "#fff", border: "none" }}>
+            <button onClick={reset} style={{ padding: "8px 16px", borderRadius: 8, background: "#0f766e", color: "#fff", border: "none" }}>
               Try again
             </button>
           </div>

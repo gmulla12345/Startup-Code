@@ -27,7 +27,7 @@ export function Slider({ value, onChange, min = 0, max = 100, step = 1, leftLabe
       <div className="relative h-8 flex items-center">
         <div className="absolute inset-x-0 h-2 rounded-full bg-surface-sunken" />
         <div
-          className="absolute h-2 rounded-full bg-ember"
+          className="absolute h-2 rounded-full bg-primary"
           style={{ width: `${percent}%` }}
         />
         <input
@@ -40,10 +40,10 @@ export function Slider({ value, onChange, min = 0, max = 100, step = 1, leftLabe
           className="relative w-full h-8 appearance-none bg-transparent cursor-pointer
             [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-7 [&::-webkit-slider-thumb]:w-7
             [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white
-            [&::-webkit-slider-thumb]:border-4 [&::-webkit-slider-thumb]:border-ember
+            [&::-webkit-slider-thumb]:border-4 [&::-webkit-slider-thumb]:border-primary
             [&::-webkit-slider-thumb]:shadow-[var(--shadow-card)] [&::-webkit-slider-thumb]:cursor-grab
             [&::-moz-range-thumb]:h-7 [&::-moz-range-thumb]:w-7 [&::-moz-range-thumb]:rounded-full
-            [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border-4 [&::-moz-range-thumb]:border-ember"
+            [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border-4 [&::-moz-range-thumb]:border-primary"
         />
       </div>
       <div className="flex justify-between mt-1 text-xs font-medium text-foreground-muted">

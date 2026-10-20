@@ -1,130 +1,15 @@
 @import "tailwindcss";
 
 :root {
-  /* Surfaces */
-  --background: #faf7f2;
-  --surface: #ffffff;
-  --surface-raised: #ffffff;
-  --surface-sunken: #f2ede4;
-  --border: #e8e1d4;
-  --border-strong: #d8cfbc;
-
-  /* Text */
-  --foreground: #1b1712;
-  --foreground-muted: #6b6255;
-  --foreground-subtle: #948a7a;
-
-  /* Brand */
-  --ember: #ff4e2b;
-  --ember-strong: #e63f1d;
-  --ember-soft: #ffe3da;
-  --forest: #0f5c4c;
-  --forest-strong: #0a4438;
-  --forest-soft: #dcefe9;
-  --gold: #e0a326;
-  --gold-soft: #faf0d8;
-
-  /* Semantic */
-  --success: #1a8f5e;
-  --danger: #d93636;
-  --ring: var(--ember);
-
-  --radius-sm: 0.5rem;
-  --radius-md: 0.875rem;
-  --radius-lg: 1.25rem;
-  --radius-xl: 1.75rem;
-
-  --shadow-card: 0 1px 2px rgba(27, 23, 18, 0.04), 0 8px 24px -12px rgba(27, 23, 18, 0.12);
-  --shadow-raised: 0 4px 12px rgba(27, 23, 18, 0.08), 0 16px 40px -16px rgba(27, 23, 18, 0.18);
-}
-
-/* Not `:root[data-theme="dark"]` -- :root only ever matches <html>, and
-   data-theme="dark" is set on (marketing)/layout.tsx's wrapping div, not on
-   <html> (Next.js's App Router can't add attributes to <html> from a nested
-   route-group layout). That mismatch meant this rule never matched anything,
-   ever -- the marketing pages' "always dark, regardless of visitor system
-   preference" design (see that file's own comment) was silently just
-   mirroring each visitor's own OS dark-mode setting via the unrelated
-   prefers-color-scheme fallback below, undetected because every verification
-   pass happened to run on a dark-mode system. Custom properties inherit to
-   descendants from whichever element defines them, so dropping `:root` here
-   is enough -- the marketing div (which wraps the whole route group) is
-   where the attribute actually lives. */
-[data-theme="dark"] {
-  --background: #14120f;
-  --surface: #1c1914;
-  --surface-raised: #221e18;
-  --surface-sunken: #0f0d0a;
-  --border: #322c22;
-  --border-strong: #453d2f;
-
-  --foreground: #f6f1e7;
-  --foreground-muted: #b8ae9b;
-  --foreground-subtle: #8a8071;
-
-  --ember: #ff6a45;
-  --ember-strong: #ff8a68;
-  --ember-soft: #3a2016;
-  --forest: #3fae91;
-  --forest-strong: #63c4aa;
-  --forest-soft: #16302a;
-  --gold: #f0bc4e;
-  --gold-soft: #332b14;
-
-  --success: #3fbd85;
-  --danger: #f0685f;
-
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.2), 0 8px 24px -12px rgba(0, 0, 0, 0.5);
-  --shadow-raised: 0 4px 16px rgba(0, 0, 0, 0.35), 0 24px 48px -20px rgba(0, 0, 0, 0.6);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --background: #14120f;
-    --surface: #1c1914;
-    --surface-raised: #221e18;
-    --surface-sunken: #0f0d0a;
-    --border: #322c22;
-    --border-strong: #453d2f;
-
-    --foreground: #f6f1e7;
-    --foreground-muted: #b8ae9b;
-    --foreground-subtle: #8a8071;
-
-    --ember: #ff6a45;
-    --ember-strong: #ff8a68;
-    --ember-soft: #3a2016;
-    --forest: #3fae91;
-    --forest-strong: #63c4aa;
-    --forest-soft: #16302a;
-    --gold: #f0bc4e;
-    --gold-soft: #332b14;
-
-    --success: #3fbd85;
-    --danger: #f0685f;
-
-    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.2), 0 8px 24px -12px rgba(0, 0, 0, 0.5);
-    --shadow-raised: 0 4px 16px rgba(0, 0, 0, 0.35), 0 24px 48px -20px rgba(0, 0, 0, 0.6);
-  }
-}
-
-/* The pre-login marketing site: a crisp, light, product-first look (white
-   canvas, deep navy ink, cool grays, vivid gradients reserved for decoration),
-   scoped to (marketing)/layout.tsx's wrapper div the same way the old dark
-   theme was -- the logged-in app and auth pages keep following the visitor's
-   own light/dark preference. Every marketing component already reads color
-   through these semantic tokens, so this one block restyles the whole route
-   group at once.
-
-   Contrast, deliberately: --ember here is a deeper orange-red (#d93a17) than
-   the app's #ff4e2b, because #ff4e2b on white is only ~3.3:1 -- too low for
-   small links and eyebrow labels, and for white button text. #d93a17 clears
-   4.5:1 both ways. The vivid brand orange lives in the decorative gradients
-   below instead, where it carries no text. --gold is darkened for the same
-   reason (it's used as text on --gold-soft). */
-[data-theme="marketing"] {
+  /* One look for the whole product, landing page and inside alike: a white canvas,
+     deep navy ink, cool grays, and layered shadows, with the brand's vivid colors
+     kept for decoration (see .mk-gradient and friends below), never behind or as
+     small text. The product used to follow the visitor's light/dark setting with a
+     warm cream-and-espresso palette; it is light only now, to match the landing
+     page, which has always been. */
   color-scheme: light;
 
+  /* Surfaces */
   --background: #ffffff;
   --surface: #ffffff;
   --surface-raised: #ffffff;
@@ -132,38 +17,61 @@
   --border: #e3e8ee;
   --border-strong: #cfd7e3;
 
+  /* Text */
   --foreground: #0a2540;
   --foreground-muted: #425466;
   --foreground-subtle: #697386;
 
-  --ember: #d93a17;
-  --ember-strong: #bf3012;
-  --ember-soft: #fff0eb;
+  /* Brand. --primary is the one color for links, buttons, focus and small labels: a deep
+     teal taken from the teal end of the brand gradient, so it sits beside the warm band
+     instead of repeating it. It is darker than the gradient's #2fc4a3 on purpose: that
+     is only ~2:1 on white, too low for small text or a white-on-button label, while
+     #0f766e clears 4.5:1 on white and on the sunken panel, and for white text on it.
+     The vivid colors live in the gradients, where no text sits on them. --gold is
+     darkened for the same reason (it is used as text on --gold-soft). */
+  --primary: #0f766e;
+  --primary-strong: #0b5c56;
+  --primary-soft: #e6f6f3;
   --forest: #0f5c4c;
   --forest-strong: #0a4438;
   --forest-soft: #e3f4ef;
   --gold: #94590b;
   --gold-soft: #fdf1d6;
 
+  /* The brand's vivid colors: decoration only */
+  --brand-orange: #ff4e2b;
+  --brand-pink: #ff4f93;
+  --brand-gold: #ffb340;
+  --brand-teal: #2fc4a3;
+  --brand-sky: #5ccdf5;
+
+  /* Semantic */
   --success: #15803d;
   --danger: #c2362b;
+  --ring: var(--primary);
+
+  --radius-sm: 0.5rem;
+  --radius-md: 0.875rem;
+  --radius-lg: 1.25rem;
+  --radius-xl: 1.75rem;
 
   --shadow-card: 0 0 0 1px rgba(10, 37, 64, 0.04), 0 2px 5px -1px rgba(50, 50, 93, 0.08), 0 1px 3px -1px rgba(0, 0, 0, 0.06);
   --shadow-raised: 0 30px 60px -12px rgba(50, 50, 93, 0.22), 0 18px 36px -18px rgba(0, 0, 0, 0.28);
 }
 
-/* Headings across the marketing site are sans (Inter) with a touch of
-   negative tracking -- the serif display face stays for the wordmark
-   (.font-logo) and the logged-in app. */
-[data-theme="marketing"] .font-display {
+/* Headlines are Inter with a touch of negative tracking. The serif face is kept for
+   two things only, the wordmark and the "why this matches you" voice of a
+   recommendation, so it stays a signature rather than a second system. */
+.font-display {
   font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
   letter-spacing: -0.022em;
 }
+
 .font-logo {
   font-family: var(--font-fraunces), ui-serif, Georgia, serif;
 }
 
-/* Decorative marketing gradient: the brand's ember/pink/gold/teal as one
+/* Decorative marketing gradient: the brand's orange/pink/gold/teal as one
    slow-shifting band. Purely visual (no text sits on the vivid part). */
 .mk-gradient {
   background: linear-gradient(
@@ -236,9 +144,9 @@
   --color-foreground-muted: var(--foreground-muted);
   --color-foreground-subtle: var(--foreground-subtle);
 
-  --color-ember: var(--ember);
-  --color-ember-strong: var(--ember-strong);
-  --color-ember-soft: var(--ember-soft);
+  --color-primary: var(--primary);
+  --color-primary-strong: var(--primary-strong);
+  --color-primary-soft: var(--primary-soft);
   --color-forest: var(--forest);
   --color-forest-strong: var(--forest-strong);
   --color-forest-soft: var(--forest-soft);
@@ -255,7 +163,7 @@
   --radius-xl: var(--radius-xl);
 
   --font-sans: var(--font-inter);
-  --font-display: var(--font-fraunces);
+  --font-display: var(--font-inter);
 }
 
 body {
@@ -264,13 +172,9 @@ body {
   font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
 }
 
-.font-display {
-  font-family: var(--font-display), ui-serif, Georgia, serif;
-}
-
 ::selection {
-  background: var(--ember-soft);
-  color: var(--ember-strong);
+  background: var(--primary-soft);
+  color: var(--primary-strong);
 }
 
 /* var(--border), not var(--color-border): --color-border is declared on :root
@@ -313,4 +217,73 @@ body {
    would otherwise sit on top of the page's main button. */
 body:has([data-own-google-attribution]) [data-google-attribution] {
   display: none;
+}
+
+/* ---- What makes the inside its own thing -------------------------------------------
+   The landing page sells the product; the inside is where it feels personal. Four small,
+   consistent signatures, all drawn from the brand gradient and the wordmark's serif:
+     1. .font-reason, the serif italic voice of a recommendation's reasoning
+     2. .match-ring, a match score drawn as a ring in the brand gradient
+     3. .ring-brand, a thin brand-gradient ring (the avatar)
+     4. .glow-page, the hero's faint grid and gradient glow behind the top of a page
+   Decoration only: no text ever sits on the vivid gradient. */
+.font-reason {
+  font-family: var(--font-fraunces), ui-serif, Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.match-ring {
+  --p: 0;
+  display: inline-grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 9999px;
+  background: conic-gradient(
+    from 0deg,
+    var(--brand-orange) 0%,
+    var(--brand-pink) calc(var(--p) * 0.55%),
+    var(--brand-gold) calc(var(--p) * 1%),
+    var(--border) 0
+  );
+}
+.match-ring > span {
+  display: grid;
+  place-items: center;
+  width: calc(100% - 4px);
+  height: calc(100% - 4px);
+  border-radius: 9999px;
+  background: var(--surface);
+}
+
+.ring-brand {
+  padding: 2px;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, var(--brand-orange), var(--brand-pink) 55%, var(--brand-gold));
+}
+.ring-brand > * {
+  border: 2px solid var(--surface);
+}
+
+.glow-page {
+  position: relative;
+  isolation: isolate;
+}
+.glow-page::before {
+  content: "";
+  position: absolute;
+  /* starts behind the top bar (4rem) so the glow reaches the very top of the page */
+  inset: -4rem 0 auto 0;
+  height: 26rem;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 60% 70% at 100% 0%, rgba(255, 79, 147, 0.14), transparent 70%),
+    radial-gradient(ellipse 55% 70% at 85% 10%, rgba(255, 78, 43, 0.12), transparent 70%),
+    linear-gradient(to right, rgba(10, 37, 64, 0.04) 1px, transparent 1px) 0 0 / 56px 56px,
+    linear-gradient(to bottom, rgba(10, 37, 64, 0.04) 1px, transparent 1px) 0 0 / 56px 56px;
+  -webkit-mask-image: linear-gradient(to bottom, black 35%, transparent);
+  mask-image: linear-gradient(to bottom, black 35%, transparent);
 }

@@ -17,7 +17,7 @@ export function DiscoveryLayer() {
       </div>
       <div className="relative mx-auto max-w-3xl px-4 py-20 sm:px-6 md:py-28">
         <Reveal>
-          <p className="mb-6 text-sm font-semibold text-ember">Positioning</p>
+          <p className="mb-6 text-sm font-semibold text-primary">Positioning</p>
           <h2 className="font-display text-3xl font-semibold leading-[1.2] tracking-tight text-foreground sm:text-4xl">
             {brand.name} doesn&apos;t replace Google Maps, Tripadvisor, or your favorite booking app.
             <span className="text-foreground-muted"> It sits before them</span> — helping you decide what&apos;s
@@ -28,7 +28,7 @@ export function DiscoveryLayer() {
             {FLOW.map((label, i) => (
               <li key={label} className="flex items-center gap-2">
                 <span className="rounded-full border border-border bg-surface px-4 py-2 text-sm font-medium text-foreground shadow-[var(--shadow-card)]">
-                  <span className="mr-2 text-ember">{i + 1}</span>
+                  <span className="mr-2 text-primary">{i + 1}</span>
                   {label}
                 </span>
                 {i < FLOW.length - 1 && (

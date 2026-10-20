@@ -112,7 +112,7 @@ export function TripPlannerModal({
           <div className="w-full sm:max-w-lg bg-surface rounded-t-[var(--radius-xl)] sm:rounded-[var(--radius-xl)] overflow-hidden max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 pb-0">
               <div className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-ember" />
+                <Sparkles className="h-5 w-5 text-primary" />
                 <h2 className="font-display text-xl font-semibold text-foreground">
                   Plan your {destinationCity} trip
                 </h2>

@@ -68,15 +68,15 @@ export function FAQ() {
             <Reveal key={item.q} delay={Math.min(i, 4) * 0.05}>
               <div className="border-b border-border">
                 <button
-                  className="w-full flex items-center justify-between gap-4 px-1 py-5 text-left cursor-pointer transition-colors hover:text-ember"
+                  className="w-full flex items-center justify-between gap-4 px-1 py-5 text-left cursor-pointer transition-colors hover:text-primary"
                   onClick={() => setOpen(isOpen ? null : i)}
                   aria-expanded={isOpen}
                 >
-                  <span className={cn("font-semibold transition-colors", isOpen ? "text-ember" : "text-foreground")}>{item.q}</span>
+                  <span className={cn("font-semibold transition-colors", isOpen ? "text-primary" : "text-foreground")}>{item.q}</span>
                   <ChevronDown
                     className={cn(
                       "h-4 w-4 shrink-0 transition-transform duration-300 [transition-timing-function:cubic-bezier(0.32,0.72,0,1)]",
-                      isOpen ? "rotate-180 text-ember" : "text-foreground-muted"
+                      isOpen ? "rotate-180 text-primary" : "text-foreground-muted"
                     )}
                   />
                 </button>
@@ -111,7 +111,7 @@ export function FAQ() {
       </div>
 
       <p className="mt-8 text-center text-sm text-foreground-muted">
-        <Link href="/faq" className="text-ember hover:underline">
+        <Link href="/faq" className="text-primary hover:underline">
           See the full FAQ
         </Link>
       </p>

@@ -17,7 +17,7 @@ export function SocialProof() {
           <Reveal key={s.label} delay={i * 0.08} className="flex items-center gap-4 p-6 sm:p-7">
             <span
               aria-hidden
-              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--ember-soft)] text-ember"
+              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--primary-soft)] text-primary"
             >
               <s.icon className="h-5 w-5" strokeWidth={1.75} />
             </span>

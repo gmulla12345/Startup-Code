@@ -24,8 +24,8 @@ export default function NotFound() {
       <MarketingNav />
       <main className="flex-1 flex items-center justify-center">
         <div className="mx-auto max-w-md px-4 py-24 text-center">
-          <div className="h-12 w-12 rounded-full bg-[var(--ember-soft)] flex items-center justify-center mx-auto mb-6">
-            <Compass className="h-6 w-6 text-ember" />
+          <div className="h-12 w-12 rounded-full bg-[var(--primary-soft)] flex items-center justify-center mx-auto mb-6">
+            <Compass className="h-6 w-6 text-primary" />
           </div>
           <h1 className="font-display text-3xl font-semibold text-foreground mb-3">Page not found</h1>
           <p className="text-foreground-muted mb-8">

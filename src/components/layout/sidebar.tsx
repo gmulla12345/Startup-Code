@@ -28,7 +28,7 @@ export function Sidebar({ premium }: { premium: boolean }) {
               href={item.href}
               className={cn(
                 "flex items-center gap-3 rounded-full px-4 py-3 text-sm font-medium transition-colors",
-                active ? "bg-[var(--ember-soft)] text-[var(--ember-strong)]" : "text-foreground-muted hover:bg-surface-sunken hover:text-foreground"
+                active ? "bg-[var(--primary-soft)] text-[var(--primary-strong)]" : "text-foreground-muted hover:bg-surface-sunken hover:text-foreground"
               )}
             >
               <Icon className="h-5 w-5" strokeWidth={active ? 2.5 : 2} />
@@ -39,13 +39,17 @@ export function Sidebar({ premium }: { premium: boolean }) {
       </nav>
 
       {!premium && (
-        <div className="mt-6 rounded-[var(--radius-lg)] bg-[linear-gradient(160deg,var(--forest-soft),var(--surface))] border border-border p-4">
-          <Sparkles className="h-5 w-5 text-forest mb-2" />
+        <div className="mt-6 rounded-[var(--radius-lg)] border border-border bg-surface-sunken p-4">
+          <span className="ring-brand mb-3 inline-block">
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-surface">
+              <Sparkles className="h-4 w-4 text-primary" />
+            </span>
+          </span>
           <p className="text-sm font-semibold text-foreground">Go Premium</p>
           <p className="text-xs text-foreground-muted mt-1 mb-3">
             Unlimited Surprise Me, more specific categories in Discover, and AI trip planning.
           </p>
-          <Button asChild size="sm" variant="forest" className="w-full">
+          <Button asChild size="sm" className="w-full">
             <Link href="/profile/upgrade">Upgrade</Link>
           </Button>
         </div>

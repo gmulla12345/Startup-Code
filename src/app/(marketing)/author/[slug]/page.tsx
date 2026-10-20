@@ -50,7 +50,7 @@ export default async function AuthorPage({ params }: AuthorPageProps) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(profileJsonLd) }} />
       <BreadcrumbJsonLd items={[{ name: author.name, path: `/author/${author.slug}` }]} />
 
-      <p className="text-sm font-medium text-ember mb-3">{author.jobTitle}</p>
+      <p className="text-sm font-medium text-primary mb-3">{author.jobTitle}</p>
       <h1 className="font-display text-4xl sm:text-5xl font-semibold text-foreground tracking-tight mb-6">
         {author.name}
       </h1>
@@ -78,7 +78,7 @@ export default async function AuthorPage({ params }: AuthorPageProps) {
           <ul className="space-y-2">
             {author.sameAs.map((url) => (
               <li key={url}>
-                <a href={url} rel="me noopener noreferrer" target="_blank" className="text-ember hover:underline break-all">
+                <a href={url} rel="me noopener noreferrer" target="_blank" className="text-primary hover:underline break-all">
                   {url}
                 </a>
               </li>
@@ -93,7 +93,7 @@ export default async function AuthorPage({ params }: AuthorPageProps) {
           <ul className="space-y-3">
             {posts.map((post) => (
               <li key={post.slug}>
-                <Link href={`/blog/${post.slug}`} className="text-ember hover:underline font-medium">
+                <Link href={`/blog/${post.slug}`} className="text-primary hover:underline font-medium">
                   {post.title}
                 </Link>
                 <span className="text-sm text-foreground-subtle">

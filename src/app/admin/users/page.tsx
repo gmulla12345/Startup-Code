@@ -51,7 +51,7 @@ export default async function AdminUsersPage() {
                     </Badge>
                   </td>
                   <td className="p-3">
-                    <Badge variant={premium ? "ember" : "default"}>{premium ? "Premium" : "Free"}</Badge>
+                    <Badge variant={premium ? "primary" : "default"}>{premium ? "Premium" : "Free"}</Badge>
                   </td>
                   <td className="p-3 text-foreground-muted">{new Date(p.created_at).toLocaleDateString()}</td>
                 </tr>

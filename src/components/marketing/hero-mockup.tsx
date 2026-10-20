@@ -57,7 +57,7 @@ export function HeroMockup() {
 
       <motion.div {...rise(0.85)} className="absolute -top-5 right-2 z-10 sm:-right-5">
         <div className="animate-mk-float flex items-center gap-2 rounded-full border border-border bg-surface px-3.5 py-2 text-xs font-medium text-foreground shadow-[var(--shadow-raised)]">
-          <Heart className="h-3.5 w-3.5 fill-[#ff4e2b] text-[#ff4e2b]" aria-hidden />
+          <Heart className="h-3.5 w-3.5 fill-[var(--brand-pink)] text-[var(--brand-pink)]" aria-hidden />
           Saved to your list
         </div>
       </motion.div>
@@ -67,7 +67,7 @@ export function HeroMockup() {
           className="animate-mk-float w-[256px] rounded-2xl border border-border bg-surface p-3.5 shadow-[var(--shadow-raised)]"
           style={{ animationDelay: "-3s" }}
         >
-          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-ember">
+          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-primary">
             <Shuffle className="h-3.5 w-3.5" aria-hidden />
             Surprise Me
           </div>

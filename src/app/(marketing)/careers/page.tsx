@@ -42,7 +42,7 @@ export default function CareersPage() {
     <div className="mx-auto max-w-3xl px-4 sm:px-6 py-16">
       <WebPageJsonLd path={SEO.path} name={SEO.title} description={SEO.description} dateModified={SEO.lastModified} />
       <BreadcrumbJsonLd items={[{ name: "Careers", path: "/careers" }]} />
-      <p className="text-sm font-medium text-ember mb-3">Careers at {brand.name}</p>
+      <p className="text-sm font-medium text-primary mb-3">Careers at {brand.name}</p>
       <h1 className="font-display text-4xl sm:text-5xl font-semibold text-foreground mb-4">Join us early.</h1>
       <p className="text-lg text-foreground-muted mb-4 max-w-xl">
         We&apos;re a small team building the personalized discovery engine for real-world experiences. We&apos;re
@@ -53,15 +53,15 @@ export default function CareersPage() {
           had no route to what the company does or how to ask a question. */}
       <p className="text-sm text-foreground-muted mb-12 max-w-xl">
         Want context first? Read{" "}
-        <Link href="/about" className="text-ember hover:underline">
+        <Link href="/about" className="text-primary hover:underline">
           why {brand.name} exists
         </Link>
         , see{" "}
-        <Link href="/pricing" className="text-ember hover:underline">
+        <Link href="/pricing" className="text-primary hover:underline">
           how {brand.name} is priced
         </Link>
         , or{" "}
-        <Link href="/contact" className="text-ember hover:underline">
+        <Link href="/contact" className="text-primary hover:underline">
           contact the team
         </Link>{" "}
         with questions before you apply.

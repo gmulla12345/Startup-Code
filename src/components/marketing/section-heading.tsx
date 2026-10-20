@@ -26,7 +26,7 @@ export function SectionHeading({
   return (
     <div className={cn("max-w-3xl", align === "center" && "mx-auto text-center", className)}>
       {eyebrow && (
-        <p className={cn("text-sm font-semibold mb-3", inverted ? "text-[#ff9b7d]" : "text-ember")}>{eyebrow}</p>
+        <p className={cn("text-sm font-semibold mb-3", inverted ? "text-[#5fd9c0]" : "text-primary")}>{eyebrow}</p>
       )}
       <h2
         className={cn(

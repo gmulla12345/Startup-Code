@@ -31,7 +31,7 @@ export function ChipSelect<T extends string>({
               "text-sm font-medium transition-colors border",
               stacked ? "rounded-[var(--radius-md)] px-4 py-3 text-left" : "rounded-full px-4 py-2",
               active
-                ? "bg-forest text-white border-forest"
+                ? "bg-foreground text-background border-foreground"
                 : "border-border-strong text-foreground hover:bg-surface-sunken"
             )}
           >

@@ -110,18 +110,20 @@ export function ActionBar({
   return (
     <div className="flex items-center gap-3">
       {externalBookingUrl ? (
-        <Button asChild size="lg" className="flex-1" onClick={handleBook}>
+        // min-w-0 and a truncating label: on a narrow phone the label gives way to the three
+        // icon buttons beside it instead of pushing the row wider than the screen.
+        <Button asChild size="lg" className="min-w-0 flex-1" onClick={handleBook}>
           <a href={externalBookingUrl} target="_blank" rel="noopener noreferrer">
-            {bookLabel}
+            <span className="truncate">{bookLabel}</span>
           </a>
         </Button>
       ) : (
-        <Button size="lg" className="flex-1" disabled>
-          No live booking available
+        <Button size="lg" className="min-w-0 flex-1" disabled>
+          <span className="truncate">No live booking available</span>
         </Button>
       )}
       <Button variant="outline" size="icon" onClick={toggleSave} disabled={saving} aria-label="Save">
-        <Heart className={saved ? "fill-ember text-ember" : ""} />
+        <Heart className={saved ? "fill-[var(--brand-pink)] text-[var(--brand-pink)]" : ""} />
       </Button>
       <Button
         variant="outline"

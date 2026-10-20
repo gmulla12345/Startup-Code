@@ -56,7 +56,7 @@ export default function PricingPage() {
 
       <section>
         <div className="mx-auto max-w-3xl px-4 sm:px-6 pt-20 pb-14 text-center">
-          <p className="text-sm font-medium text-ember mb-4">Pricing</p>
+          <p className="text-sm font-medium text-primary mb-4">Pricing</p>
           <h1 className="font-display text-4xl sm:text-5xl font-semibold text-foreground leading-tight">
             Simple pricing that grows with you
           </h1>
@@ -109,7 +109,7 @@ export default function PricingPage() {
           ))}
         </div>
         <p className="mt-8 text-center text-sm text-foreground-muted">
-          <Link href="/faq" className="text-ember hover:underline">
+          <Link href="/faq" className="text-primary hover:underline">
             See the full FAQ
           </Link>
         </p>

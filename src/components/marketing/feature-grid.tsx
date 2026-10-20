@@ -67,13 +67,13 @@ function Card({
     >
       <span
         aria-hidden
-        className="mb-5 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--ember-soft)] text-ember"
+        className="mb-5 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--primary-soft)] text-primary"
       >
         <Icon className="h-5 w-5" strokeWidth={1.75} />
       </span>
       <h3 className="font-display text-xl font-semibold tracking-tight text-foreground">{title}</h3>
       <p className="mt-2 max-w-md leading-relaxed text-foreground-muted">{description}</p>
-      {subtext && <p className="mt-3 text-sm font-medium text-ember">{subtext}</p>}
+      {subtext && <p className="mt-3 text-sm font-medium text-primary">{subtext}</p>}
       <div className="mt-auto pt-7">{visual}</div>
     </div>
   );
@@ -88,11 +88,11 @@ const panel = "rounded-2xl border border-border bg-surface-sunken p-4";
 function ReasoningVisual() {
   const [first, ...rest] = MOCK_PICKS;
   return (
-    <div aria-hidden className={cn(panel, "bg-gradient-to-br from-[#fff4ef] via-white to-[#f4f1ff] p-5")}>
+    <div aria-hidden className={cn(panel, "bg-gradient-to-br from-[#e8f7f4] via-white to-[#f0f5ff] p-5")}>
       <p className="mb-3 text-[11px] font-semibold text-foreground-muted">For you tonight</p>
       <PickRow pick={first} />
-      <div className="my-3 rounded-xl border border-dashed border-[#f1b9a8] bg-[var(--ember-soft)]/60 p-3.5">
-        <p className="flex items-center gap-1.5 text-[11px] font-semibold text-ember">
+      <div className="my-3 rounded-xl border border-dashed border-[#a6dcd2] bg-[var(--primary-soft)]/60 p-3.5">
+        <p className="flex items-center gap-1.5 text-[11px] font-semibold text-primary">
           <Sparkles className="h-3.5 w-3.5" /> Why this pick
         </p>
         <p className="mt-1 text-sm text-foreground">
@@ -192,8 +192,8 @@ function ItineraryVisual() {
       <ol className="relative space-y-3 border-l border-border-strong pl-4">
         {stops.map((s) => (
           <li key={s.time} className="relative">
-            <span className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full border-2 border-ember bg-surface" />
-            <span className="text-[11px] font-semibold text-ember">{s.time}</span>
+            <span className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full border-2 border-primary bg-surface" />
+            <span className="text-[11px] font-semibold text-primary">{s.time}</span>
             <p className="text-xs text-foreground">{s.label}</p>
           </li>
         ))}

@@ -108,7 +108,7 @@ function ResetPasswordForm() {
       footer={
         <p className="text-sm text-foreground-muted">
           Remembered it?{" "}
-          <Link href="/login" className="text-ember font-medium hover:underline">
+          <Link href="/login" className="text-primary font-medium hover:underline">
             Log in
           </Link>
         </p>

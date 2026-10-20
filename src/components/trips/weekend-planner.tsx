@@ -80,7 +80,7 @@ export function WeekendPlanner({ isPremium }: { isPremium: boolean }) {
   return (
     <div className="rounded-[var(--radius-lg)] border border-border bg-surface p-6">
       <div className="flex items-center gap-2 mb-4">
-        <Sparkles className="h-5 w-5 text-ember" />
+        <Sparkles className="h-5 w-5 text-primary" />
         <h2 className="font-display text-xl font-semibold text-foreground">Plan My Weekend</h2>
         {!isPremium && <span className="text-xs bg-[var(--gold-soft)] text-[color:var(--gold)] px-2 py-0.5 rounded-full font-medium">Premium</span>}
       </div>
@@ -95,7 +95,7 @@ export function WeekendPlanner({ isPremium }: { isPremium: boolean }) {
                   key={day}
                   onClick={() => toggleDay(day)}
                   className={`px-4 py-2 rounded-full border text-sm font-medium ${
-                    request.days.includes(day) ? "bg-forest text-white border-forest" : "border-border-strong text-foreground"
+                    request.days.includes(day) ? "bg-foreground text-background border-foreground" : "border-border-strong text-foreground"
                   }`}
                 >
                   {day === "friday_evening" ? "Friday evening" : day[0].toUpperCase() + day.slice(1)}

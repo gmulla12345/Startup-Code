@@ -28,7 +28,7 @@ export default function PremiumWelcomePage() {
         <CheckCircle2 className="h-7 w-7 text-forest" />
       </div>
 
-      <p className="text-sm font-medium text-ember mb-3">You&apos;re in</p>
+      <p className="text-sm font-medium text-primary mb-3">You&apos;re in</p>
       <h1 className="font-display text-4xl sm:text-5xl font-semibold text-foreground mb-4">
         Welcome to {brand.name} Premium
       </h1>
@@ -59,7 +59,7 @@ export default function PremiumWelcomePage() {
       </p>
       <p className="mt-3 text-sm text-foreground-muted">
         Didn&apos;t get the email, or something look wrong?{" "}
-        <a href={`mailto:${brand.supportEmail}`} className="text-ember hover:underline">
+        <a href={`mailto:${brand.supportEmail}`} className="text-primary hover:underline">
           Email us
         </a>
         .

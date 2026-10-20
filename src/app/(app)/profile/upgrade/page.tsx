@@ -40,7 +40,7 @@ export default async function UpgradePage() {
         <ArrowLeft className="h-4 w-4" /> Back to profile
       </Link>
 
-      <div className="rounded-[var(--radius-xl)] border-2 border-ember bg-surface p-8">
+      <div className="rounded-[var(--radius-xl)] border-2 border-primary bg-surface p-8">
         <h1 className="font-display text-3xl font-semibold text-foreground mb-6">{brand.name} Premium</h1>
         <PremiumPlanCard savedCode={savedCode} requireCard={studentPromoRequiresCard()} />
       </div>

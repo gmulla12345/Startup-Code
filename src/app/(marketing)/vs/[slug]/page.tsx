@@ -55,7 +55,7 @@ export default async function VsPage({ params }: PageProps<"/vs/[slug]">) {
 
       <section>
         <div className="mx-auto max-w-3xl px-4 sm:px-6 pt-20 pb-14 text-center">
-          <p className="text-sm font-medium text-ember mb-4">Compare</p>
+          <p className="text-sm font-medium text-primary mb-4">Compare</p>
           <h1 className="font-display text-4xl sm:text-5xl font-semibold text-foreground leading-tight">
             {brand.name} vs {page.competitor}
           </h1>

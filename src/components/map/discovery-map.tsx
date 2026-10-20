@@ -64,7 +64,7 @@ export function DiscoveryMap({
             <button aria-label={exp.title} className="cursor-pointer">
               <MapPin
                 className="h-8 w-8 drop-shadow-md"
-                fill={exp.isHiddenGem ? "var(--gold)" : "var(--ember)"}
+                fill={exp.isHiddenGem ? "var(--gold)" : "var(--primary)"}
                 color="white"
                 strokeWidth={1.5}
               />

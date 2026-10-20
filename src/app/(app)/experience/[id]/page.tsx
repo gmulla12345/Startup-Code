@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { Clock, MapPin, Sparkles, Star, Users } from "lucide-react";
+import { Clock, MapPin, Star, Users } from "lucide-react";
 import { createClient, getCurrentUser } from "@/lib/supabase/server";
 import { safeJsonLd } from "@/lib/seo";
 import { getExperienceProvider } from "@/services/providers";
@@ -134,7 +134,7 @@ export default async function ExperienceDetailPage({ params }: PageProps<"/exper
       <div className="mt-6 flex flex-wrap items-center gap-2">
         <Badge variant="default">{formatCategoryLabel(experience.category)}</Badge>
         {experience.isHiddenGem && <Badge variant="gold">Hidden gem</Badge>}
-        {experience.isPremium && <Badge variant="ember">Premium</Badge>}
+        {experience.isPremium && <Badge variant="primary">Premium</Badge>}
         {experience.sourceProvider === "mock" && <Badge variant="outline">Editorial pick</Badge>}
       </div>
       {experience.sourceProvider === "mock" && (
@@ -184,13 +184,17 @@ export default async function ExperienceDetailPage({ params }: PageProps<"/exper
       </div>
 
       {match && (
-        <div className="mt-6 rounded-[var(--radius-lg)] border border-border bg-[var(--ember-soft)]/40 p-4 flex gap-3">
-          <div className="h-9 w-9 rounded-full bg-[var(--ember-soft)] flex items-center justify-center shrink-0">
-            <Sparkles className="h-4 w-4 text-ember" />
-          </div>
+        <div className="mt-6 rounded-[var(--radius-lg)] border border-border bg-surface-sunken p-4 flex gap-3.5">
+          <span
+            className="match-ring mt-0.5 h-9 w-9 shrink-0"
+            style={{ "--p": Math.round(match.score) } as React.CSSProperties}
+            aria-hidden
+          >
+            <span />
+          </span>
           <div>
             <p className="text-sm font-semibold text-foreground">{match.score}% match for you</p>
-            <p className="text-sm text-foreground-muted mt-0.5">{match.reasons.join(". ")}.</p>
+            <p className="font-reason mt-0.5 text-[15px] leading-snug text-foreground-muted">{match.reasons.join(". ")}.</p>
           </div>
         </div>
       )}

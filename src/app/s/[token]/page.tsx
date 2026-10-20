@@ -82,7 +82,7 @@ function Attribution({ credit }: { credit?: { name: string; url: string | null }
 function Note({ view }: { view: ShareView }) {
   if (!view.note) return null;
   return (
-    <figure className="mt-6 border-l-2 border-ember pl-4">
+    <figure className="mt-6 border-l-2 border-primary pl-4">
       <blockquote className="text-lg leading-relaxed text-foreground">{`“${view.note}”`}</blockquote>
       {view.sharerName && <figcaption className="mt-2 text-sm text-foreground-muted">{view.sharerName}</figcaption>}
     </figure>

@@ -67,7 +67,7 @@ export default async function AdminOverviewPage() {
 function StatCard({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: number }) {
   return (
     <div className="rounded-[var(--radius-lg)] border border-border bg-surface p-5">
-      <Icon className="h-5 w-5 text-ember mb-3" />
+      <Icon className="h-5 w-5 text-primary mb-3" />
       <div className="font-display text-2xl font-semibold text-foreground">{value}</div>
       <div className="text-xs text-foreground-muted">{label}</div>
     </div>

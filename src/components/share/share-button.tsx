@@ -207,7 +207,7 @@ export function ShareButton({
           <label className="mt-3 flex cursor-pointer items-start gap-2 text-sm text-foreground">
             <input
               type="checkbox"
-              className="mt-0.5 h-4 w-4 accent-[var(--ember)]"
+              className="mt-0.5 h-4 w-4 accent-[var(--primary)]"
               checked={showName}
               onChange={(e) => setShowName(e.target.checked)}
             />

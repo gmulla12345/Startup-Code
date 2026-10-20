@@ -40,7 +40,7 @@ export default function AboutPage() {
       <BreadcrumbJsonLd items={[{ name: "About", path: "/about" }]} />
       <section>
         <div className="mx-auto max-w-4xl px-4 sm:px-6 pt-20 pb-16 text-center">
-          <p className="text-sm font-medium text-ember mb-4">Our story</p>
+          <p className="text-sm font-medium text-primary mb-4">Our story</p>
           <h1 className="font-display text-4xl sm:text-6xl font-semibold text-foreground leading-tight">
             Life is made of moments.
             <br />
@@ -64,7 +64,7 @@ export default function AboutPage() {
             a suggestion, not a chore. So we built a platform that actually gets to know you — your interests,
             your budget, your personality, your patterns — and does the deciding with you, not for you to do
             alone. Read more about{" "}
-            <Link href="/blog/how-ai-is-changing-the-way-we-discover-things-to-do" className="text-ember hover:underline">
+            <Link href="/blog/how-ai-is-changing-the-way-we-discover-things-to-do" className="text-primary hover:underline">
               how that actually works
             </Link>
             .
@@ -73,8 +73,8 @@ export default function AboutPage() {
 
         <div className="grid sm:grid-cols-3 gap-8">
           <div>
-            <div className="h-11 w-11 rounded-full bg-[var(--ember-soft)] flex items-center justify-center mb-4">
-              <Compass className="h-5 w-5 text-ember" />
+            <div className="h-11 w-11 rounded-full bg-[var(--primary-soft)] flex items-center justify-center mb-4">
+              <Compass className="h-5 w-5 text-primary" />
             </div>
             <h3 className="font-display text-lg font-semibold text-foreground mb-2">Real places, real reasoning</h3>
             <p className="text-sm text-foreground-muted leading-relaxed">

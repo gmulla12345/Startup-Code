@@ -98,7 +98,7 @@ export function MatchPill({ value, className }: { value: number; className?: str
   return (
     <span
       className={cn(
-        "shrink-0 rounded-full bg-[var(--ember-soft)] px-2 py-0.5 text-[11px] font-semibold text-ember",
+        "shrink-0 rounded-full bg-[var(--primary-soft)] px-2 py-0.5 text-[11px] font-semibold text-primary",
         className
       )}
     >

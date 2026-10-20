@@ -26,7 +26,7 @@ export default function ContactPage() {
         dateModified={SEO.lastModified}
       />
       <BreadcrumbJsonLd items={[{ name: "Contact", path: "/contact" }]} />
-      <p className="text-sm font-medium text-ember mb-3">Get in touch</p>
+      <p className="text-sm font-medium text-primary mb-3">Get in touch</p>
       <h1 className="font-display text-4xl sm:text-5xl font-semibold text-foreground mb-4">Contact us</h1>
       {/* Opens with a plain "X is Y" definition (heycatch audit g_definition):
           that's the form a search engine or AI assistant lifts verbatim, and
@@ -35,7 +35,7 @@ export default function ContactPage() {
         {brand.name} is a personalized discovery platform that recommends things to do, with a reason for every
         pick. This page is how you reach the team: send questions, feedback, bug reports, or partnership inquiries
         with the form below, or email us directly at{" "}
-        <a href={`mailto:${brand.supportEmail}`} className="text-ember hover:underline">
+        <a href={`mailto:${brand.supportEmail}`} className="text-primary hover:underline">
           {brand.supportEmail}
         </a>
         .

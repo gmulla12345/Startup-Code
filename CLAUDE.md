@@ -1922,7 +1922,7 @@ The whole pre-login marketing site is now a light theme; the logged-in app and a
   theme (tight tracking); the serif face survives only as the wordmark (`.font-logo`, used by
   [logo.tsx](src/components/shared/logo.tsx)) and in the logged-in app. Every other marketing page (pricing, blog,
   faq, about, vs, legal) picked the theme up automatically through the semantic tokens.
-- **Contrast is deliberate.** Marketing `--ember` is #d93a17 (not the app's #ff4e2b, only ~3.3:1 on white) and `--gold`
+- **Contrast is deliberate.** (Superseded 2026-10-20: the accent is now a teal, `--primary`; see "The inside now looks like the landing page".) Marketing `--ember` was #d93a17 (not the app's #ff4e2b, only ~3.3:1 on white) and `--gold`
   is darkened, so small links, eyebrows, and white-on-orange buttons clear 4.5:1. The vivid brand orange/pink/gold/teal
   lives only in decoration (`.mk-gradient`, `.mk-gradient-text`), never behind or as small text.
 - **Latent bug found and fixed:** the global `* { border-color }` rule used `var(--color-border)`, which is declared on
@@ -2295,6 +2295,45 @@ If that ever matters, expire the tag `share:<token>` for that person's tokens wh
 
 **Mobile equivalent:** call the same `/api/shares` routes with the bearer token and hand the returned `url` to the system share sheet. For links to open in the app instead of the browser, the app needs Universal Links / App Links for `discoverzolo.com/s/*` (the
 `apple-app-site-association` file, as already noted in `zolo-app/CLAUDE.md`); until then a shared link opens the web page, whose button leads to signup. Nothing about the page needs to be duplicated in the app. Noted in `zolo-app/CLAUDE.md`.
+
+## The inside now looks like the landing page, with a few signatures of its own (2026-10-20)
+
+The user asked for the logged-in app (and auth/onboarding) to match the landing page's colors and type while still being its own thing.
+**Built and tested locally, not committed or deployed.** To review it, see "How to look at it" below.
+
+**One look, defined once.** The landing page's palette is now the `:root` palette in [globals.css](src/app/globals.css): white canvas, navy ink (#0a2540),
+cool grays, Stripe-style layered shadows, Inter headlines with tight tracking, the vivid brand colors kept for decoration only (`--brand-orange/pink/gold/teal/sky`,
+`.mk-gradient`, `.mk-gradient-text`, `.mk-grid`). The separate `[data-theme="marketing"]` block and the attribute are gone: there is nothing left to drift.
+- **Light only.** The old warm cream-and-espresso palette and its dark mode (which followed the visitor's OS) were removed, like the landing page's (the landing page was always light).
+  **Flagged to the owner as a tradeoff.** A navy dark theme would be a small follow-up if wanted. A test fails if a `dark:` utility or `prefers-color-scheme` comes back.
+- **Type.** `.font-display` is Inter everywhere. Fraunces (serif) survives in exactly two places: the wordmark (`.font-logo`) and `.font-reason`, the italic voice of a recommendation's reasoning.
+- **The accent is a teal, not a red (changed the same day, at the owner's request).** The first pass kept the landing page's text-and-button orange-red (`--ember`, #d03616). The owner did not like the red and
+  asked for a color that fits the Zolo palette. The token is now **`--primary`** (`text-primary`, `bg-primary`, `border-primary`, `--primary-strong` for hover, `--primary-soft` for tints): **#0f766e**, strong #0b5c56, soft #e6f6f3,
+  taken from the teal end of the brand gradient, darkened so white text and small links clear 4.5:1 (5.47:1 on white, 5.18:1 on the gray panel). The token was renamed from `ember` (63 files, mechanically) so a teal is not called "ember".
+  The landing page uses it too: buttons, links, eyebrows, match chips. What stayed warm on purpose: the gradients (`.mk-gradient`, the "doing" and "today" words, the match ring), which are the brand's colors and decoration only.
+  What changed with it: the saved heart is the brand pink (`--brand-pink`, not the accent); the dark "How it works" band's active step and progress bar are the brand teal (#2fc4a3, navy numeral); the global error page's button is #0f766e;
+  the auth screen's corner band shows the whole spectrum (a cropped gradient showed only its red-orange end). `--danger` stays red, for errors only. Not changed: the share preview image (opengraph-image) keeps its cream and orange, drawn outside the page's CSS.
+  **To try another accent, change the three `--primary*` values in globals.css** (and keep the contrast test passing; it also asserts the hue is in the teal range, so a deliberate change of family needs that test updated).
+- **Contrast is tested, from the stylesheet itself** ([design-system.test.ts](src/__tests__/design-system.test.ts)): body, muted, subtle, links, white-on-accent, gold and green labels, and the
+  Surprise Me card's text all must clear WCAG AA. That test **caught a real shortfall** in the first pass: the text orange #d93a17 was 4.35:1 on the sunken gray panel (also on the landing page's gray sections).
+  Another test forbids the old palette's hex (including the removed red) in any component outside the marketing/decoration allowlist.
+
+**What makes the inside its own thing** (all decoration or voice, never text on the vivid gradient):
+1. **Match ring** ([match-badge.tsx](src/components/experience/match-badge.tsx), `.match-ring`): a match score drawn as a ring in the brand gradient, on a white chip over photos; also beside the reasoning on a place page.
+2. **Serif italic reasoning** (`.font-reason`): "why this matches you", on cards and the place page. The product's one serif voice, like a friend's recommendation.
+3. **Avatar ring** (`.ring-brand`): a thin brand-gradient ring around the avatar (and the not-found icon, the Premium card icon).
+4. **Gradient word + glow header**: Home's "What should you do *today*?" uses the landing's "Start *doing*" device; `.glow-page` is the hero's faint grid and gradient glow behind the top of Home and the auth screens.
+5. **Surprise Me** is one flat teal card (`bg-primary`, white text, a darker teal on hover): no gradient, no fade, at the owner's request (a test keeps it that way). The onboarding progress bar fills with the brand gradient.
+
+**Other changes in the same pass:** selected chips and the user's chat bubble are navy (they were the old green, inconsistent with the navy "All categories" chip); the sidebar Premium card is a quiet panel with a primary button;
+[AuthShell](src/components/marketing/auth-shell.tsx) gets the hero's grid and band on desktop; a signed-in [not-found](src/app/(app)/not-found.tsx) that is only a message (the global one brought the marketing header and footer inside the app shell, two sets of navigation);
+the place page's booking button label truncates so the action row cannot overflow a 375px screen; stale dark-mode comments removed. `forest` green remains only where it means success or Premium (Completed, billing "paid", the avatar-upload badge, the `forest` Button/Badge variants).
+
+**Not touched, for the owner to decide:** Discover's subtitle still says "experiences, places, and events" (no events feature ships; the earlier legal review removed such claims elsewhere); the mobile app's own theme still uses the old warm palette (see `zolo-app/CLAUDE.md`).
+
+**How to look at it (no production data, no stray analytics events).** Create a git-ignored `.env.development.local` containing `NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:4010/your-project` and an empty `MAPS_API_KEY=`: the "your-project" in the URL makes the app use its built-in
+34-place demo catalog (Baltimore-heavy), and the empty key keeps Google out. Run a tiny fake of the Supabase REST + auth API on port 4010 that serves one signed-in demo user (finished onboarding, Baltimore) and a plan, and set the cookie
+`sb-127-auth-token` (`base64-` + base64url of a session JSON). Then `npm run dev`. **Delete `.env.development.local` afterwards**, or the dev server keeps pointing at the fake.
 
 ## Exact next steps (priority order)
 

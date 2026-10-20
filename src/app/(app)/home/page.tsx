@@ -30,11 +30,12 @@ export default async function HomePage() {
   if (!profile) redirect("/onboarding");
 
   return (
+    <div className="glow-page">
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-10">
       <div>
         <p className="text-foreground-muted">{greeting()}, {profile.firstName || "there"}.</p>
-        <h1 className="font-display text-3xl sm:text-4xl font-semibold text-foreground mt-1">
-          What should you do today?
+        <h1 className="font-display text-3xl sm:text-5xl font-semibold tracking-[-0.03em] text-foreground mt-1">
+          What should you do <span className="mk-gradient-text">today</span>?
         </h1>
       </div>
 
@@ -50,6 +51,7 @@ export default async function HomePage() {
       <Suspense fallback={<RailsSkeleton />}>
         <RecommendationRails profile={profile} />
       </Suspense>
+    </div>
     </div>
   );
 }

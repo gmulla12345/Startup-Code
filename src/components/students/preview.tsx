@@ -26,14 +26,14 @@ export function StudentsPreview() {
 
         <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
           <article className="rounded-[var(--radius-xl)] border border-border bg-surface p-6 shadow-[var(--shadow-card)] sm:p-8 lg:self-start">
-            <p className="text-sm font-medium text-ember">Surprise Me</p>
+            <p className="text-sm font-medium text-primary">Surprise Me</p>
             <h3 className="mt-4 font-logo text-2xl font-semibold leading-snug text-foreground">{surpriseMe.title}</h3>
             <p className="mt-1 text-sm text-foreground-subtle">{surpriseMe.category}</p>
             <p className="mt-5 leading-relaxed text-foreground-muted">{surpriseMe.reasoning}</p>
           </article>
 
           <article className="rounded-[var(--radius-xl)] border border-border bg-surface p-6 shadow-[var(--shadow-card)] sm:p-8">
-            <p className="text-sm font-medium text-ember">Weekend Planner</p>
+            <p className="text-sm font-medium text-primary">Weekend Planner</p>
             <p className="mt-4 leading-relaxed text-foreground">{weekend.summary}</p>
 
             <div className="mt-6 grid gap-8 sm:grid-cols-2">

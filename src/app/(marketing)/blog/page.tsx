@@ -41,7 +41,7 @@ export default function BlogIndexPage() {
         }}
       />
       <BreadcrumbJsonLd items={[{ name: "Blog", path: "/blog" }]} />
-      <p className="text-sm font-medium text-ember mb-3">From the team</p>
+      <p className="text-sm font-medium text-primary mb-3">From the team</p>
       <h1 className="font-display text-4xl sm:text-5xl font-semibold text-foreground mb-4">{brand.name} Blog</h1>
       <p className="text-lg text-foreground-muted mb-12 max-w-xl">
         Guides, comparisons, and ideas on personalized discovery, travel, and finding things to do worth actually

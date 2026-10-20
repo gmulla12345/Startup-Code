@@ -15,7 +15,7 @@ export function ComparisonCellValue({ value }: { value: ComparisonCell }) {
   if (value === true)
     return (
       <span className="inline-flex items-center justify-center">
-        <Check className="h-4 w-4 text-ember" aria-hidden="true" />
+        <Check className="h-4 w-4 text-primary" aria-hidden="true" />
         <span className="sr-only">Included</span>
       </span>
     );

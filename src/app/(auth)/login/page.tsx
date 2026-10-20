@@ -58,7 +58,7 @@ function LoginForm() {
       footer={
         <p className="text-sm text-foreground-muted">
           New to {brand.name}?{" "}
-          <Link href="/signup" className="text-ember font-medium hover:underline">
+          <Link href="/signup" className="text-primary font-medium hover:underline">
             Create an account
           </Link>
         </p>
@@ -92,7 +92,7 @@ function LoginForm() {
           required
         />
         <div className="text-right">
-          <Link href="/reset-password" className="text-xs text-foreground-muted hover:text-ember">
+          <Link href="/reset-password" className="text-xs text-foreground-muted hover:text-primary">
             Forgot password?
           </Link>
         </div>

@@ -46,7 +46,7 @@ export function StepPreferences({
           max={100}
           value={value.maxDistanceMiles}
           onChange={(e) => onChange({ ...value, maxDistanceMiles: Number(e.target.value) })}
-          className="w-full accent-ember"
+          className="w-full accent-primary"
         />
       </div>
 

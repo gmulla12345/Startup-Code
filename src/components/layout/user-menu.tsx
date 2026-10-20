@@ -89,7 +89,7 @@ export function UserMenu({ profile, email, premium }: { profile: Profile; email:
           </MenuLink>
 
           {!premium && (
-            <MenuLink href="/profile/upgrade" icon={Sparkles} className="text-ember" onClick={() => setOpen(false)}>
+            <MenuLink href="/profile/upgrade" icon={Sparkles} className="text-primary" onClick={() => setOpen(false)}>
               Upgrade to Premium
             </MenuLink>
           )}

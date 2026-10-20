@@ -21,7 +21,7 @@ export function PillGroup<T extends string>({
           className={cn(
             "px-4 py-2 rounded-full border text-sm font-medium transition-colors",
             value === opt.value
-              ? "bg-forest text-white border-forest"
+              ? "bg-foreground text-background border-foreground"
               : "border-border-strong text-foreground hover:bg-surface-sunken"
           )}
         >

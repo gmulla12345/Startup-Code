@@ -68,7 +68,7 @@ export function SubscriptionCard({ subscription }: { subscription: Subscription 
   return (
     <div className="rounded-[var(--radius-lg)] border border-border bg-surface p-6">
       <div className="flex items-center gap-2 mb-1">
-        <Sparkles className={isPremium ? "h-5 w-5 text-ember" : "h-5 w-5 text-foreground-subtle"} />
+        <Sparkles className={isPremium ? "h-5 w-5 text-primary" : "h-5 w-5 text-foreground-subtle"} />
         <h3 className="font-display text-lg font-semibold text-foreground">
           {isPremium ? `${brand.name} Premium` : "Free Plan"}
         </h3>

@@ -21,8 +21,8 @@ export function BottomNav() {
               href={item.href}
               className="flex flex-col items-center justify-center gap-1"
             >
-              <Icon className={cn("h-5 w-5", active ? "text-ember" : "text-foreground-subtle")} strokeWidth={active ? 2.5 : 2} />
-              <span className={cn("text-[10px] font-medium", active ? "text-ember" : "text-foreground-subtle")}>
+              <Icon className={cn("h-5 w-5", active ? "text-primary" : "text-foreground-subtle")} strokeWidth={active ? 2.5 : 2} />
+              <span className={cn("text-[10px] font-medium", active ? "text-primary" : "text-foreground-subtle")}>
                 {item.label}
               </span>
             </Link>

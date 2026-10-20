@@ -5,7 +5,10 @@ export function OnboardingProgress({ step, total }: { step: number; total: numbe
         <div
           key={i}
           className="h-1.5 flex-1 rounded-full transition-colors"
-          style={{ background: i <= step ? "var(--ember)" : "var(--border)" }}
+          // Done steps are drawn in the brand gradient (the landing page's, as a small signature).
+          style={{
+            background: i <= step ? "linear-gradient(90deg, var(--brand-orange), var(--brand-pink))" : "var(--border)",
+          }}
         />
       ))}
     </div>

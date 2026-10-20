@@ -33,7 +33,7 @@ export function PremiumPlanCard({ savedCode, requireCard }: { savedCode?: string
           onClick={() => choose("monthly")}
           className={cn(
             "px-4 py-1.5 rounded-full text-sm font-medium transition-colors",
-            !isAnnual ? "bg-ember text-white" : "text-foreground-muted"
+            !isAnnual ? "bg-primary text-white" : "text-foreground-muted"
           )}
         >
           Monthly
@@ -42,7 +42,7 @@ export function PremiumPlanCard({ savedCode, requireCard }: { savedCode?: string
           onClick={() => choose("annual")}
           className={cn(
             "px-4 py-1.5 rounded-full text-sm font-medium transition-colors inline-flex items-center gap-1.5",
-            isAnnual ? "bg-ember text-white" : "text-foreground-muted"
+            isAnnual ? "bg-primary text-white" : "text-foreground-muted"
           )}
         >
           Annual
@@ -68,7 +68,7 @@ export function PremiumPlanCard({ savedCode, requireCard }: { savedCode?: string
       <ul className="space-y-3 mb-8">
         {pricing.premium.features.map((f) => (
           <li key={f} className="flex items-start gap-2 text-sm text-foreground-muted">
-            <Check className="h-4 w-4 text-ember mt-0.5 shrink-0" />
+            <Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />
             {f}
           </li>
         ))}

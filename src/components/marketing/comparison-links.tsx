@@ -38,7 +38,7 @@ export function ComparisonLinks() {
                 {brand.name} vs {page.competitor}
               </p>
               <p className="font-display text-xl font-semibold leading-snug tracking-tight text-foreground">{page.tagline}</p>
-              <span className="mt-6 inline-flex items-center gap-1 text-sm font-medium text-ember">
+              <span className="mt-6 inline-flex items-center gap-1 text-sm font-medium text-primary">
                 See the comparison
                 <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
               </span>

@@ -78,7 +78,7 @@ export function StepBasics({ data, onChange }: { data: BasicsData; onChange: (da
               className={cn(
                 "h-11 rounded-full border text-sm font-medium transition-colors",
                 data.ageRange === range
-                  ? "bg-ember text-white border-ember"
+                  ? "bg-primary text-white border-primary"
                   : "border-border-strong text-foreground hover:bg-surface-sunken"
               )}
             >

@@ -61,7 +61,7 @@ export function PricingCards() {
             {!isAnnual && (
               <motion.span
                 layoutId="pricing-toggle-thumb"
-                className="absolute inset-0 rounded-full bg-ember"
+                className="absolute inset-0 rounded-full bg-primary"
                 transition={reduceMotion ? { duration: 0 } : { type: "spring", bounce: 0, duration: 0.35 }}
               />
             )}
@@ -77,7 +77,7 @@ export function PricingCards() {
             {isAnnual && (
               <motion.span
                 layoutId="pricing-toggle-thumb"
-                className="absolute inset-0 rounded-full bg-ember"
+                className="absolute inset-0 rounded-full bg-primary"
                 transition={reduceMotion ? { duration: 0 } : { type: "spring", bounce: 0, duration: 0.35 }}
               />
             )}
@@ -147,7 +147,7 @@ export function PricingCards() {
             <ul className="space-y-3 mb-8">
               {pricing.premium.features.map((f) => (
                 <li key={f} className="flex items-start gap-2 text-sm text-foreground-muted">
-                  <Check className="h-4 w-4 text-ember mt-0.5 shrink-0" />
+                  <Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />
                   {f}
                 </li>
               ))}

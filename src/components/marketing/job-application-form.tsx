@@ -79,7 +79,7 @@ export function JobApplicationForm({ role }: { role: string }) {
           type="file"
           accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
           onChange={(e) => setResume(e.target.files?.[0] ?? null)}
-          className="block w-full text-sm text-foreground-muted file:mr-4 file:rounded-full file:border-0 file:bg-[var(--ember-soft)] file:px-4 file:py-2 file:text-sm file:font-medium file:text-[color:var(--ember-strong)] hover:file:opacity-90"
+          className="block w-full text-sm text-foreground-muted file:mr-4 file:rounded-full file:border-0 file:bg-[var(--primary-soft)] file:px-4 file:py-2 file:text-sm file:font-medium file:text-[color:var(--primary-strong)] hover:file:opacity-90"
         />
         <p className="text-xs text-foreground-subtle mt-1">PDF, DOC, or DOCX, up to 5MB.</p>
       </div>

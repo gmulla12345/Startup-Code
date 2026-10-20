@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { MatchBadge } from "@/components/experience/match-badge";
 import { Spinner } from "@/components/ui/spinner";
 import { formatPrice, formatDuration } from "@/lib/utils/format";
 import type { SurpriseMeResult } from "@/types/ai";
@@ -129,24 +129,25 @@ export function SurpriseMeButton() {
 
   return (
     <>
+      {/* One flat color, the brand teal, resting and hovered. */}
       <button
         onClick={() => fetchSurprise(excludeIds)}
         disabled={loading}
-        className="w-full rounded-[var(--radius-lg)] p-5 flex items-center gap-4 text-left bg-[linear-gradient(135deg,var(--ember),var(--ember-strong))] text-white shadow-[var(--shadow-raised)] hover:brightness-105 transition-all disabled:opacity-70"
+        className="w-full rounded-[var(--radius-lg)] p-5 flex items-center gap-4 text-left bg-primary text-white shadow-[var(--shadow-card)] hover:bg-[var(--primary-strong)] hover:shadow-[var(--shadow-raised)] transition-[background-color,box-shadow] disabled:opacity-70"
       >
-        <div className="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+        <div className="h-12 w-12 rounded-full bg-white/15 flex items-center justify-center shrink-0">
           {loading ? <Spinner className="h-6 w-6" /> : <Sparkles className="h-6 w-6" />}
         </div>
         <div className="flex-1">
           <div className="font-display text-lg font-semibold">{loading ? "Finding something..." : "Surprise Me"}</div>
-          <div className="text-sm text-white/80">One perfect recommendation, right now.</div>
+          <div className="text-sm text-white/90 text-balance">One perfect recommendation, right now.</div>
         </div>
       </button>
 
       {savedResult && (
         <button
           onClick={viewLastSurprise}
-          className="mt-2 text-sm text-ember font-medium hover:underline"
+          className="mt-2 text-sm text-primary font-medium hover:underline"
         >
           View my Surprise: {savedResult.experience.title}
         </button>
@@ -166,19 +167,12 @@ export function SurpriseMeButton() {
                 <X className="h-4 w-4 text-white" />
               </button>
               <div className="absolute bottom-3 left-3">
-                {/* Hardcoded color, not the ember variant's CSS-var text
-                    color -- this chip is always white regardless of theme
-                    (it sits on a photo), but the variant's color flips in
-                    dark mode and loses contrast against a fixed-white
-                    chip. Same fix as experience-card.tsx's match badge. */}
-                <Badge className="bg-white/95 text-[#e63f1d] font-semibold">
-                  {Math.round(result.recommendation.matchScore)}% match
-                </Badge>
+                <MatchBadge score={result.recommendation.matchScore} />
               </div>
             </div>
 
             <div className="p-6">
-              <p className="text-sm font-medium text-ember mb-1">{result.headline}</p>
+              <p className="text-sm font-medium text-primary mb-1">{result.headline}</p>
               <h3 className="font-display text-2xl font-semibold text-foreground mb-2">{result.experience.title}</h3>
               <p className="text-sm text-foreground-muted mb-3">{result.experience.shortDescription}</p>
 
@@ -194,7 +188,7 @@ export function SurpriseMeButton() {
                 )}
               </div>
 
-              <p className="text-sm italic text-foreground-muted border-l-2 border-ember pl-3 mb-6">
+              <p className="text-sm italic text-foreground-muted border-l-2 border-primary pl-3 mb-6">
                 &ldquo;{result.recommendation.reasoning}&rdquo;
               </p>
 
