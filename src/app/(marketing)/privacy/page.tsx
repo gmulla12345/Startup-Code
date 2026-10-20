@@ -138,6 +138,15 @@ export default function PrivacyPolicyPage() {
           photos on a shared list come from Google when the page is built and are not stored by us. We ask search engines
           not to index shared lists. You can turn a list&apos;s link off at any time, which deletes it.
         </p>
+        <p>
+          <strong>First list.</strong> If you ask for a list before you have an account, you tell us what kind of outing
+          you want, what you would like to spend, and where you are (your device&apos;s location, or a city you type). We
+          use the location once, to look for places through Google, and we do not store it. Your two answers and the
+          Google identifiers of the places on your list are kept in your browser&apos;s storage, on your device and not
+          on our servers, so the list is still there when you return, for up to 30 days. If you then make an account,
+          we save those places to it, and the two answers fill in your first onboarding choices. The places&apos; names,
+          addresses, and photos are not kept: they come from Google each time they are shown.
+        </p>
 
         <h3>Information automatically collected</h3>
         <p>
@@ -256,6 +265,10 @@ export default function PrivacyPolicyPage() {
           <li>
             <strong>To keep a school waitlist.</strong> To write to people who asked to hear when we reach their
             school.
+          </li>
+          <li>
+            <strong>To give you a first list.</strong> To find places near the location you give us, rank them by your
+            two answers, and, if you make an account, keep the list there.
           </li>
           <li>
             <strong>To let you share places, plans and lists.</strong> To make the link you ask for, show what you chose to
@@ -403,6 +416,12 @@ export default function PrivacyPolicyPage() {
           third-party advertising or retargeting.
         </p>
         <p>
+          <strong>Browser storage.</strong> To remember a first list we use your browser&apos;s local storage, not a
+          cookie. It stays on your device and is sent to us only when you ask us to keep the list in an account. It is
+          cleared once the list is saved to an account, or after 30 days, and you can clear it yourself in your browser
+          settings at any time.
+        </p>
+        <p>
           <strong>Campaign cookie.</strong> If you arrive through a link carrying a source or campaign label, we set a
           first-party cookie named <code>zolo_attr</code> that holds those labels for 30 days. It is used to credit the
           link that brought you if you sign up, and to attach the same labels to the measurement events described
@@ -504,6 +523,10 @@ export default function PrivacyPolicyPage() {
           <li>
             <strong>Shared lists:</strong> until you turn the list&apos;s link off, which deletes it, or you delete your
             account, which deletes all of your lists.
+          </li>
+          <li>
+            <strong>First list:</strong> in your browser for up to 30 days, or until it is saved to an account. Places
+            saved from it are kept like any place you save, until you remove them or delete your account.
           </li>
           <li>
             <strong>Promo code redemptions:</strong> when you delete your account, the link to your account is removed,

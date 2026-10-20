@@ -65,8 +65,9 @@ export function Hero() {
 
           <div className="mk-rise mt-9 flex flex-col gap-3 sm:flex-row" style={{ ["--d" as string]: "0.24s" }}>
             <Button asChild size="lg">
-              <Link href="/signup">
-                Start Discovering <ArrowRight className="h-4 w-4" />
+              {/* COPY: the hero button now leads to a first list, no account needed */}
+              <Link href="/start">
+                Get your first list <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="bg-surface/70 backdrop-blur">
@@ -78,7 +79,8 @@ export function Hero() {
             className="mk-rise mt-5 flex items-center gap-1.5 text-sm text-foreground-subtle"
             style={{ ["--d" as string]: "0.3s" }}
           >
-            <Check className="h-4 w-4 text-success" aria-hidden /> No credit card required
+            {/* COPY: the line under the hero buttons */}
+            <Check className="h-4 w-4 text-success" aria-hidden /> No account needed for your first list
           </p>
         </div>
 

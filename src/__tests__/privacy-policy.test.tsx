@@ -5,6 +5,7 @@ import { join } from "node:path";
 import PrivacyPolicyPage from "@/app/(marketing)/privacy/page";
 import { ATTRIBUTION_COOKIE, ATTRIBUTION_MAX_AGE_SECONDS } from "@/lib/attribution";
 import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
+import { FIRST_LIST_MAX_AGE_DAYS } from "@/lib/config/start";
 
 // A privacy policy that does not match what the system does is worse than none.
 // These tests tie the page to the code and the database: each data practice we
@@ -61,6 +62,24 @@ describe("the privacy policy discloses what we collect", () => {
     expect(text).toMatch(/ask search engines not to index shared lists/);
     expect(text).toMatch(/turn a list.s link off at any time, which deletes it/);
     expect(text).toMatch(/Shared lists: until you turn the list.s link off, which deletes it, or you delete your account/);
+  });
+
+  it("covers the first list: what is asked, that the location is not stored, what the browser keeps, and what the account gets", () => {
+    expect(text).toMatch(/First list\. If you ask for a list before you have an account/);
+    expect(text).toMatch(/We use the location once, to look for places through Google, and we do not store it/);
+    expect(text).toMatch(/kept in your browser.s storage, on your device and not on our servers/);
+    expect(text).toMatch(/for up to 30 days/);
+    expect(text).toMatch(/we save those places to it/);
+    expect(text).toMatch(/names, addresses, and photos are not kept: they come from Google each time they are shown/);
+    expect(text).toMatch(/Browser storage\. To remember a first list we use your browser.s local storage, not a cookie/);
+    expect(text).toMatch(/sent to us only when you ask us to keep the list in an account/);
+    expect(text).toMatch(/To give you a first list/);
+    expect(text).toMatch(/First list: in your browser for up to 30 days, or until it is saved to an account/);
+  });
+
+  it("keeps what it says about the first list equal to what the code does", () => {
+    // The policy says 30 days; the code forgets a kept list at the same age.
+    expect(FIRST_LIST_MAX_AGE_DAYS).toBe(30);
   });
 
   it("covers measurement events and service usage records", () => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Logo } from "@/components/shared/logo";
@@ -15,6 +15,8 @@ import { StepReady } from "@/components/onboarding/step-ready";
 import { emptyPersonality, defaultPreferences } from "@/lib/repositories/profile";
 import { analyticsEvents } from "@/services/analytics/track";
 import { brand } from "@/lib/config/brand";
+import { outingInterests } from "@/lib/start/questions";
+import { readFirstList } from "@/lib/start/storage";
 import type { InterestTag, LifestyleGoal, PersonalitySliders, UserPreferences } from "@/types/database";
 
 const STEPS = ["basics", "interests", "personality", "preferences", "goals"] as const;
@@ -38,6 +40,16 @@ export default function OnboardingPage() {
   const [personality, setPersonality] = useState<PersonalitySliders>(emptyPersonality());
   const [preferences, setPreferences] = useState<UserPreferences>(defaultPreferences());
   const [goals, setGoals] = useState<LifestyleGoal[]>([]);
+
+  // Someone who made a first list before signing up has already told us two things: carry them over,
+  // so the account starts as personal as the list was. (Only what they have not filled in themselves.)
+  useEffect(() => {
+    const first = readFirstList();
+    if (!first) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reads the browser's storage once, which only exists after the page loads
+    setInterests((current) => (current.length > 0 ? current : (outingInterests(first.outing) as InterestTag[])));
+    setPreferences((current) => ({ ...current, budgetLevel: first.budget }));
+  }, []);
 
   const step = STEPS[stepIndex];
 

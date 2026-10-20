@@ -3,6 +3,7 @@ import { Sidebar } from "./sidebar";
 import { BottomNav } from "./bottom-nav";
 import { ContentArea } from "./content-area";
 import { Topbar } from "./topbar";
+import { ClaimFirstList } from "@/components/start/claim-first-list";
 import type { Profile } from "@/types/database";
 
 export function AppShell({
@@ -24,6 +25,8 @@ export function AppShell({
         <ContentArea>{children}</ContentArea>
       </div>
       <BottomNav />
+      {/* Keeps a first list the visitor made before they had an account. */}
+      <ClaimFirstList />
     </div>
   );
 }

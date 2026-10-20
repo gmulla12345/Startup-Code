@@ -8,12 +8,13 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils/cn";
 import { formatCategoryLabel, formatPrice, withMaxWidth } from "@/lib/utils/format";
 import { track } from "@/services/analytics/track";
-import type { Experience } from "@/types/database";
+import type { ListPlaceExperience } from "@/lib/start/types";
 
 /**
  * One place in a list: a photo, the name, a line of facts, and why it is here. The
  * whole row opens the place; the heart saves it (same call the cards make, with the
- * tags and category the taste-learning reads back later).
+ * tags and category the taste-learning reads back later). For a visitor with no account
+ * the page passes onSaveRequest, and the heart asks for one instead of saving.
  */
 export function ListPlaceRow({
   experience,
@@ -21,14 +22,17 @@ export function ListPlaceRow({
   why,
   distanceLabel,
   matchScore,
+  onSaveRequest,
 }: {
-  experience: Experience;
+  experience: ListPlaceExperience;
   /** Zero-based position in the list. */
   index: number;
   why: string | null;
   distanceLabel?: string;
   /** Shown only on the list made from the person's own tastes. */
   matchScore?: number;
+  /** If set, the heart calls this instead of saving: there is no account to save to yet. */
+  onSaveRequest?: () => void;
 }) {
   const [saved, setSaved] = useState(false);
   const rawImage = experience.images[0];
@@ -37,6 +41,10 @@ export function ListPlaceRow({
   async function toggleSave(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
+    if (onSaveRequest) {
+      onSaveRequest();
+      return;
+    }
     const next = !saved;
     setSaved(next);
     try {

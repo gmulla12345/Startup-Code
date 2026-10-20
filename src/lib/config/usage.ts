@@ -40,6 +40,9 @@ export const ANONYMOUS_DAILY_PLACES_CAPS: Readonly<Record<string, number>> = {
   share_preview: 200,
   // A shared list shows up to ten places, so one opened link can be ten calls (about once an hour).
   list_preview: 400,
+  // A first list is one Places search (up to seven calls) plus the places of a list being asked for again,
+  // so 350 units is about 50 first lists a day, roughly twelve dollars at list price. A starting value.
+  start_list: 350,
 };
 
 export type UsageBucket = "ai" | "places";

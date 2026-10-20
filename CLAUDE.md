@@ -2392,6 +2392,38 @@ labeled: Next.js declares a `.ico` by its FIRST entry and ours listed the 16px i
 **Fix:** `favicon.ico` now lists its 48px image first (only the directory entries moved; the images are untouched, so the page declares `48x48`), and `src/app/icon1.png` (192x192, 4 x 48) was added. [favicon.test.ts](src/__tests__/favicon.test.ts) keeps it so.
 **Google updates a favicon slowly** (days to a few weeks after it recrawls the homepage), so the globe may linger. To nudge it: Search Console, URL Inspection on `https://discoverzolo.com/`, then Request indexing. Nothing else on our side controls it.
 
+## Influence-principles work, Phase 2: reciprocity, a first list before any account (2026-10-20)
+
+**Built and tested locally; NOT pushed or deployed (waiting on the owner's review). No migration, no new env var, no Stripe change.**
+
+**The flow** ([/start](src/app/start/page.tsx), [start-flow.tsx](src/components/start/start-flow.tsx)): two questions (what kind of outing: six choices mapped to interests; what feels right to spend: the same real dollar ranges onboarding uses),
+then where they are (the browser's location, or a typed city looked up by the existing public `/api/geocode`), then one list of six. No account. Signed-in visitors are sent to /home; the page is noindex. The landing hero's main button is now
+"Get your first list" (to /start) with "No account needed for your first list" beneath it; the header's "Start Discovering" still goes to signup.
+
+**How the list is made** ([build.ts](src/lib/start/build.ts), `POST /api/start/list`): a made-up profile that holds only the two answers (interests from the outing, the budget, neutral defaults; no name, no history) is ranked with the SAME
+`rankExperiences` the signed-in app uses, over the places Google returns around the visitor; the best six become the list, with the Phase 1 "why this pick" lines. Fewer than 3 places gives no list (never padded). The server sends the
+page only what a row needs (no address, rating, description, coordinates or booking link), and the visitor's location is used for that one request and is not stored, logged or returned.
+
+**Where an account is asked for, and only there** ([keep-card.tsx](src/components/start/keep-card.tsx)): keeping the list (the card under it, "Keep this list", always visible, never in the way), the heart on a place ("Keep this place"),
+and "Start another list" ("Another list": the first is theirs to keep). One card, three sets of words, never a modal or a wall; its "Create an account" carries `src=first-list` so signups can be counted by source in `/admin/analytics`.
+
+**What the browser keeps** ([storage.ts](src/lib/start/storage.ts), key `zolo:first-list:v1`): the two answers, and each place's id, tags and category (the same three things saving a place stores), and the time. **No name, photo, rating, address, price
+or location** (Google's terms do not let us keep Google content; the writer cleans what it is handed, so nothing extra can get in, and a test proves it). Wrapped in try/catch; forgotten after 30 days. When the visitor reloads, or taps into a place and
+comes back, the places are asked for again by id (`POST /api/start/places`) and the same list is shown, without the questions; distance is dropped then (the location was not kept).
+
+**Keeping it in an account** ([claim-first-list.tsx](src/components/start/claim-first-list.tsx), mounted in the signed-in shell; `POST /api/start/claim`): the first signed-in page that loads in that browser saves the places the way the heart does
+(collection "Saved", idempotent), so they appear in Saved and teach the recommendations; the browser then forgets the list and says "Kept. Your first list is in Saved." If it cannot be kept (offline) it is tried again on the next page; a list the server
+refuses as malformed is dropped. **Onboarding starts with the two answers filled in** (interests from the outing, the budget). **Limit by design:** a confirmation link opened in a *different* browser or device cannot reach the list (it lives in the first browser's storage).
+
+**"One list" is the page's rule, not a security boundary.** Cost is bounded by: a per-address limit on making a list (5 per 10 minutes) and on asking again (20), both in [start.ts](src/lib/config/start.ts) and both soft (per server instance); and the **hard** daily ceiling on Google calls made for
+visitors with no account, `start_list: 350` units in [usage.ts](src/lib/config/usage.ts) (about 50 first lists a day, roughly twelve dollars at list price). **Both are starting values: change them there.** When the ceiling is reached Google returns nothing and the visitor is told
+"We could not find places near you just now." While Google billing is on hold the same message shows for everyone; the page is built and tested with the built-in demo catalog.
+
+**Privacy:** the policy and its test now cover the first list (what is asked, location used once and not stored, browser storage on the device for up to 30 days, what the account gets, a "Browser storage" note beside the cookie notice, the purpose and the retention line);
+a test ties the 30 days in the policy to `FIRST_LIST_MAX_AGE_DAYS`. **Not added (would need a migration):** analytics events for "first list made" and "first list kept"; for now first-list signups are counted by their `first-list` source and Google spend by the `start_list` usage feature.
+
+**Mobile equivalent:** the same three routes (`/api/start/list`, `/places`, `/claim`, the last with a bearer token); keep the answers and ids in the app's own storage and send them to `/claim` after signup.
+
 ## Exact next steps (priority order)
 
 **Done since the last update:** deployed to production at `discoverzolo.com` (fixed a Vercel
