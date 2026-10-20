@@ -1,7 +1,7 @@
 -- Seed the schools shown in the /students selector.
 --
--- Migration 20261016_01 created the campuses table with one school (Loyola
--- University Maryland). This adds the other 99, so a student at any of them can
+-- Migration 20261016_01 created the campuses table with one school
+-- (the first). This adds the other 99, so a student at any of them can
 -- pick their school and, once they confirm a .edu address on its domain, have it
 -- recorded on their account. The selector sorts the list alphabetically in the
 -- application; sort_order now only breaks a tie when matching an email domain.
@@ -15,7 +15,7 @@
 -- Additive and idempotent: it inserts rows and skips any slug that already exists.
 --
 -- Rollback (profiles.campus_id is set to null for anyone recorded at these schools):
---   delete from public.campuses where slug <> 'loyola-maryland';
+--   delete from public.campuses where slug <> '<the first school's slug>';
 
 begin;
 

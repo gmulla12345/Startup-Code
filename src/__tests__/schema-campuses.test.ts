@@ -10,6 +10,8 @@ import { FALLBACK_CAMPUSES } from "@/lib/campus";
 const root = join(__dirname, "../db");
 const schema = readFileSync(join(root, "schema.sql"), "utf-8");
 const migration = readFileSync(join(root, "migrations/20261016_01_campuses_and_student_verification.sql"), "utf-8");
+// The one school that migration seeds (the rest come from 20261018_01).
+const firstSlug = migration.match(/insert into public\.campuses[\s\S]*?values \('([a-z-]+)'/i)![1];
 
 function createPolicies(sql: string, name: string): string[] {
   return sql.match(new RegExp(`create policy "${name}"[^;]*;`, "gi")) ?? [];
@@ -55,11 +57,11 @@ describe("campuses and the waitlist", () => {
     expect(signup.indexOf("insert into public.profiles")).toBeLessThan(signup.indexOf("exception when others"));
   });
 
-  it("seeds Loyola, and the application's fallback list has the same row", () => {
-    const loyola = FALLBACK_CAMPUSES.find((c) => c.slug === "loyola-maryland")!;
-    expect(migration).toContain(`'${loyola.slug}'`);
-    expect(migration).toContain(`'${loyola.name}'`);
-    expect(migration).toContain(`array['${loyola.emailDomains[0]}']`);
+  it("seeds the first school, and the application's fallback list has the same row", () => {
+    const first = FALLBACK_CAMPUSES.find((c) => c.slug === firstSlug)!;
+    expect(first, "the migration's school is in the fallback list").toBeDefined();
+    expect(migration).toContain(`'${first.name}'`);
+    expect(migration).toContain(`array['${first.emailDomains[0]}']`);
   });
 
   it("deletes nothing", () => {
@@ -83,10 +85,10 @@ describe("the seeded schools", () => {
       shortName: shortName.replace(/''/g, "'"),
       emailDomains: [...domains.matchAll(/'([^']+)'/g)].map((m) => m[1]),
     }));
-  const withoutLoyola = FALLBACK_CAMPUSES.filter((c) => c.slug !== "loyola-maryland");
+  const withoutFirst = FALLBACK_CAMPUSES.filter((c) => c.slug !== firstSlug);
 
   it("adds every other school in the application's list, identically, and nothing else", () => {
-    expect(parse(seed)).toEqual(withoutLoyola);
+    expect(parse(seed)).toEqual(withoutFirst);
     expect(parse(seed)).toHaveLength(99);
   });
 

@@ -44,7 +44,7 @@ describe("property sanitizing", () => {
   });
 
   it("cannot be used to store an email, a name, a sentence, or an address", () => {
-    const attempts = ["maya@loyola.edu", "Maya Johnson", "I love the harbor", "100 N Charles St", "https://x.com/?u=me", "a".repeat(41)];
+    const attempts = ["maya@example.edu", "Maya Johnson", "I love the harbor", "100 N Charles St", "https://x.com/?u=me", "a".repeat(41)];
     for (const value of attempts) {
       expect(sanitizeProps("place_saved", { category: value })).toEqual({});
       expect(sanitizeProps("signup_started", { method: value })).toEqual({});

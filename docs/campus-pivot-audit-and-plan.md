@@ -167,9 +167,9 @@ Mobile-specific: native share sheet (`Share.share`), Universal Links for invite 
 
 ### C. Campus-first features
 
-- **`campuses` table:** id, slug, name, `email_domains text[]`, center lat/lng, radius_km, timezone, `config jsonb` (display price, launch date, copy overrides), active. Loyola is one row; I need the exact email domain(s) and center point from you (section 7). Adding a campus is an insert plus `scripts/seed-campus.ts <slug>`, not code.
+- **`campuses` table:** id, slug, name, `email_domains text[]`, center lat/lng, radius_km, timezone, `config jsonb` (display price, launch date, copy overrides), active. The pilot school is one row; I need the exact email domain(s) and center point from you (section 7). Adding a campus is an insert plus `scripts/seed-campus.ts <slug>`, not code.
 - **Verified .edu signup.** Two paths: (1) sign up with a `.edu` address, and the existing email confirmation plus a domain match against `campuses.email_domains` sets `campus_id` and `edu_verified_until` (extend `handle_new_user` and an update trigger); (2) users who signed in with Google or Apple verify a student address from settings through a small `edu_verifications` table (token hash, expiry) and our existing email sender (Resend). A unique hash of the verified address prevents one address verifying many accounts, and only the hash, campus and expiry are kept. Verification lasts one academic year (graduates keep working addresses, so expiry matters). 
-- **"Popular at your campus."** A nightly job writes `campus_place_stats` (campus_id, place id, distinct_users_14d). **A place appears only when at least 5 distinct students saved or completed it**, so no individual can be inferred. RLS: readable only by verified members of that campus. Cold start before enough activity: `campus_places.editorial_rank` (our staff picks) fills the view. New rail on Home and a "Popular at Loyola" sort on Discover.
+- **"Popular at your campus."** A nightly job writes `campus_place_stats` (campus_id, place id, distinct_users_14d). **A place appears only when at least 5 distinct students saved or completed it**, so no individual can be inferred. RLS: readable only by verified members of that campus. Cold start before enough activity: `campus_places.editorial_rank` (our staff picks) fills the view. New rail on Home and a "Popular at your campus" sort on Discover.
 - Mobile: a verification step in onboarding. Apple's hidden-email relay addresses cannot be verified directly, which is why path (2) exists.
 
 ### D. Revenue support
@@ -215,7 +215,7 @@ One migration per phase, additive, in `src/db/` (the repo keeps a single `schema
 2. **Anthropic Console usage and cost for the last 30 days**, and the production value of `ANTHROPIC_MODEL` (hidden in Vercel).
 3. **Supabase row counts:** `profiles`, `social_profiles`, `follows`, `user_events` (last 30 days by type), `saved_experiences`, and your Vercel and Supabase plans.
 4. **Current users:** total accounts, monthly actives, number of Premium subscribers.
-5. **Loyola:** exact student email domain(s), the campus center point and the radius you want covered, expected pilot size and launch date.
+5. **Pilot school:** exact student email domain(s), the campus center point and the radius you want covered, expected pilot size and launch date.
 6. **Student price** target ($3, $4 or $5), annual option or not, and what happens to the price when a student's verification expires.
 7. **Data source for A2:** (a) open-data campus catalog, (b) keep live Google, or (c) get quotes from a licensed provider.
 8. **iOS and Android timing**, and whether you have an Apple Developer account for in-app purchases.

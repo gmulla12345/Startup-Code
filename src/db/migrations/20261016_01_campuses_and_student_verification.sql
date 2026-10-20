@@ -7,7 +7,7 @@
 --      address, by the confirmation link (an update of auth.users.email_confirmed_at)
 --      or, for a Google account that arrives already verified, at account
 --      creation. The campus is detected from the email's domain, so a subdomain
---      such as students.loyola.edu matches loyola.edu and notloyola.edu does not.
+--      such as students.example.edu matches example.edu and notexample.edu does not.
 --      Any verified .edu address counts as edu_verified, whether or not the school
 --      is a campus we serve yet (campus_id stays null for those).
 --   3. edu_verified analytics event, recorded once per user, with the campus slug
@@ -18,7 +18,7 @@
 -- Everything here is wrapped so that it can never stop an account being created
 -- or confirmed: a failure in this logic is swallowed, not raised.
 --
--- Loyola's email domain is seeded as loyola.edu. CONFIRM IT with the school; if
+-- The first school's email domain is seeded below. CONFIRM IT with the school; if
 -- students use another domain, add it to campuses.email_domains.
 --
 -- Rollback (nothing here deletes existing data):
@@ -60,7 +60,7 @@ alter table public.profiles add column if not exists campus_id uuid references p
 alter table public.profiles add column if not exists edu_verified_at timestamptz;
 
 -- The campus whose email domain this address belongs to, or null. An address on a
--- subdomain (students.loyola.edu) matches the campus domain (loyola.edu).
+-- subdomain (students.example.edu) matches the campus domain (example.edu).
 create or replace function public.campus_for_email(p_email text)
 returns uuid
 language sql

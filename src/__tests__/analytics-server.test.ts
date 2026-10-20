@@ -128,7 +128,7 @@ describe("recording an event", () => {
   it("stores no personal data even if a caller tries to pass some", async () => {
     await trackAnalytics("place_saved", {
       userId: "u5",
-      props: { category: "maya@loyola.edu", email: "maya@loyola.edu", note: "my apartment" } as never,
+      props: { category: "maya@example.edu", email: "maya@example.edu", note: "my apartment" } as never,
     });
     await flush();
     expect(h.inserts[0].props).toEqual({});

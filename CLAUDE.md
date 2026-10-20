@@ -1952,7 +1952,7 @@ The whole pre-login marketing site is now a light theme; the logged-in app and a
 
 ## Phase 0 of the campus pivot: privacy fix, usage logging, daily limits (2026-10-14)
 
-Context: the product is moving to college students (Loyola University Maryland first); the plan is in
+Context: the product is moving to college students (one pilot school first); the plan is in
 [docs/campus-pivot-audit-and-plan.md](docs/campus-pivot-audit-and-plan.md). Phase 0 fixes things before any
 feature work. Migrations were applied to production on 2026-10-14 after a rolled-back rehearsal.
 
@@ -2103,14 +2103,14 @@ and no copy on the page promises a discount.
 **Verification and campus** (database, so every path is covered, including the future mobile app): clicking the confirmation link updates
 `auth.users.email_confirmed_at`, and the trigger `on_auth_user_email_confirmed` calls `apply_student_verification()`. For any verified `.edu`
 address it sets `profiles.edu_verified_at`, sets `profiles.campus_id` from the domain (a school's domain or a subdomain of it matches, a
-lookalike like `notloyola.edu` or `loyola.edu.evil.com` does not), and records the `edu_verified` event once with the campus slug (or `other`).
+lookalike like `notexample.edu` or `example.edu.evil.com` does not), and records the `edu_verified` event once with the campus slug (or `other`).
 A `.edu` at a school we do not serve is still verified, with no campus. A Google account arrives already verified, so `handle_new_user()` runs
 the same function at creation (and `apply_signup_attribution` also patches that event's src/code afterwards). All of it is wrapped so it can
 never block an account being created or confirmed. Verified live against production through Supabase's admin API (no mail sent), then cleaned up.
-**Loyola's domain `loyola.edu` is confirmed by the owner (2026-10-14)**; add any other domains to `campuses.email_domains`.
+**The pilot school's email domain is confirmed by the owner (2026-10-14)**; add any other domains to `campuses.email_domains`.
 
 **The 100 schools** (owner's list, 2026-10-14): [campus-directory.ts](src/lib/campus-directory.ts) is the list and the page's fallback if the table cannot
-be read; migration `20261018_01_seed_campuses.sql` (generated from it) inserts the 99 beyond Loyola, additive and idempotent; a test keeps the two
+be read; migration `20261018_01_seed_campuses.sql` (generated from it) inserts the 99 beyond the first, additive and idempotent; a test keeps the two
 and `schema.sql` identical, and checks that no domain is shared with or a subdomain of another school's (so no address belongs to two schools).
 **The other 99 domains are not confirmed with the schools**: they are the domains students are known to use, and each was checked only to have mail
 servers. A missing domain means that student verifies as a `.edu` with no campus; a wrong one that is another school's domain would put them on the wrong campus
@@ -2203,13 +2203,13 @@ the retention (account deletion removes the link), and [privacy-policy.test.tsx]
 
 **Decisions taken (owner delegated them, 2026-10-14):** card **required** (flag left unset in Vercel); any verified student may use any student
 code (no per-school restriction); the delete-and-resign-up gap above is left open (most private default); pilot code suggested as
-`LOYOLA-LAUNCH`, 100 redemptions, expiring 2027-05-31 (the end of the academic year); Dashboard promotion-code settings are the owner's to check.
+`CAMPUS-LAUNCH` (any prefix works; use the school's name on its own posters), 100 redemptions, expiring 2027-05-31 (the end of the academic year); Dashboard promotion-code settings are the owner's to check.
 
 **Production Stripe is LIVE** (`pk_live` publishable key; the secret key is a hidden Vercel secret). The Stripe key in `.env.local` is a TEST key, so
 `npm run promo-codes -- ... --apply` from this machine only ever reaches the TEST account. **The live coupon and codes are not created yet** and cannot
 be by anyone who lacks the live secret key: until the owner runs the script with it, a typed code answers "That code is not valid." (safe and inert).
 Owner's command (PowerShell, key typed only into their own terminal, never shared):
-`$env:STRIPE_SECRET_KEY="sk_live_..."; npm run promo-codes -- --prefix LOYOLA --names LAUNCH --max 100 --expires 2027-05-31 --apply --yes-live`
+`$env:STRIPE_SECRET_KEY="sk_live_..."; npm run promo-codes -- --prefix CAMPUS --names LAUNCH --max 100 --expires 2027-05-31 --apply --yes-live`
 (drop `--apply --yes-live` first to see the dry run). **A mistaken `--apply` was run once against the TEST account** while testing the no-key refusal (the script
 loads `.env.local` itself, so there is no such refusal); it created the test coupon and an example test code, and was reported to the owner.
 

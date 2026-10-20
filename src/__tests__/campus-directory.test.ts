@@ -165,7 +165,7 @@ describe("sortCampusesByName", () => {
     expect(shuffled).toEqual(copy);
   });
 
-  it("puts Loyola where it falls in the alphabet, not first", () => {
+  it("puts the school the product started with where it falls in the alphabet, not first", () => {
     const sorted = names(sortCampusesByName(CAMPUS_DIRECTORY));
     expect(sorted[0]).toBe("American University");
     expect(sorted.at(-1)).toBe("Yale University");

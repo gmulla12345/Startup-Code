@@ -67,7 +67,7 @@ describe("who can open it", () => {
   });
 
   it("sends a signed-in user who is not an admin back to the app", async () => {
-    h.user = { email: "student@loyola.edu" };
+    h.user = { email: "student@example.edu" };
     await expect(render()).rejects.toThrow("REDIRECT:/home");
     expect(h.redirected).toEqual(["/home"]);
   });

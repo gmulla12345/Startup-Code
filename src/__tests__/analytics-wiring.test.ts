@@ -72,7 +72,7 @@ beforeEach(() => {
 describe("the public event endpoint", () => {
   it("accepts the events a browser may send", async () => {
     for (const event of ["students_page_view", "signup_started", "share_link_opened"]) {
-      expect((await send({ event, props: { campus: "loyola-maryland", kind: "place" } })).status).toBe(200);
+      expect((await send({ event, props: { campus: "example-university", kind: "place" } })).status).toBe(200);
     }
     expect(h.track).toHaveBeenCalledTimes(3);
     expect(h.track.mock.calls[0][0]).toBe("students_page_view");

@@ -1095,7 +1095,7 @@ alter table public.profiles add column if not exists campus_id uuid references p
 alter table public.profiles add column if not exists edu_verified_at timestamptz;
 
 -- The campus whose email domain this address belongs to, or null. An address on a
--- subdomain (students.loyola.edu) matches the campus domain (loyola.edu).
+-- subdomain (students.example.edu) matches the campus domain (example.edu).
 create or replace function public.campus_for_email(p_email text)
 returns uuid
 language sql

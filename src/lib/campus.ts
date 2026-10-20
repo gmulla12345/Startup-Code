@@ -19,7 +19,7 @@ export interface Campus {
   emailDomains: string[];
 }
 
-/** Mirrors the rows seeded by migrations/20261016_01 (Loyola) and 20261018_01 (the rest). */
+/** Mirrors the rows seeded by migrations/20261016_01 (the first school) and 20261018_01 (the rest). */
 export const FALLBACK_CAMPUSES: Campus[] = CAMPUS_DIRECTORY;
 
 /** A copy of the list in alphabetical order by name, which is the order the selector shows. */
@@ -51,8 +51,8 @@ export function isEduEmail(email: string): boolean {
 
 /**
  * The campus an address belongs to. A subdomain matches its parent
- * (students.loyola.edu is Loyola); a lookalike does not (notloyola.edu,
- * loyola.edu.example.com). Same rule as campus_for_email() in the database.
+ * (students.example.edu belongs to example.edu); a lookalike does not (notexample.edu,
+ * example.edu.example.com). Same rule as campus_for_email() in the database.
  */
 export function campusForEmail(email: string, campuses: Campus[]): Campus | null {
   const domain = emailDomain(email);
