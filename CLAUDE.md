@@ -2385,6 +2385,13 @@ Privacy policy and its test now cover shared lists (what is stored, who sees it,
 
 **Mobile equivalent:** call the same `/api/lists` routes with the bearer token; show the same six rules over the same ranked places; the app has no lists yet.
 
+## Favicon in Google results showed a globe (2026-10-20)
+
+The owner saw a generic globe beside discoverzolo.com in Google. The icons existed and loaded (orange "Z" mark: `src/app/favicon.ico`, `icon.png` 512, `apple-icon.png` 180; robots.txt and headers were fine). The cause was how they were
+labeled: Next.js declares a `.ico` by its FIRST entry and ours listed the 16px image first, so the page said `sizes="16x16"`; Google asks for a square favicon whose side is a **multiple of 48px**, and 512 is not one either.
+**Fix:** `favicon.ico` now lists its 48px image first (only the directory entries moved; the images are untouched, so the page declares `48x48`), and `src/app/icon1.png` (192x192, 4 x 48) was added. [favicon.test.ts](src/__tests__/favicon.test.ts) keeps it so.
+**Google updates a favicon slowly** (days to a few weeks after it recrawls the homepage), so the globe may linger. To nudge it: Search Console, URL Inspection on `https://discoverzolo.com/`, then Request indexing. Nothing else on our side controls it.
+
 ## Exact next steps (priority order)
 
 **Done since the last update:** deployed to production at `discoverzolo.com` (fixed a Vercel
