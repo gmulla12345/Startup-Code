@@ -2,6 +2,7 @@ import type Stripe from "stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { SubscriptionStatus } from "@/types/database";
 import { trackAnalytics } from "@/lib/analytics/server";
+import { isStudentPriceId } from "@/lib/config/pricing";
 import { markPromoRedeemed } from "./promo";
 
 /**
@@ -121,6 +122,8 @@ async function upsertSubscriptionRow(userId: string, subscription: Stripe.Subscr
       props: {
         interval: interval === "year" ? "annual" : interval === "month" ? "monthly" : undefined,
         trial: subscription.status === "trialing",
+        // Which price it is, so the student plan can be told apart in the measurements.
+        tier: isStudentPriceId(item?.price.id) ? "student" : "standard",
       },
     });
   }

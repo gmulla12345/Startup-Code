@@ -9,6 +9,7 @@ import { noindexMetadata } from "@/lib/seo";
 import { isStripeConfigured } from "@/lib/stripe/client";
 import { previewPromoCode } from "@/lib/stripe/promo";
 import { studentPromoRequiresCard } from "@/lib/config/promo";
+import { isStudentPlanConfigured } from "@/lib/config/pricing";
 
 export const metadata = noindexMetadata;
 
@@ -25,6 +26,14 @@ export default async function UpgradePage() {
   // The code they entered when they signed up, if it is one this account can use
   // (checked on the server), is filled in for them. Anything else is left blank.
   let savedCode: string | undefined;
+  // Whether this account has a verified school email, for the Student plan (offered only once it is on sale).
+  // This only shapes what the page says; the server decides who may have the price, at checkout.
+  const studentOffered = isStudentPlanConfigured();
+  let eduVerified = false;
+  if (studentOffered) {
+    const { data } = await supabase.from("profiles").select("edu_verified_at").eq("user_id", user.id).maybeSingle();
+    eduVerified = Boolean(data?.edu_verified_at);
+  }
   if (isStripeConfigured()) {
     const { data: profile } = await supabase.from("profiles").select("signup_code").eq("user_id", user.id).maybeSingle();
     const signupCode = profile?.signup_code as string | null | undefined;
@@ -42,7 +51,11 @@ export default async function UpgradePage() {
 
       <div className="rounded-[var(--radius-xl)] border-2 border-primary bg-surface p-8">
         <h1 className="font-display text-3xl font-semibold text-foreground mb-6">{brand.name} Premium</h1>
-        <PremiumPlanCard savedCode={savedCode} requireCard={studentPromoRequiresCard()} />
+        <PremiumPlanCard
+          savedCode={savedCode}
+          requireCard={studentPromoRequiresCard()}
+          student={studentOffered ? { eligible: eduVerified } : undefined}
+        />
       </div>
     </div>
   );

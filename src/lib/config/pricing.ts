@@ -53,6 +53,43 @@ export const pricing = {
 export type PlanId = keyof typeof pricing;
 export type BillingInterval = "monthly" | "annual";
 
+/**
+ * The Student plan: everything in Premium, monthly only, at a lower price, for accounts
+ * with a verified school email (profiles.edu_verified_at, set by the database when a
+ * school address is confirmed). It is a second real Stripe Price on the SAME product as
+ * Premium, so the student free-month coupon (which is limited to that product) works on
+ * it and entitlements are identical: a student subscription is plan_id "premium" in our
+ * database, told apart only by its price id (see isStudentPriceId).
+ *
+ * The plan is offered only once its Stripe Price exists and its id is set
+ * (NEXT_PUBLIC_STRIPE_STUDENT_PRICE_ID): until then the pricing page, the upgrade page,
+ * the FAQ and the Terms say nothing about it, because a price we cannot charge must not
+ * be advertised. Create the Price with `npm run student-price`. The number below is for
+ * display and must match the Price in Stripe. Kept apart from `pricing` so it is never
+ * mistaken for a plan_id.
+ */
+export const studentPricing = {
+  id: "student",
+  name: "Student",
+  priceMonthly: Number(process.env.NEXT_PUBLIC_STUDENT_PRICE ?? 9.99),
+  priceId: process.env.NEXT_PUBLIC_STRIPE_STUDENT_PRICE_ID ?? "",
+} as const;
+
+export type CheckoutPlan = "premium" | "student";
+
+export function isStudentPlanConfigured(): boolean {
+  return studentPricing.priceId !== "";
+}
+
+export function studentPriceId(): string {
+  return studentPricing.priceId;
+}
+
+/** Whether a Stripe price id is the Student price (false for anything else, and always false until it is configured). */
+export function isStudentPriceId(priceId: string | null | undefined): boolean {
+  return Boolean(priceId) && priceId === studentPricing.priceId;
+}
+
 export function premiumPriceId(interval: BillingInterval): string {
   return interval === "annual" ? pricing.premium.annualPriceId : pricing.premium.priceId;
 }

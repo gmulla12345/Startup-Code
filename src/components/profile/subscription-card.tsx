@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { pricing } from "@/lib/config/pricing";
+import { isStudentPlanConfigured, isStudentPriceId, pricing } from "@/lib/config/pricing";
 import { brand } from "@/lib/config/brand";
 import { getBillingPreference } from "@/lib/utils/billing-preference";
 import { getEndorselyReferral } from "@/lib/analytics/endorsely";
@@ -18,6 +18,12 @@ export function SubscriptionCard({ subscription }: { subscription: Subscription 
   const isPremium = subscription?.planId === "premium" && ["active", "trialing"].includes(subscription.status);
 
   async function handleUpgrade() {
+    // Once the Student plan is on sale there is a choice to make (Premium or Student, monthly or annual),
+    // so this goes to the page that offers it instead of straight to a checkout for one plan.
+    if (isStudentPlanConfigured()) {
+      router.push("/profile/upgrade");
+      return;
+    }
     setLoading(true);
     try {
       // Respects whatever billing interval the user picked on the homepage
@@ -70,7 +76,7 @@ export function SubscriptionCard({ subscription }: { subscription: Subscription 
       <div className="flex items-center gap-2 mb-1">
         <Sparkles className={isPremium ? "h-5 w-5 text-primary" : "h-5 w-5 text-foreground-subtle"} />
         <h3 className="font-display text-lg font-semibold text-foreground">
-          {isPremium ? `${brand.name} Premium` : "Free Plan"}
+          {isPremium ? (isStudentPriceId(subscription?.stripePriceId) ? `${brand.name} Premium · Student` : `${brand.name} Premium`) : "Free Plan"}
         </h3>
       </div>
       <p className="text-sm text-foreground-muted mb-4">

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { LegalPage } from "@/components/marketing/legal-page";
 import { brand } from "@/lib/config/brand";
-import { pricing } from "@/lib/config/pricing";
+import { isStudentPlanConfigured, pricing, studentPricing } from "@/lib/config/pricing";
 import { canonical } from "@/lib/seo";
 import { BreadcrumbJsonLd } from "@/components/shared/breadcrumb-jsonld";
 
@@ -141,6 +141,18 @@ export default function TermsOfServicePage() {
           recurring monthly basis until you cancel. When we do not, Premium ends with the month unless you add a payment
           method before then. We may refuse or withdraw a code used against these terms.
         </p>
+        {isStudentPlanConfigured() && (
+          // COPY: the Student plan, in the terms
+          <p>
+            <strong>Student plan.</strong> The Student plan is Premium at ${studentPricing.priceMonthly}/month, billed
+            monthly only, for accounts with a verified school email address. We check the school email once, when you
+            start. Your student rate continues for as long as your subscription continues without a break; it is not
+            re-checked and does not end because you leave school. If you cancel and later return, the terms and price in
+            force then apply, and the student price needs a verified school email again. A student promo code may be
+            used with the Student plan: the free month comes first, and your card is charged the student price when it
+            ends. We may refuse or withdraw the student price where it is used against these terms.
+          </p>
+        )}
         <p>
           <strong>Auto-renewal and cancellation.</strong> By subscribing, you authorize us to charge your payment
           method on a recurring monthly basis until you cancel. You can cancel anytime from your Profile. If you

@@ -1,4 +1,4 @@
-import { pricing } from "@/lib/config/pricing";
+import { isStudentPlanConfigured, pricing, studentPricing } from "@/lib/config/pricing";
 import type { FaqItem } from "@/components/marketing/faq-accordion";
 
 /**
@@ -15,6 +15,16 @@ export const PRICING_FAQ_ITEMS: FaqItem[] = [
     q: "What do I get with Premium?",
     a: `Premium ($${pricing.premium.priceMonthly}/month, or $${pricing.premium.priceAnnual}/year) unlocks unlimited personalized discovery and Surprise Me, more specific categories in Discover (e.g. "Italian Restaurant" instead of "Food & Drink"), the AI Weekend Planner and Trip Planner, advanced filters, and Travel Mode for 10 destinations.`,
   },
+  // Only once the Student plan can actually be bought (see studentPricing in config/pricing.ts).
+  ...(isStudentPlanConfigured()
+    ? [
+        {
+          // COPY: the student price, in the pricing questions
+          q: "Is there a student price?",
+          a: `Yes. Students with a verified school email can have everything in Premium for $${studentPricing.priceMonthly} a month, monthly only. We check your school email once, when you start, and your rate stays the same for as long as you stay subscribed. Make an account with your school email on the students page, then choose Student in your profile. A student promo code works with it: the free month comes first, then the student price.`,
+        },
+      ]
+    : []),
   {
     q: "Can I cancel Premium anytime?",
     a: "Yes — manage or cancel your subscription anytime from your Profile. You'll keep Premium access through the end of your current billing period.",

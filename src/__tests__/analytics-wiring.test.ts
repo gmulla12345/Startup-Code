@@ -15,6 +15,10 @@ const h = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/analytics/server", () => ({ trackAnalytics: h.track, applySignupAttribution: vi.fn() }));
+vi.mock("@/lib/config/pricing", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/config/pricing")>()),
+  isStudentPriceId: (id: string | null | undefined) => id === "price_student",
+}));
 vi.mock("@/lib/supabase/server", () => ({
   getCurrentUser: async () => h.user,
   createClient: async () => ({}),
@@ -176,7 +180,7 @@ describe("events recorded where they happen", () => {
 });
 
 describe("premium_started from Stripe", () => {
-  const subscriptionEvent = (status: string, interval = "month") =>
+  const subscriptionEvent = (status: string, interval = "month", priceId = "price_1") =>
     ({
       type: "customer.subscription.created",
       data: {
@@ -186,7 +190,7 @@ describe("premium_started from Stripe", () => {
           status,
           metadata: { userId: "user-s" },
           cancel_at_period_end: false,
-          items: { data: [{ price: { id: "price_1", recurring: { interval } }, current_period_end: 1_900_000_000 }] },
+          items: { data: [{ price: { id: priceId, recurring: { interval } }, current_period_end: 1_900_000_000 }] },
         },
       },
     }) as never;
@@ -196,13 +200,18 @@ describe("premium_started from Stripe", () => {
     expect(h.track).toHaveBeenCalledWith("premium_started", {
       userId: "user-s",
       dedupeKey: "premium_started:stripe:sub_123",
-      props: { interval: "monthly", trial: true },
+      props: { interval: "monthly", trial: true, tier: "standard" },
     });
   });
 
   it("labels an annual plan, and a paid (not trial) start", async () => {
     await handleStripeEvent(subscriptionEvent("active", "year"));
-    expect(h.track.mock.calls[0][1].props).toEqual({ interval: "annual", trial: false });
+    expect(h.track.mock.calls[0][1].props).toEqual({ interval: "annual", trial: false, tier: "standard" });
+  });
+
+  it("labels the student plan by its price, so it can be told apart in the measurements", async () => {
+    await handleStripeEvent(subscriptionEvent("trialing", "month", "price_student"));
+    expect(h.track.mock.calls[0][1].props).toEqual({ interval: "monthly", trial: true, tier: "student" });
   });
 
   it("records nothing when the subscription is not live", async () => {

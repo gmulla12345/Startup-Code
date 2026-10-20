@@ -55,7 +55,7 @@ export const PROP_ALLOWLIST: Record<AnalyticsEvent, readonly string[]> = {
   share_link_opened: ["kind"],
   share_to_signup: ["kind"],
   promo_redeemed: [],
-  premium_started: ["interval", "trial"],
+  premium_started: ["interval", "trial", "tier"],
 };
 
 export type PropValue = string | number | boolean;

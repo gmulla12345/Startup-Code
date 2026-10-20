@@ -7,6 +7,9 @@ const lifestyleGoalValues = LIFESTYLE_GOALS.map((g) => g.value) as [LifestyleGoa
 
 export const checkoutRequestSchema = z.object({
   billingInterval: z.enum(["monthly", "annual"]).default("monthly"),
+  // Which plan is being bought. Only the name travels: the price id is chosen on the server,
+  // and the student plan is refused there unless the account has a verified school email.
+  plan: z.enum(["premium", "student"]).default("premium"),
   // Endorsely's affiliate-referral id (see src/lib/analytics/endorsely.ts) —
   // a UUID in practice, capped well above that so a malformed value can't
   // bloat the Stripe metadata field it gets passed into.

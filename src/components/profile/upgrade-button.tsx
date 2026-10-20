@@ -4,7 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { pricing, type BillingInterval } from "@/lib/config/pricing";
+import { pricing, studentPricing, type BillingInterval, type CheckoutPlan } from "@/lib/config/pricing";
 import { getEndorselyReferral } from "@/lib/analytics/endorsely";
 
 /**
@@ -23,10 +23,13 @@ import { getEndorselyReferral } from "@/lib/analytics/endorsely";
  */
 export function UpgradeButton({
   billingInterval,
+  plan = "premium",
   initialCode = "",
   requireCard = true,
 }: {
   billingInterval: BillingInterval;
+  /** "student" is the lower monthly price for verified students; the server checks who may have it. */
+  plan?: CheckoutPlan;
   initialCode?: string;
   requireCard?: boolean;
 }) {
@@ -43,6 +46,8 @@ export function UpgradeButton({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           billingInterval,
+          // Named only for the student plan: a Premium request is exactly what it always was.
+          ...(plan === "student" ? { plan } : {}),
           promoCode: trimmed || undefined,
           endorselyReferral: getEndorselyReferral(),
         }),
@@ -56,13 +61,15 @@ export function UpgradeButton({
     }
   }
 
-  const price = `$${pricing.premium.priceMonthly}`;
+  const isStudent = plan === "student";
+  const price = `$${isStudent ? studentPricing.priceMonthly : pricing.premium.priceMonthly}`;
+  const what = isStudent ? "the Student plan" : "Premium";
   const note =
     billingInterval === "annual"
       ? "Student codes apply to monthly Premium."
       : requireCard
-        ? `A student code gives one free month of Premium. A card is needed to start it, and it is charged ${price} a month when the month ends unless you cancel first.`
-        : "A student code gives one free month of Premium, with no card. When the month ends, add a card from your profile to keep Premium.";
+        ? `A student code gives one free month of ${what}. A card is needed to start it, and it is charged ${price} a month when the month ends unless you cancel first.`
+        : `A student code gives one free month of ${what}, with no card. When the month ends, add a card from your profile to keep ${what}.`;
 
   return (
     <div>
@@ -93,7 +100,7 @@ export function UpgradeButton({
         </button>
       )}
       <Button size="lg" className="w-full" onClick={handleClick} loading={loading}>
-        {loading ? "Redirecting..." : "Upgrade to Premium"}
+        {loading ? "Redirecting..." : isStudent ? "Start the Student plan" : "Upgrade to Premium"}
       </Button>
     </div>
   );

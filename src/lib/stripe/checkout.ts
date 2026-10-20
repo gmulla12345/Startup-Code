@@ -2,8 +2,16 @@ import { createHash } from "node:crypto";
 import type Stripe from "stripe";
 import { getStripeClient } from "./client";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { premiumPriceId, type BillingInterval } from "@/lib/config/pricing";
+import { ApiError } from "@/lib/api/auth";
+import {
+  isStudentPlanConfigured,
+  premiumPriceId,
+  studentPriceId,
+  type BillingInterval,
+  type CheckoutPlan,
+} from "@/lib/config/pricing";
 import { studentPromoRequiresCard } from "@/lib/config/promo";
+import { assertVerifiedStudent, STUDENT_PLAN_MESSAGES } from "./student-plan";
 import {
   attachSessionToClaim,
   claimStudentPromo,
@@ -42,12 +50,25 @@ export async function createCheckoutSession(params: {
   successUrl: string;
   cancelUrl: string;
   billingInterval?: BillingInterval;
+  /** "student" is the lower price for verified students: monthly only, checked here before anything is created. */
+  plan?: CheckoutPlan;
   endorselyReferral?: string;
   /** A code the person typed. Checked on the server (lib/stripe/promo.ts) before it touches Stripe. */
   promoCode?: string;
 }): Promise<string> {
   const interval = params.billingInterval ?? "monthly";
-  const priceId = premiumPriceId(interval);
+  const plan = params.plan ?? "premium";
+
+  // The student price is judged before anything is created: an account that cannot have
+  // it, or a plan that is not on sale yet, stops here, with a message, and no customer
+  // or session is made. The browser names the plan; the price id is chosen only here.
+  if (plan === "student") {
+    if (!isStudentPlanConfigured()) throw new ApiError(503, STUDENT_PLAN_MESSAGES.unavailable);
+    if (interval !== "monthly") throw new ApiError(400, STUDENT_PLAN_MESSAGES.monthlyOnly);
+    await assertVerifiedStudent(params.userId);
+  }
+
+  const priceId = plan === "student" ? studentPriceId() : premiumPriceId(interval);
   if (!priceId) {
     throw new Error(
       interval === "annual"
@@ -92,7 +113,12 @@ export async function createCheckoutSession(params: {
       // The free month of a student code replaces the standard 7-day trial; the
       // two are never stacked.
       ...(claim ? {} : { trial_period_days: 7 }),
-      metadata: { userId: params.userId, ...endorselyMetadata, ...(promo ? { promo_code: promo.code } : {}) },
+      metadata: {
+        userId: params.userId,
+        ...endorselyMetadata,
+        ...(promo ? { promo_code: promo.code } : {}),
+        ...(plan === "student" ? { plan: "student" } : {}),
+      },
     },
     // promo_claim is how the webhook knows this session carried a reserved student
     // code. Only this server can set metadata, so a customer cannot forge it.
@@ -101,6 +127,7 @@ export async function createCheckoutSession(params: {
       ...endorselyMetadata,
       ...(promo ? { promo_code: promo.code } : {}),
       ...(claim ? { promo_claim: claim.id } : {}),
+      ...(plan === "student" ? { plan: "student" } : {}),
     },
     // A code is applied here, by the server, after its checks. Stripe's own
     // promotion-code box is deliberately not offered (allow_promotion_codes

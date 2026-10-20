@@ -2209,7 +2209,8 @@ code (no per-school restriction); the delete-and-resign-up gap above is left ope
 `npm run promo-codes -- ... --apply` from this machine only ever reaches the TEST account. **The live coupon and codes are not created yet** and cannot
 be by anyone who lacks the live secret key: until the owner runs the script with it, a typed code answers "That code is not valid." (safe and inert).
 Owner's command (PowerShell, key typed only into their own terminal, never shared):
-`$env:STRIPE_SECRET_KEY="sk_live_..."; npm run promo-codes -- --prefix CAMPUS --names LAUNCH --max 100 --expires 2027-05-31 --apply --yes-live`
+`$env:STRIPE_SECRET_KEY="sk_live_..."; $env:NEXT_PUBLIC_STRIPE_PREMIUM_PRICE_ID="<the LIVE monthly Premium price id, from Vercel>"; npm run promo-codes -- --prefix CAMPUS --names LAUNCH --max 100 --expires 2027-05-31 --apply --yes-live`
+(**The second variable was missing from this command until 2026-10-20 and is required:** `.env.local` holds the TEST price id, which the live account does not know, so without it the script stops at "No such price". Variables already in the shell win over `.env.local`.)
 (drop `--apply --yes-live` first to see the dry run). **A mistaken `--apply` was run once against the TEST account** while testing the no-key refusal (the script
 loads `.env.local` itself, so there is no such refusal); it created the test coupon and an example test code, and was reported to the owner.
 
@@ -2423,6 +2424,41 @@ visitors with no account, `start_list: 350` units in [usage.ts](src/lib/config/u
 a test ties the 30 days in the policy to `FIRST_LIST_MAX_AGE_DAYS`. **Not added (would need a migration):** analytics events for "first list made" and "first list kept"; for now first-list signups are counted by their `first-list` source and Google spend by the `start_list` usage feature.
 
 **Mobile equivalent:** the same three routes (`/api/start/list`, `/places`, `/claim`, the last with a bearer token); keep the answers and ids in the app's own storage and send them to `/claim` after signup.
+
+## Influence-principles work, Phase 3: the Student plan on the pricing page (2026-10-20)
+
+**Built and tested locally; NOT pushed or deployed (waiting on the owner's review). No migration.** **Decisions (owner, 2026-10-20):** the student free-month code **works with** the Student plan (the free month comes first, then the student price);
+the student rate is **kept while the person stays subscribed** (verified once, at purchase; no re-checks; a graduate who stays subscribed keeps $9.99).
+
+**What it is.** The Student plan is Premium at **$9.99/month, monthly only**, for accounts with a verified school email. It is a second real Stripe Price (lookup key `zolo_student_monthly`) on the **same product as Premium**, so entitlements are
+identical (a student subscription is `plan_id = "premium"`; it is told apart only by its price id, via `isStudentPriceId` in [pricing.ts](src/lib/config/pricing.ts)) and the student coupon, which is limited to that product, works on it. No schema change.
+**Verification is the existing one** (`profiles.edu_verified_at`, set by the database when a school address is confirmed): nothing new to build or run, and the tradeoff is the same as for the promo codes (a school address someone still has after leaving still verifies; accepted, per the decision above).
+
+**It is on sale only when its price id is set.** Until `NEXT_PUBLIC_STRIPE_STUDENT_PRICE_ID` is set and the site redeployed, the pricing page, the upgrade page, the pricing FAQ and the Terms **say nothing about it**: a price we cannot charge must not be advertised, and checkout answers 503. So deploying this
+code changes nothing visible until the owner does the step below.
+
+**Owner's step to turn it on** (PowerShell, the key typed only into their own terminal): create the live Price, then set the env var and redeploy.
+`$env:STRIPE_SECRET_KEY="sk_live_..."; $env:NEXT_PUBLIC_STRIPE_PREMIUM_PRICE_ID="<the LIVE monthly Premium price id>"; npm run student-price -- --apply --yes-live`
+(drop `--apply --yes-live` first for the dry run). It prints the one line to put in Vercel (Production): `NEXT_PUBLIC_STRIPE_STUDENT_PRICE_ID=price_...`. Safe to run twice (found again by its lookup key; refused if a different price holds the key).
+[create-student-price.ts](scripts/create-student-price.ts), rules in [student-price-plan.ts](src/lib/stripe/student-price-plan.ts). Optional: `NEXT_PUBLIC_STUDENT_PRICE` (display only, default 9.99; it must match the Price).
+
+**The server decides, the browser only names the plan** ([checkout.ts](src/lib/stripe/checkout.ts), [student-plan.ts](src/lib/stripe/student-plan.ts)): `POST /api/stripe/checkout` takes `plan: "premium" | "student"` (Premium requests are byte-for-byte unchanged). For the student plan the server first checks the plan is on sale (503),
+the interval is monthly (400) and the account has a verified school email (403, fail closed on a database error), **before any customer, reservation or session is made and before any code is looked at**; the price id comes only from the server's environment. The session and subscription carry `metadata.plan = "student"`.
+**Stacking:** a student code on the student plan applies the free-month coupon to the student price and replaces the 7-day trial exactly as for Premium; the card flag still decides whether a card is collected.
+
+**The pages.** [Pricing cards](src/components/marketing/pricing-cards.tsx): Free, then Premium, then Student **beside** it with the struck-through regular $19.99 next to $9.99 ("Regular Premium is $19.99 a month. Monthly only."; real numbers from the config, no invented reference), "Verify your school email" (to /students) and "Already verified?" (to /profile/upgrade);
+the Free plan stays as it was. The homepage's embedded pricing shows the same cards. [Upgrade page](src/app/(app)/profile/upgrade/page.tsx): a Premium | Student chooser for a signed-in person; a verified student sees the same contrast and a "Start the Student plan" button, an account without a verified school email is told what it needs and is shown nothing to buy
+(the server refuses it anyway). The profile's "Upgrade" button goes to that page once the plan is on sale, and a student subscription is labeled "Premium · Student". FAQ and Terms gain the student answer and a "Student plan" paragraph (price, who, the one-time check, what happens after school, the code), both only when on sale.
+**Not built (by design):** a way for an already-signed-up, non-school-email account to verify a school email afterwards (the verification runs when a school address is confirmed at signup; such a person is sent to the students page to make an account with theirs); an annual student price; re-verification.
+
+**Measurement (no migration):** `premium_started` now carries `tier: "student" | "standard"` (allowed in the event's property list); the student share of subscriptions can also be counted from `subscriptions.stripe_price_id`, which Phase 4's founding-spot cap will use.
+
+**Verified against real Stripe TEST mode and the real database** (throwaway accounts, all removed; the temporary script was deleted): the script created the price once and found it again on a second run; the price is $9.99 monthly on Premium's product and currency; a verified student gets a checkout for the student price tagged as the student plan with nothing due today;
+with the code the free month takes off the student price ($9.99, not $19.99); an unverified account, and the annual interval, are refused and no Stripe customer is made; Premium's checkout is unchanged; a real student subscription is recorded as Premium at the student price and measured once as a student start; and a real subscription with the free-month coupon has a $0 first invoice and a **$9.99** next invoice, not $19.99.
+**Not exercised:** the live Stripe account (the Price does not exist there until the owner runs the command above), a real browser checkout and the redirect after paying, the customer portal for a student subscription.
+Test-mode leftovers (harmless, in the TEST account only): the student price, the coupon `zolo-student-free-month`, and deactivated `E2E-*` codes.
+
+**Mobile equivalent:** none of this reaches the app: a digital subscription bought in an iOS or Android app goes through the stores, so a student price there is an Apple/Google offer or product, with the same `edu_verified_at` rule checked server-side. Noted in `zolo-app/CLAUDE.md`.
 
 ## Exact next steps (priority order)
 

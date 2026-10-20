@@ -7,7 +7,7 @@ import { Check, Lock } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { Button } from "@/components/ui/button";
 import { Magnetic } from "@/components/marketing/magnetic";
-import { pricing, type BillingInterval } from "@/lib/config/pricing";
+import { isStudentPlanConfigured, pricing, studentPricing, type BillingInterval } from "@/lib/config/pricing";
 import { getBillingPreference, setBillingPreference } from "@/lib/utils/billing-preference";
 
 /**
@@ -42,6 +42,9 @@ export function PricingCards() {
   // number is ~20.8%, and floor keeps every "Save X%" claim on the page
   // consistent with each other rather than one place saying 21%.
   const annualSavingsPercent = Math.floor((annualSavings / monthlyPaidYearly) * 100);
+
+  // The Student plan is shown only once it can actually be bought (its Stripe Price is set).
+  const showStudent = isStudentPlanConfigured();
 
   return (
     <div>
@@ -94,7 +97,7 @@ export function PricingCards() {
         </div>
       </div>
 
-      <div className="grid sm:grid-cols-2 gap-6 max-w-3xl mx-auto items-start">
+      <div className={cn("grid sm:grid-cols-2 gap-6 mx-auto items-start", showStudent ? "max-w-5xl lg:grid-cols-3" : "max-w-3xl")}>
         <div className="rounded-[var(--radius-lg)] border border-border bg-surface p-8">
           <h3 className="font-display text-xl font-semibold text-foreground">{pricing.free.name}</h3>
           <div className="mt-2 mb-6">
@@ -163,6 +166,44 @@ export function PricingCards() {
           </div>
           </div>
         </motion.div>
+
+        {showStudent && (
+          // Beside Premium, so the student price is read against the regular one. The $19.99 is the
+          // real regular price (the same one on the Premium card), not an invented reference.
+          <div className="rounded-[var(--radius-lg)] border border-primary bg-surface p-8">
+            {/* COPY: the Student plan card */}
+            <h3 className="font-display text-xl font-semibold text-foreground">{studentPricing.name}</h3>
+            <div className="mt-2 mb-1 flex items-baseline gap-2 flex-wrap">
+              <span className="text-lg text-foreground-subtle line-through decoration-2">${pricing.premium.priceMonthly}</span>
+              <span className="font-display text-4xl font-semibold text-foreground">${studentPricing.priceMonthly}</span>
+              <span className="text-foreground-muted">/month</span>
+            </div>
+            <p className="text-sm text-foreground-muted mb-5">
+              Regular Premium is ${pricing.premium.priceMonthly} a month. Monthly only.
+            </p>
+            <ul className="space-y-3 mb-8">
+              {[
+                "Everything in Premium",
+                "Verified once, with your school email",
+                "Your rate stays the same while you stay subscribed",
+              ].map((f) => (
+                <li key={f} className="flex items-start gap-2 text-sm text-foreground-muted">
+                  <Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                  {f}
+                </li>
+              ))}
+            </ul>
+            <Button asChild size="lg" className="w-full">
+              <Link href="/students">Verify your school email</Link>
+            </Button>
+            <p className="mt-3 text-center text-xs text-foreground-subtle">
+              7-day free trial, then ${studentPricing.priceMonthly} a month.{" "}
+              <Link href="/profile/upgrade" className="underline underline-offset-2 hover:text-foreground">
+                Already verified?
+              </Link>
+            </p>
+          </div>
+        )}
       </div>
 
       <div className="mt-10 max-w-2xl mx-auto rounded-[var(--radius-lg)] border border-border bg-surface p-6">

@@ -73,3 +73,29 @@ describe("a code that cannot be used", () => {
     expect((await res.json()).error).toMatch(/verified school email/);
   });
 });
+
+describe("the plan in the request", () => {
+  it("is premium when none is named, and the request that reaches checkout says so", async () => {
+    await post({});
+    expect(h.create.mock.calls[0][0].plan).toBe("premium");
+  });
+
+  it("can be the student plan, and only the plan's name travels: the price is chosen on the server", async () => {
+    await post({ plan: "student", priceId: "price_cheap", unit_amount: 1 });
+    const sent = h.create.mock.calls[0][0];
+    expect(sent.plan).toBe("student");
+    expect(JSON.stringify(sent)).not.toMatch(/price_cheap|unit_amount/);
+  });
+
+  it("is refused when it is not a plan we have", async () => {
+    for (const plan of ["free", "enterprise", "", 1, null]) expect((await post({ plan })).status, String(plan)).toBe(400);
+    expect(h.create).not.toHaveBeenCalled();
+  });
+
+  it("reaches the person as a message when the student plan is refused", async () => {
+    h.create.mockRejectedValue(new ApiError(403, "The student price is for verified school email addresses."));
+    const res = await post({ plan: "student" });
+    expect(res.status).toBe(403);
+    expect((await res.json()).error).toMatch(/verified school email/);
+  });
+});
