@@ -2427,7 +2427,7 @@ a test ties the 30 days in the policy to `FIRST_LIST_MAX_AGE_DAYS`. **Not added 
 
 ## Influence-principles work, Phase 3: the Student plan on the pricing page (2026-10-20)
 
-**Built and tested locally; NOT pushed or deployed (waiting on the owner's review). No migration.** **Decisions (owner, 2026-10-20):** the student free-month code **works with** the Student plan (the free month comes first, then the student price);
+**DEPLOYED to production 2026-10-20 (commit `e4c0032`) on the owner's go-ahead; it is dormant (invisible and un-buyable) until the owner creates the live Price and sets the env var (below). No migration.** Checked live after deploying (throwaway account, removed, no Stripe objects created, 12 checks): /pricing, the homepage's pricing, the Terms and the FAQ say nothing about a student price; checkout refuses the student plan with 503 "not available yet" (also with a code, before Stripe is reached), an unknown plan with 400, and no login with 401, and none of it made a Stripe customer. **Decisions (owner, 2026-10-20):** the student free-month code **works with** the Student plan (the free month comes first, then the student price);
 the student rate is **kept while the person stays subscribed** (verified once, at purchase; no re-checks; a graduate who stays subscribed keeps $9.99).
 
 **What it is.** The Student plan is Premium at **$9.99/month, monthly only**, for accounts with a verified school email. It is a second real Stripe Price (lookup key `zolo_student_monthly`) on the **same product as Premium**, so entitlements are
