@@ -40,7 +40,8 @@ export async function generateMetadata({ params }: PageProps<"/blog/[slug]">): P
 // Light inline markup: `[label](/path)` becomes a real internal link and
 // `[label](https://...)` an external one (a cited source). Content stays plain
 // strings in blog-posts.ts (content-as-data) rather than storing JSX there.
-const LINK_PATTERN = /\[([^\]]+)\]\(((?:\/|https?:\/\/)[^)\s]+)\)/g;
+// A bare "/" (the home page) is a valid internal target, so the path part may be empty.
+const LINK_PATTERN = /\[([^\]]+)\]\((\/[^)\s]*|https?:\/\/[^)\s]+)\)/g;
 
 function renderWithLinks(text: string): ReactNode[] {
   const nodes: ReactNode[] = [];

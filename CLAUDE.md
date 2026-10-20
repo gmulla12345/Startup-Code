@@ -2335,6 +2335,15 @@ the place page's booking button label truncates so the action row cannot overflo
 34-place demo catalog (Baltimore-heavy), and the empty key keeps Google out. Run a tiny fake of the Supabase REST + auth API on port 4010 that serves one signed-in demo user (finished onboarding, Baltimore) and a plan, and set the cookie
 `sb-127-auth-token` (`base64-` + base64url of a session JSON). Then `npm run dev`. **Delete `.env.development.local` afterwards**, or the dev server keeps pointing at the fake.
 
+## Blog: "Things to Do on a Rainy Day Near You" published (2026-10-19)
+
+Added to [blog-posts.ts](src/lib/content/blog-posts.ts) at the owner's request (slug `things-to-do-on-a-rainy-day`, about 2,300 words, 6 FAQ items). The owner supplied the text; the "Publishing Notes" block they marked "Remove Before Posting" was not published.
+- **No personal byline, by the owner's instruction.** The draft was signed with a handle; the owner then said not to put their name on it. `authorSlug` is unset, so it is credited to the organization (and `AUTHORS` stays empty, as that file requires).
+- **Sources are the two the post actually relies on:** the National Weather Service and CDC lightning-safety pages (both fetched and checked: go indoors at thunder, wait 30 minutes). The draft's Sources list named Google's content guidance and a Search Engine Journal article; those back the SEO notes, not the post, so they are not shown as its sources.
+- The FAQ renders as plain text and goes raw into the FAQPage JSON-LD, so no markdown link in an FAQ answer (the lightning answer names the NWS without a link; the link is under Sources).
+- Internal links added per the notes: the fall date ideas post, the New York weekend post, `/students`, and the home page. Fixed the inline-link pattern in [blog/[slug]/page.tsx](src/app/(marketing)/blog/[slug]/page.tsx) so a bare `(/)` link renders (it used to print the markdown).
+- No hero image yet (the notes ask for original photos; only the site's default share image is used). Not done from the notes: a city or campus version of the post, and Search Console follow-up after indexing.
+
 ## Exact next steps (priority order)
 
 **Done since the last update:** deployed to production at `discoverzolo.com` (fixed a Vercel

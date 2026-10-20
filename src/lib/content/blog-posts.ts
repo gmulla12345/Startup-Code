@@ -489,6 +489,246 @@ export const BLOG_POSTS: BlogPost[] = [
       },
     ],
   },
+  {
+    slug: "things-to-do-on-a-rainy-day",
+    title: "Things to Do on a Rainy Day Near You: Indoor Ideas for Every Mood",
+    seoTitle: "Things to Do on a Rainy Day Near You",
+    description:
+      "Rainy day ideas near you, sorted by mood: cozy, active, creative, free, date, friends, solo, and student picks. Find indoor spots and decide fast.",
+    publishedAt: "2026-10-19",
+    sources: [
+      {
+        label: "National Weather Service, \"Lightning Safety Overview\"",
+        url: "https://www.weather.gov/safety/lightning-safety-overview",
+        note: "The National Weather Service's advice to go indoors when thunder is heard and to wait 30 minutes after the last lightning or thunder before going back outside.",
+      },
+      {
+        label: "CDC, \"Safety Guidelines: Lightning\"",
+        url: "https://www.cdc.gov/lightning/safety/index.html",
+        note: "The CDC's lightning safety guidance: when thunder roars, go indoors, and do not resume outdoor activities for at least 30 minutes after the storm.",
+      },
+    ],
+    readingMinutes: 10,
+    sections: [
+      {
+        paragraphs: [
+          "When it rains, the hard part is not finding ideas. It is that most ideas seem to need good weather, and most lists have no idea where you are.",
+          "This guide collects rainy day things to do near you, sorted by mood and situation: cozy, active, creative, free, with a date, with friends, alone, and for college students. Read the section that matches how you feel, then use the last section to find the actual spots closest to you.",
+          "In a hurry? Five fast picks:",
+        ],
+        list: [
+          "Browse a bookstore or record store, then settle into a café nearby",
+          "Visit a museum, gallery, or glass conservatory",
+          "Play something: bowling, an arcade, or a climbing gym",
+          "Take a one-off pottery or cooking class",
+          "Stay in, but make it an event, like a themed movie marathon or an all-afternoon cook",
+        ],
+      },
+      {
+        heading: "Cozy Rainy Day Activities",
+        paragraphs: [
+          "The best cozy rainy day activities make staying in feel like a choice, not a consolation prize. The trick is to commit to one idea early instead of drifting between screens.",
+        ],
+        list: [
+          "Cook something slow. A braise, a soup, fresh bread, or a big batch of something you will eat all week. Long, low-effort cooking fits wet weather.",
+          "Run a themed movie marathon. Pick a director, a decade, or a genre and watch three in a row, rather than scrolling for an hour first.",
+          "Finish one small mess. A desk drawer, a bookshelf, your camera roll. Small and finishable beats ambitious and abandoned.",
+          "Set up a puzzle or a game. A jigsaw on a table you leave out for days, or a card or board game with whoever is home.",
+          "Start the book you keep postponing. Make tea, put your phone in another room, and give it two hours.",
+          "Write the messages you have been putting off. A letter, a long reply, a thank-you note.",
+        ],
+      },
+      {
+        paragraphs: [
+          "If you would rather be warm and around other people, the next section covers the outing version of cozy.",
+        ],
+      },
+      {
+        heading: "Rainy Day Things to Do Near You When You Want to Get Out of the House",
+        paragraphs: [
+          "The best rainy day outings are fully indoors, easy to reach from parking or transit, and fine to walk into without a reservation. These types of places fit that description almost everywhere.",
+        ],
+        list: [
+          "Museums and galleries. Smaller and specialty museums give you a few hours of something new without a big ticket price. Check for discounted or pay-what-you-wish hours.",
+          "Bookstores, record stores, and comic shops. Browsing is the activity and buying is optional. Independent shops tend to reward a slow lap.",
+          "A café with a good seat. Choose one with big windows, plan on staying two hours, and bring something to read or work on.",
+          "Arcades, bowling alleys, and indoor mini-golf. Built-in structure means no one has to plan anything once you arrive.",
+          "Cinemas. A weekday matinee is cheap, and independent or repertory theaters often show things you would not otherwise see.",
+          "Greenhouses and conservatories. Many botanical gardens have glass houses that feel warm, green, and the opposite of the weather outside.",
+          "Aquariums. Dim, calm, and fully covered, which suits a gray afternoon.",
+          "Food halls and indoor markets. A walk-and-graze format works well when people want different things.",
+        ],
+      },
+      {
+        paragraphs: [
+          "Popular indoor spots fill up when the weather turns, so check the hours before you leave and arrive earlier in the day if you can. For a plan that covers a whole weekend, see our [weekend guide for New York](/blog/things-to-do-this-weekend-near-new-york).",
+        ],
+      },
+      {
+        heading: "Active Rainy Day Activities That Keep You Indoors",
+        paragraphs: ["You can still burn off energy on a rainy day. You just need a roof."],
+        list: [
+          "Indoor climbing gyms. Most offer day passes and rental shoes, so beginners can drop in without owning anything.",
+          "Trampoline parks and skating rinks. Roller and ice skating are both easier to enjoy with a friend to laugh at the wobbles with.",
+          "Indoor pools. Rain stops mattering once you are already wet.",
+          "Drop-in fitness and dance classes. Many studios discount a first class, which makes a rainy day a low-risk time to try something new.",
+          "Pool halls and ping pong bars. Casual, social, and good for any skill level.",
+          "A long walk through somewhere big. A large museum, a covered market, or a mall adds up to more steps than you would expect.",
+        ],
+      },
+      {
+        heading: "Creative and Hands-On Rainy Day Activities",
+        paragraphs: [
+          "Rainy afternoons suit making things, because you are already committed to staying put. Doing it somewhere other than your couch makes it feel like an outing.",
+        ],
+        list: [
+          "Pottery or ceramics. Many studios run one-off wheel or hand-building sessions with no experience needed, and you leave with something you made.",
+          "Cooking, baking, or drink workshops. A class gives you a skill and a meal, and it is easy to book as a pair or a group.",
+          "Thrifting and antique shopping. Indoor, cheap, and endlessly different from one shop to the next.",
+          "Painting, printmaking, or open studio nights. Look for sessions that supply materials so you can show up empty-handed.",
+          "A skill project at home. Learn a few chords, a knitting stitch, or a new recipe technique, and treat the afternoon as practice, not performance.",
+        ],
+      },
+      {
+        heading: "Free Rainy Day Activities Near You",
+        paragraphs: [
+          "You can fill a rainy day for nothing if you know which kinds of places do not charge. Start with these.",
+        ],
+        list: [
+          "Public libraries. Books, quiet seating, board games, free events, and in some places museum passes you can borrow.",
+          "Free museum days and pay-what-you-wish hours. Many museums run them on a set evening or day each week, so check each site's visit page.",
+          "Browsing without buying. Bookstores, plant shops, and big department stores are all warm, dry, and free to wander.",
+          "Community events. Open mics, gallery openings, lectures, and community center classes are often free. Venue calendars and local bulletin boards list them.",
+          "Grand indoor spaces. Train station concourses, atriums, and covered arcades are free to walk through and often worth seeing for the architecture alone.",
+          "Home options. Free workout videos, free online courses, and a cook-from-the-pantry challenge cost nothing and fill an afternoon.",
+        ],
+      },
+      {
+        paragraphs: [
+          "A useful rule when money is tight: pick one paid thing, like a coffee or a movie ticket, and make everything around it free.",
+        ],
+      },
+      {
+        heading: "Rainy Day Date Ideas",
+        paragraphs: [
+          "Rain makes a date easier, not harder, because it gives you a reason to stay close and take your time. Pick the tone you want.",
+        ],
+        list: [
+          "Cozy: cook a new recipe together, spend two hours at a café table with a deck of cards, or visit a bookstore and each choose a book for the other.",
+          "Playful: bowl or play arcade games with a small bet on the line, try indoor mini-golf, or take a one-off pottery class.",
+          "Low-key and cheap: visit a museum during free or pay-what-you-wish hours, set up a themed movie night with a matching dinner, or start a jigsaw puzzle.",
+        ],
+      },
+      {
+        paragraphs: [
+          "Whichever you choose, give the date a shape: one main activity, a stop before it (coffee) and a stop after it (dessert). On clear, cooler days, see our [fall date ideas guide](/blog/fall-date-ideas-cozy-adventurous-budget-friendly) for seasonal options.",
+        ],
+      },
+      {
+        heading: "Rainy Day Ideas With Friends",
+        paragraphs: [
+          "The best rainy day plans for a group are easy to join, easy to split, and easy to cancel. That rules out anything that needs advance tickets or one person hosting.",
+        ],
+        list: [
+          "A food hall or indoor market. Everyone orders what they want and you meet at one table.",
+          "Bowling, arcades, or an escape room. The activity supplies the structure, so no one has to run the afternoon.",
+          "A board game café. Staff teach the rules, which saves the usual twenty minutes of arguing over the rulebook.",
+          "Karaoke. Private rooms make it easier for a nervous group to commit.",
+          "A potluck or game night at someone's place. Assign each person one dish or one game to bring.",
+          "A group class. Cooking and pottery both work well for four to six people.",
+        ],
+      },
+      {
+        paragraphs: [
+          "To skip the group chat debate, offer two options and let everyone vote once. A decision in five minutes leaves more of the day for the plan itself.",
+        ],
+      },
+      {
+        heading: "Rainy Day Things to Do Alone",
+        paragraphs: [
+          "A rainy day alone is a good excuse to go somewhere you would never drag anyone else. You set the pace, so nobody waits on you.",
+        ],
+        list: [
+          "A long museum visit. Skip what bores you, stay as long as you like in front of what does not.",
+          "A café with a book or a journal. Take the table by the window and stay for two drinks.",
+          "A solo matinee. Going alone means you pick the film and sit where you want.",
+          "A drop-in workshop or class. Pottery, cooking, and open studios are easy places to meet people without forcing it.",
+          "A reset day. Laundry, meal prep, and planning the week feel better against the sound of rain, and they make tomorrow easier.",
+        ],
+      },
+      {
+        heading: "Rainy Day Ideas for College Students",
+        paragraphs: [
+          "College students have an advantage on rainy days: campus supplies free indoor space, and a student ID unlocks discounts off campus.",
+        ],
+        list: [
+          "On campus: libraries, student centers, gyms and pools, campus galleries, and club events. Your school's events calendar usually lists free screenings, performances, and talks.",
+          "Off campus with a student ID: many museums, cinemas, and theaters offer student pricing, so ask at the counter even when it is not advertised.",
+          "Cheap group plans: bowling, an arcade, a board game café, or a thrift run, with one food hall order split between you.",
+          "A study reward: work for two hours at a café you have not tried, then spend the last hour doing something that is not studying.",
+          "A roommate cook-off: set a spending cap per person and see who makes the best meal.",
+          "If you are new to the area: a rainy day is a low-pressure time to find out what is close to campus, since you are not trying to see everything at once.",
+        ],
+      },
+      {
+        paragraphs: [
+          `For picks near your own campus, see [${brand.name} for students](/students).`,
+        ],
+      },
+      {
+        heading: "How to Find Rainy Day Activities Near You",
+        paragraphs: [
+          "The fastest way to find a good rainy day spot is to search by the kind of place you want, then check a few things before you leave.",
+        ],
+        list: [
+          "Search by place type, not by weather. \"Bowling near me\" or \"pottery class near me\" returns real, open businesses. \"Rainy day activities\" returns lists.",
+          "Check today's hours. Some places close early or run on a different schedule on weekdays, and some need a booking or a timed ticket.",
+          "Confirm it is actually indoors. Gardens, markets, and zoos are often part indoor and part outdoor. Look for words like \"fully covered\" or \"indoor exhibits\".",
+          "Allow extra travel time. Rain slows traffic, fills parking lots, and delays transit.",
+          "Pick a backup within walking distance. If the first place is full, you can switch without starting the search again.",
+        ],
+      },
+      {
+        paragraphs: [
+          `If you would rather skip the searching, [${brand.name}](/) finds places near you based on your location and what you like. Tell it your mood, or use Surprise Me when you cannot decide, and you get spots worth going to instead of a page of generic results.`,
+        ],
+      },
+      {
+        heading: "Plan Less, Find More",
+        paragraphs: [
+          "Rainy days go best when you decide quickly and spend the saved time actually doing something. Pick a mood from this guide, choose the nearest place that fits, and keep a backup in mind.",
+          `If you want help finding spots near you, ${brand.name} is a discovery app that suggests places based on where you are and what you like. Use Surprise Me when you cannot decide, and look for the indoor picks when the forecast turns. ${brand.name} has a free plan, so you can try it the next time it rains.`,
+          "Bookmark this guide for the next gray weekend.",
+        ],
+      },
+    ],
+    faq: [
+      {
+        q: "What are good things to do on a rainy day when you are bored?",
+        a: "Pick one of three types: go somewhere indoors with something to look at, like a museum, bookstore, or conservatory; play something, like bowling, an arcade, or a climbing gym; or make something, like a class or a long cook. Boredom on a rainy day is usually indecision, so choose the category first and the place second.",
+      },
+      {
+        q: "What can I do on a rainy day for free?",
+        a: "Visit a public library, use a museum's free or pay-what-you-wish hours, browse bookstores and indoor markets, or check venue calendars for free events. At home, cook from the pantry, run a movie marathon, or start a puzzle.",
+      },
+      {
+        q: "What are fun things to do outside in the rain?",
+        a: "In light rain with no thunder, a walk in a park, photographing reflections on wet streets, or a run in proper rain gear can all be enjoyable. If you hear thunder, go inside right away and wait 30 minutes after the last thunder before heading back out, as the National Weather Service advises.",
+      },
+      {
+        q: "What are good rainy day activities for adults?",
+        a: "Choose activities with a social or skill element instead of another screen: a class, a climbing gym, a game café, a food hall, or a long museum visit. The active and creative sections above are good places to start.",
+      },
+      {
+        q: "What should I do on a rainy day if I have to stay home?",
+        a: "Commit to one project that fills the afternoon: a slow recipe, a puzzle, a themed movie marathon, or a small organizing job. Silence notifications for two hours and treat it like a real plan.",
+      },
+      {
+        q: "How do I find indoor things to do near me?",
+        a: `Search by place type, such as "bowling near me" or "museum near me", check today's hours, and confirm the venue is fully indoors. A discovery app like ${brand.name} can also suggest places near you based on what you like.`,
+      },
+    ],
+  },
 ];
 
 export function getBlogPost(slug: string): BlogPost | undefined {
