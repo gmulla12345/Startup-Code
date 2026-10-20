@@ -2373,7 +2373,12 @@ off (deletes it; the cached page is expired at once). Public page: [/l/[token]](
 
 **Database** (migration [20261021_01_lists.sql](src/db/migrations/20261021_01_lists.sql), mirrored in `schema.sql`, guarded by [schema-lists.test.ts](src/__tests__/schema-lists.test.ts)): `lists` and `list_places`, closed to every
 browser key (no policy, no grant), removed with the account; `save_shared_list()` makes or updates a list and its places in one transaction and enforces 3 to 10 distinct places and the per-person limit (`MAX_SHARED_LISTS`, 50).
-**Rehearsed against production in a rolled-back transaction (23 checks, nothing left behind); NOT yet applied.** Until it is applied the Share button returns an error; Home itself does not depend on it.
+**Rehearsed against production in a rolled-back transaction (23 checks, nothing left behind), then APPLIED to production and DEPLOYED (commit `5024ea8`, 2026-10-20).** Verified after applying: RLS on, no policies, no grants to
+anon or authenticated, `save_shared_list` executable by `service_role` only, 0 rows. **Verified live** on discoverzolo.com with two throwaway accounts (all removed, 0 leftovers): the public database key cannot read the tables or call the function;
+the API refuses an unknown list, too few places, a repeated place, a bad place id and bad JSON, and a missing login; a link is made (201) with the server's own title and copy (request words ignored) and the three place ids stored in order;
+the owner finds their link and someone else does not; the public page is 200, noindex, shows no name or id, carries `src=share-list`, and says plainly that its places could not be loaded (fake ids; Google is also on hold); the preview image is a PNG;
+non-existent links are 404; sharing again keeps the link and replaces the places (one list, four places); another person cannot turn it off; exactly one `share_created` event with `{"kind":"list"}`; the owner turns it off and the page
+and its image are then 404 at once. (A path like `/l/..%2f..%2fetc` is answered 400 by Vercel's gateway on every route, not by the app.) **Not seen yet:** a shared list showing real places, because Google billing is still on hold.
 
 **Navigation.** Trips is out of the main bar (now 5 items) and is a quiet "secondary" link in the sidebar; it stays in the account menu and at the end of Home. Home's rails are gone; `ExperienceRail` remains for Travel Mode pages.
 Privacy policy and its test now cover shared lists (what is stored, who sees it, retention, the event wording).
