@@ -20,6 +20,8 @@ import { Badge } from "@/components/ui/badge";
 import { LocalPickBadge } from "@/components/experience/local-pick-badge";
 import { getLocalPickIds, isMarked } from "@/lib/local-picks";
 import { placeIdFromExperienceId } from "@/lib/share/input";
+import { getSaveCounts } from "@/lib/social-proof/save-counts";
+import { saveCountLine } from "@/lib/config/save-counts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCategoryLabel, formatDuration, formatPrice } from "@/lib/utils/format";
 import { trackEvent } from "@/lib/repositories/events";
@@ -81,6 +83,8 @@ export default async function ExperienceDetailPage({ params }: PageProps<"/exper
   let initialCompleted = false;
   let userIsPremium = false;
   let match: { score: number; reasons: string[] } | null = null;
+  // How many verified students nearby saved this place this week: a real count, shown only above the owner's minimum.
+  let savedBy: number | null = null;
 
   if (user) {
     // Measurement: the first place a user ever opens. Counted before this view is
@@ -102,6 +106,10 @@ export default async function ExperienceDetailPage({ params }: PageProps<"/exper
     if (profile?.onboardingCompleted) {
       const scored = scoreExperience(experience, profile);
       match = { score: scored.score, reasons: scored.reasons };
+    }
+    if (profile) {
+      const counts = await getSaveCounts([experience.id], { userId: user.id, latitude: profile.latitude, longitude: profile.longitude });
+      savedBy = counts.get(experience.id) ?? null;
     }
   }
 
@@ -143,6 +151,7 @@ export default async function ExperienceDetailPage({ params }: PageProps<"/exper
         {experience.isPremium && <Badge variant="primary">Premium</Badge>}
         {experience.sourceProvider === "mock" && <Badge variant="outline">Editorial pick</Badge>}
       </div>
+      {savedBy !== null && <p className="mt-2 text-sm text-foreground-muted">{saveCountLine(savedBy)}</p>}
       {experience.sourceProvider === "mock" && (
         <p className="text-xs text-foreground-subtle mt-2">
           Curated by our team as an example of the kind of experience {`we'd`} recommend — always confirm details

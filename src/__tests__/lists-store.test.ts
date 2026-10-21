@@ -114,6 +114,46 @@ describe("getPublicList", () => {
       .mockReturnValueOnce({
         select: () => ({ eq: () => ({ order: async () => ({ data: [{ place_id: "ChIJ-aaaaaaaa", position: 1, why: null }, { place_id: "ChIJ-bbbbbbbb", position: 2, why: null }], error: null }) }) }),
       });
-    expect(await getPublicList(TOKEN)).toEqual({ title: "Close by", blurb: "Nearest first.", placeIds: ["ChIJ-aaaaaaaa", "ChIJ-bbbbbbbb"], whys: [null, null], startsOn: null, endsOn: null, house: false });
+    expect(await getPublicList(TOKEN)).toEqual({ title: "Close by", blurb: "Nearest first.", placeIds: ["ChIJ-aaaaaaaa", "ChIJ-bbbbbbbb"], whys: [null, null], startsOn: null, endsOn: null, house: false, author: null });
+  });
+
+  // A list a person made themselves: private answers like no list at all, and a first name appears only when chosen.
+  const publicRow = (over: Record<string, unknown> = {}) => ({ id: "l1", title: "Late-night study spots", blurb: null, starts_on: null, ends_on: null, user_id: "u1", is_public: true, show_name: false, ...over });
+  const placesQuery = () => ({ select: () => ({ eq: () => ({ order: async () => ({ data: [{ place_id: "ChIJ-aaaaaaaa", position: 1, why: null }], error: null }) }) }) });
+
+  it("answers null, as if there were no list, for one that is private", async () => {
+    h.from.mockReturnValueOnce(chain({ data: publicRow({ is_public: false, show_name: true }), error: null }));
+    expect(await getPublicList("P".repeat(22))).toBeNull();
+    expect(h.from).toHaveBeenCalledTimes(1); // not even its places or its owner's profile were read
+  });
+
+  it("names the maker by first name only when the list is public and they chose to show it", async () => {
+    h.from
+      .mockReturnValueOnce(chain({ data: publicRow({ show_name: true }), error: null }))
+      .mockReturnValueOnce(chain({ data: { first_name: "  Maya  " }, error: null }))
+      .mockReturnValueOnce(placesQuery());
+    const list = await getPublicList("Q".repeat(22));
+    expect(list?.author).toBe("Maya");
+    expect(h.from.mock.calls[1][0]).toBe("profiles"); // the name is read from the profile now, not stored with the list
+  });
+
+  it("shows no name when they did not choose to, and never reads the profile", async () => {
+    h.from.mockReturnValueOnce(chain({ data: publicRow({ show_name: false }), error: null })).mockReturnValueOnce(placesQuery());
+    const list = await getPublicList("R".repeat(22));
+    expect(list?.author).toBeNull();
+    expect(h.from.mock.calls.map((c) => c[0])).toEqual(["lists", "list_places"]);
+  });
+
+  it("shows no name when the profile has none to show", async () => {
+    h.from
+      .mockReturnValueOnce(chain({ data: publicRow({ show_name: true }), error: null }))
+      .mockReturnValueOnce(chain({ data: { first_name: "   " }, error: null }))
+      .mockReturnValueOnce(placesQuery());
+    expect((await getPublicList("S".repeat(22)))?.author).toBeNull();
+  });
+
+  it("treats a list made before lists could be private (no flag) as public, as it always was", async () => {
+    h.from.mockReturnValueOnce(chain({ data: { id: "l1", title: "Close by", blurb: null, starts_on: null, ends_on: null, user_id: "u1" }, error: null })).mockReturnValueOnce(placesQuery());
+    expect((await getPublicList("V".repeat(22)))?.title).toBe("Close by");
   });
 });

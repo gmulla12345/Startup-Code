@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils/cn";
 import { formatCategoryLabel, formatPrice, withMaxWidth } from "@/lib/utils/format";
 import { track } from "@/services/analytics/track";
 import { LocalPickBadge } from "@/components/experience/local-pick-badge";
+import { saveCountLine } from "@/lib/config/save-counts";
 import type { ListPlaceExperience } from "@/lib/start/types";
 
 /**
@@ -22,6 +23,7 @@ export function ListPlaceRow({
   index,
   why,
   localPick,
+  savedBy,
   distanceLabel,
   matchScore,
   onSaveRequest,
@@ -32,6 +34,8 @@ export function ListPlaceRow({
   why: string | null;
   /** The owner has marked this place as a local pick: shown as a small badge, and only then. */
   localPick?: boolean;
+  /** Real students nearby who saved it this week, passed only when enough did. */
+  savedBy?: number;
   distanceLabel?: string;
   /** Shown only on the list made from the person's own tastes. */
   matchScore?: number;
@@ -122,6 +126,7 @@ export function ListPlaceRow({
           </span>
 
           {why && <span className="font-reason mt-1.5 block text-[13px] leading-snug text-foreground-muted">{why}</span>}
+          {savedBy != null && <span className="mt-1 block text-xs text-foreground-subtle">{saveCountLine(savedBy)}</span>}
         </span>
       </Link>
     </li>

@@ -139,6 +139,22 @@ export default function PrivacyPolicyPage() {
           not to index shared lists. You can turn a list&apos;s link off at any time, which deletes it.
         </p>
         <p>
+          <strong>Lists you make.</strong> If you make a list of your own, we store the title and the line you write, the Google
+          identifiers of the places on it (they must be places you have saved), whether it is private or open to anyone with its
+          link, whether you chose to show your first name, and when. A list is private to you unless you choose a link. With a
+          link, anyone who has it can see the list and its places, and your first name only if you chose to show it; we never
+          show your last name, email address, or account. The place names, addresses, and photos come from Google when the page is
+          built and are not stored by us. We ask search engines not to index shared lists. You can make a list private again, or
+          delete it, at any time; either ends its link, and making a private list public again gives it a new address.
+        </p>
+        <p>
+          <strong>Saves counted nearby.</strong> When enough verified students near you have saved a place in the past week, we may
+          show how many, for example &ldquo;Saved by 14 students nearby this week.&rdquo; The number is counted from saves and from the
+          location on each profile (the city, or the device location, that a person gave us), and it is shown only when it reaches a
+          minimum that we set, never fewer than three people. We never show who saved a place. Your own saves can count toward
+          the number another person sees, but never toward your own.
+        </p>
+        <p>
           <strong>First list.</strong> If you ask for a list before you have an account, you tell us what kind of outing
           you want, what you would like to spend, and where you are (your device&apos;s location, or a city you type). We
           use the location once, to look for places through Google, and we do not store it. Your two answers and the
@@ -273,6 +289,14 @@ export default function PrivacyPolicyPage() {
           <li>
             <strong>To let you share places, plans and lists.</strong> To make the link you ask for, show what you chose to
             share to the people you give it to, and take it down when you turn it off.
+          </li>
+          <li>
+            <strong>To let you make lists of your own</strong>, and to show a list to the people you give its link to, with your
+            first name only if you choose.
+          </li>
+          <li>
+            <strong>To show how many nearby students saved a place.</strong> Only as a number that reaches our minimum, never who
+            saved it.
           </li>
           <li>
             <strong>To apply promo codes.</strong> To confirm that a code can be used by your account (a verified school
@@ -528,6 +552,10 @@ export default function PrivacyPolicyPage() {
           <li>
             <strong>Shared lists:</strong> until you turn the list&apos;s link off, which deletes it, or you delete your
             account, which deletes all of your lists.
+          </li>
+          <li>
+            <strong>Lists you make:</strong> until you delete the list, or you delete your account, which deletes all of your
+            lists.
           </li>
           <li>
             <strong>First list:</strong> in your browser for up to 30 days, or until it is saved to an account. Places

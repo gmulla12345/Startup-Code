@@ -114,6 +114,30 @@ describe("the Local pick badge", () => {
   });
 });
 
+describe("a list a person made, with their first name", () => {
+  it("says who made it, by first name, when they chose to show it, and no more than that", async () => {
+    h.view = { ...view(), author: "Maya", ended: false, through: null };
+    const out = await html();
+    expect(out).toContain("A list by Maya");
+    expect(out).not.toContain("A list, shared with you");
+    expect(out).not.toMatch(/Shared by|@[a-z]+\.[a-z]+|user_id/i);
+  });
+
+  it("says the usual line when there is no name to show", async () => {
+    h.view = { ...view(), author: null, ended: false, through: null };
+    const out = await html();
+    expect(out).toContain("A list, shared with you");
+    expect(out).not.toContain("A list by");
+  });
+
+  it("puts the first name in the description a link preview shows, and only when it was chosen", async () => {
+    h.list = { title: "Late-night study spots", blurb: null, placeIds: ["a", "b", "c"], whys: [null, null, null], startsOn: null, endsOn: null, house: false, author: "Maya" };
+    expect((await generateMetadata(props)).description).toBe("3 places to try, chosen by Maya.");
+    h.list = { title: "Late-night study spots", blurb: null, placeIds: ["a", "b", "c"], whys: [null, null, null], startsOn: null, endsOn: null, house: false, author: null };
+    expect((await generateMetadata(props)).description).toBe(`3 places to try, chosen with ${brand.name}.`);
+  });
+});
+
 describe("what a link preview sees", () => {
   it("is private by default: not indexed, with the list's own title and a plain description", async () => {
     const meta = await generateMetadata(props);

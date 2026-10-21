@@ -30,6 +30,8 @@ export interface ListView {
   items: ListViewItem[];
   /** "Through Sunday", for a list with an end date that is still open. */
   through: string | null;
+  /** The first name of the person who made it, only if they made it public and chose to show it. Never a surname or an account. */
+  author: string | null;
   /** The list's last day has passed: nothing of it is shown, and Google is not asked about its places. */
   ended: boolean;
 }
@@ -46,11 +48,11 @@ export const loadListView = cache(async (token: string): Promise<ListView | null
   const today = todayIn(LIST_TIMEZONE);
   const state = windowState(list, today);
   if (state === "upcoming") return null;
-  if (state === "ended") return { token, title: list.title, blurb: list.blurb, items: [], through: null, ended: true };
+  if (state === "ended") return { token, title: list.title, blurb: list.blurb, items: [], through: null, author: list.author, ended: true };
 
   const [marked, items] = await Promise.all([
     getLocalPickIds(list.placeIds),
     Promise.all(list.placeIds.map(async (placeId, i) => ({ placeId, place: await fetchPlacePreview(placeId, "list_preview"), why: list.whys[i] ?? null }))),
   ]);
-  return { token, title: list.title, blurb: list.blurb, items: items.map((item) => ({ ...item, localPick: marked.has(item.placeId) })), through: list.endsOn ? throughLine(list.endsOn, today) : null, ended: false };
+  return { token, title: list.title, blurb: list.blurb, items: items.map((item) => ({ ...item, localPick: marked.has(item.placeId) })), through: list.endsOn ? throughLine(list.endsOn, today) : null, author: list.author, ended: false };
 });

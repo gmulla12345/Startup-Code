@@ -11,6 +11,7 @@ import { ListSection } from "@/components/lists/list-section";
 import { buildHomeLists } from "@/lib/lists/build";
 import { loadHouseHomeLists } from "@/lib/lists/house";
 import { markLocalPicks } from "@/lib/local-picks";
+import { markSaveCounts } from "@/lib/social-proof/save-counts";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Profile } from "@/types/database";
 
@@ -83,7 +84,9 @@ async function HomeLists({ profile }: { profile: Profile }) {
   ]);
 
   // The places the owner has marked as local picks get their badge: one small read for every list on the page.
-  const lists = await markLocalPicks([...houseLists, ...buildHomeLists(recommendations, profile)]);
+  const built = await markLocalPicks([...houseLists, ...buildHomeLists(recommendations, profile)]);
+  // "Saved by N students nearby this week", only where the count is real and reaches the owner's minimum (off until it is set).
+  const lists = await markSaveCounts(built, { userId: profile.userId, latitude: profile.latitude, longitude: profile.longitude });
 
   if (lists.length === 0) {
     const hasLocation = profile.latitude != null && profile.longitude != null;

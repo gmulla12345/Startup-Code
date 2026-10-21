@@ -1570,3 +1570,146 @@ revoke all on public.local_picks from anon, authenticated;
 drop trigger if exists trg_local_picks_updated_at on public.local_picks;
 create trigger trg_local_picks_updated_at before update on public.local_picks
   for each row execute function public.set_updated_at();
+
+-- -------------------------------------------------------------------------
+-- save counts, phase 7a (migration 20261025_01_save_counts.sql): how many nearby students saved a place, above a minimum
+-- -------------------------------------------------------------------------
+
+create index if not exists idx_saved_experience_recent on public.saved_experiences (experience_id, created_at desc);
+
+create or replace function public.place_save_counts(
+  p_experience_ids text[],
+  p_lat double precision,
+  p_lng double precision,
+  p_radius_miles double precision,
+  p_since timestamptz,
+  p_viewer uuid,
+  p_min integer
+)
+returns table (out_experience_id text, out_savers integer)
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+begin
+  -- A number must never point at one or two people, whatever the caller asks for.
+  if p_min is null or p_min < 3 then
+    raise exception 'the smallest number that may be shown is three' using errcode = '22023';
+  end if;
+  if p_lat is null or p_lng is null or p_radius_miles is null or p_radius_miles <= 0 then
+    return;
+  end if;
+  if p_experience_ids is null or coalesce(array_length(p_experience_ids, 1), 0) = 0 or array_length(p_experience_ids, 1) > 200 then
+    return;
+  end if;
+
+  return query
+    select s.experience_id, count(distinct s.user_id)::integer
+      from public.saved_experiences s
+      join public.profiles p on p.user_id = s.user_id
+     where s.experience_id = any (p_experience_ids)
+       and s.status = 'saved'
+       and s.created_at >= p_since
+       and s.user_id is distinct from p_viewer
+       and p.edu_verified_at is not null
+       and p.latitude is not null
+       and p.longitude is not null
+       -- great-circle distance in miles (haversine), 3958.8 mi to the earth's radius
+       and 3958.8 * 2 * asin(sqrt(
+             power(sin(radians(p.latitude - p_lat) / 2), 2)
+             + cos(radians(p_lat)) * cos(radians(p.latitude)) * power(sin(radians(p.longitude - p_lng) / 2), 2)
+           )) <= p_radius_miles
+     group by s.experience_id
+    having count(distinct s.user_id) >= p_min;
+end;
+$$;
+
+revoke all on function public.place_save_counts(text[], double precision, double precision, double precision, timestamptz, uuid, integer) from public, anon, authenticated;
+grant execute on function public.place_save_counts(text[], double precision, double precision, double precision, timestamptz, uuid, integer) to service_role;
+
+
+-- -------------------------------------------------------------------------
+-- lists a person makes themselves, phase 7b (migration 20261025_02_user_lists.sql): private unless they choose
+-- -------------------------------------------------------------------------
+
+alter table public.lists add column if not exists is_public boolean not null default true;
+alter table public.lists add column if not exists show_name boolean not null default false;
+
+create index if not exists idx_lists_user_own on public.lists (user_id, updated_at desc) where template is null and user_id is not null;
+
+create or replace function public.save_user_list(
+  p_user uuid,
+  p_id uuid,
+  p_token text,
+  p_title text,
+  p_blurb text,
+  p_place_ids text[],
+  p_public boolean,
+  p_show_name boolean,
+  p_max_lists integer
+)
+returns table (out_id uuid, out_token text, out_old_token text, out_created boolean)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_id uuid;
+  v_token text;
+  v_old text;
+  v_was_public boolean;
+  v_count integer;
+  v_places integer := coalesce(array_length(p_place_ids, 1), 0);
+begin
+  if v_places < 3 or v_places > 10 then
+    raise exception 'a list holds three to ten places' using errcode = '22023';
+  end if;
+  if (select count(distinct x) from unnest(p_place_ids) as x) <> v_places then
+    raise exception 'a list cannot hold a place twice' using errcode = '22023';
+  end if;
+
+  if p_id is null then
+    select count(*) into v_count from public.lists where user_id = p_user and template is null;
+    if v_count >= p_max_lists then
+      raise exception 'list_limit' using errcode = 'P0001';
+    end if;
+    insert into public.lists (token, user_id, template, title, blurb, is_public, show_name)
+    values (p_token, p_user, null, p_title, p_blurb, coalesce(p_public, false), coalesce(p_public, false) and coalesce(p_show_name, false))
+    returning id, token into v_id, v_token;
+    v_old := null;
+    insert into public.list_places (list_id, position, place_id)
+    select v_id, t.ord::integer, t.pid from unnest(p_place_ids) with ordinality as t(pid, ord);
+    return query select v_id, v_token, v_old, true;
+    return;
+  end if;
+
+  select l.id, l.token, l.is_public into v_id, v_old, v_was_public
+    from public.lists l
+   where l.id = p_id and l.user_id = p_user and l.template is null
+     for update;
+  if not found then
+    raise exception 'list_not_found' using errcode = 'P0002';
+  end if;
+
+  -- going from private to public: a new address, so an old link can never open it again
+  v_token := case when coalesce(p_public, false) and not v_was_public then p_token else v_old end;
+
+  update public.lists
+     set title = p_title,
+         blurb = p_blurb,
+         token = v_token,
+         is_public = coalesce(p_public, false),
+         show_name = coalesce(p_public, false) and coalesce(p_show_name, false),
+         updated_at = now()
+   where id = v_id;
+  delete from public.list_places where list_id = v_id;
+  insert into public.list_places (list_id, position, place_id)
+  select v_id, t.ord::integer, t.pid from unnest(p_place_ids) with ordinality as t(pid, ord);
+
+  return query select v_id, v_token, v_old, false;
+end;
+$$;
+
+revoke all on function public.save_user_list(uuid, uuid, text, text, text, text[], boolean, boolean, integer) from public, anon, authenticated;
+grant execute on function public.save_user_list(uuid, uuid, text, text, text, text[], boolean, boolean, integer) to service_role;

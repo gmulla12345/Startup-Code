@@ -33,6 +33,11 @@ export function stripUnwanted(text: string): string {
   return out;
 }
 
+/** Whether a line of text carries something that reads as a link (used for notes and for the titles of lists people write). */
+export function hasLinkLike(text: string): boolean {
+  return LINK_LIKE.test(text);
+}
+
 export type NoteResult = { ok: true; note: string | null } | { ok: false; error: string };
 
 /** Collapses a note to one tidy line, and refuses one that is too long or carries a link. Empty is no note. */

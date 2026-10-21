@@ -4,6 +4,7 @@ import { canonical } from "@/lib/seo";
 import { WebPageJsonLd } from "@/components/shared/webpage-jsonld";
 import { StudentsSignup } from "@/components/students/students-signup";
 import { StudentsPreview } from "@/components/students/preview";
+import { FounderNote } from "@/components/students/founder-note";
 import { getActiveCampuses } from "@/lib/repositories/campuses";
 
 const SEO = PAGE_SEO.students;
@@ -48,6 +49,8 @@ export default async function StudentsPage() {
       </section>
 
       <StudentsPreview />
+
+      <FounderNote />
     </div>
   );
 }

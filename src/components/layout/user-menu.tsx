@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { ElementType, ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Bookmark, Briefcase, CheckCircle2, ChevronDown, LogOut, Pencil, Sparkles, User as UserIcon } from "lucide-react";
+import { Bookmark, Briefcase, CheckCircle2, ChevronDown, ListChecks, LogOut, Pencil, Sparkles, User as UserIcon } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils/cn";
@@ -80,6 +80,9 @@ export function UserMenu({ profile, email, premium }: { profile: Profile; email:
           </MenuLink>
           <MenuLink href="/saved" icon={Bookmark} onClick={() => setOpen(false)}>
             Saved
+          </MenuLink>
+          <MenuLink href="/lists" icon={ListChecks} onClick={() => setOpen(false)}>
+            Your lists
           </MenuLink>
           <MenuLink href="/profile/completed" icon={CheckCircle2} onClick={() => setOpen(false)}>
             Completed

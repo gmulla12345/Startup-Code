@@ -8,7 +8,7 @@ import { todayIn, windowState } from "@/lib/lists/window";
  * The picture a shared list shows in iMessage, GroupMe, Instagram and the rest: drawn
  * here, not taken from anywhere. It carries only our own words (the list's title and
  * how many places it holds) and our name. Never a Google photo (rehosting or
- * re-cropping one is not ours to do), never a place name, never a map, never a person.
+ * re-cropping one is not ours to do), never a place name, never a map, never a person (the one exception: the first name of its maker, when they made the list public and chose to show it).
  * Because it holds no Google data, drawing it makes no Google call at all.
  *
  * Reused for an hour like the page, and dropped with it when the list is turned off.
@@ -44,7 +44,7 @@ export default async function Image({ params }: { params: Promise<{ token: strin
 
   const title = clip(list.title, 60);
   // COPY: the small line under the title on a shared list's preview image (and when the list is over)
-  const detail = state === "ended" ? "This list has ended" : `${list.placeIds.length} places`;
+  const detail = state === "ended" ? "This list has ended" : list.author ? `${list.placeIds.length} places, by ${list.author}` : `${list.placeIds.length} places`;
 
   return new ImageResponse(
     (

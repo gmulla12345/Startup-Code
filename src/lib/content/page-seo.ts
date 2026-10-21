@@ -57,7 +57,7 @@ export const PAGE_SEO = {
     path: "/students",
     title: `${brand.name} for College Students: Things to Do Near Campus`,
     description: `${brand.name} for students: a short, personalized list of places and plans near your campus, chosen for you. Create an account with your school email.`,
-    lastModified: "2026-10-14",
+    lastModified: "2026-10-20",
   },
   blog: {
     path: "/blog",

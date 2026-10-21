@@ -185,14 +185,16 @@ export default function TermsOfServicePage() {
       <section id="user-content">
         <h2>6. Your Content</h2>
         <p>
-          The Service lets you build personal saved collections and itineraries, and optionally share a place or an
-          itinerary with others through a link you generate, with a short note if you wish. You retain ownership of the
-          itineraries and collections you create. By generating a shareable link, you grant {brand.name} a
-          non-exclusive, worldwide, royalty-free license to host and display what you chose to share (the place or
-          itinerary, your note, and your first name only if you choose to show it) to anyone who has the link, solely to
-          operate that feature. Anyone with the link can see it, so share it only with people you want to see it. You
-          can turn a link off at any time, which deletes it. A note must not contain links or anything prohibited in
-          section 8. The Service does not currently offer public posting of reviews, comments, photos, or other
+          The Service lets you build personal saved collections and itineraries, make lists of your own from places you
+          have saved, and optionally share a place, an itinerary or a list with others through a link you generate, with
+          a short note if you wish. A list you make is private to you unless you choose to give it a link. You retain
+          ownership of the itineraries, collections and lists you create. By generating a shareable link, you grant{" "}
+          {brand.name} a non-exclusive, worldwide, royalty-free license to host and display what you chose to share (the
+          place, itinerary or list, your note, the title and line you wrote for a list, and your first name only if you
+          choose to show it) to anyone who has the link, solely to operate that feature. Anyone with the link can see it,
+          so share it only with people you want to see it. You can turn a link off at any time (by deleting it, or by
+          making a list private again). A note, or the title or line of a list, must not contain links or anything
+          prohibited in section 8, and we may remove one that does. The Service does not currently offer public posting of reviews, comments, photos, or other
           content visible to other users at large.
         </p>
       </section>

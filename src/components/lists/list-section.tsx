@@ -30,6 +30,7 @@ export function ListSection({ list, showMatch = false }: { list: HomeList; showM
             index={i}
             why={p.why}
             localPick={p.localPick}
+            savedBy={p.savedBy}
             distanceLabel={p.distanceMiles != null ? formatDistance(p.distanceMiles) : undefined}
             matchScore={showMatch ? p.matchScore : undefined}
           />

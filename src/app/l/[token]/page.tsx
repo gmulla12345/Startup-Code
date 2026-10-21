@@ -25,9 +25,10 @@ import { todayIn, windowState } from "@/lib/lists/window";
  * LIST_CACHE_SECONDS.
  *
  * Private by default, like a share link: not indexed by search engines (link previews
- * in messaging apps still work, they do not obey noindex), no name of the sharer, no
- * dates, no coordinates, no account ids. A list that was turned off and one that never
- * existed are the same 404.
+ * in messaging apps still work, they do not obey noindex), no name of the person who made
+ * it unless they made it public and chose to show their first name (and then only that),
+ * no dates, no coordinates, no account ids. A list that is private, was turned off, or never
+ * existed answers the same 404.
  */
 export const revalidate = 3600;
 export const dynamicParams = true;
@@ -46,7 +47,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!list || state === "upcoming") return { title: "Link not found", robots: { index: false, follow: false } };
 
   // COPY: the description a link preview shows under a shared list's title (and when the list is over)
-  const description = state === "ended" ? "This list has ended." : `${list.placeIds.length} places to try, chosen with ${brand.name}.`;
+  const description =
+    state === "ended"
+      ? "This list has ended."
+      : list.author
+        ? `${list.placeIds.length} places to try, chosen by ${list.author}.`
+        : `${list.placeIds.length} places to try, chosen with ${brand.name}.`;
   return {
     title: list.title,
     description,
@@ -126,8 +132,10 @@ export default async function SharedListPage({ params }: Props) {
 
       <main className="mx-auto w-full max-w-xl flex-1 px-4 pb-16 pt-4 sm:px-6">
         <article className="overflow-hidden rounded-[var(--radius-xl)] border border-border bg-surface p-6 shadow-[var(--shadow-card)] sm:p-8">
-          {/* COPY: the small line above a shared list's title */}
-          <p className="text-xs font-medium uppercase tracking-[0.14em] text-foreground-subtle">A list, shared with you</p>
+          {/* COPY: the small line above a shared list's title; "A list by Maya" when its maker chose to show their first name */}
+          <p className="text-xs font-medium uppercase tracking-[0.14em] text-foreground-subtle">
+            {view.author ? `A list by ${view.author}` : "A list, shared with you"}
+          </p>
           <h1 className="mt-3 font-display text-3xl font-semibold leading-tight text-foreground sm:text-4xl">{view.title}</h1>
           {view.blurb && <p className="mt-2 text-foreground-muted">{view.blurb}</p>}
           {view.through && <p className="mt-1 text-sm text-foreground-subtle">{view.through}</p>}

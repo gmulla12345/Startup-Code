@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 const PUBLIC_APP_PATHS = ["/onboarding"];
-const PROTECTED_PREFIXES = ["/home", "/discover", "/map", "/trips", "/saved", "/profile", "/admin"];
+const PROTECTED_PREFIXES = ["/home", "/discover", "/map", "/trips", "/saved", "/lists", "/profile", "/admin"];
 
 /** Matches the exact segment, not just a string prefix — "/map" must not match "/map-debug". */
 function matchesPathPrefix(pathname: string, prefix: string): boolean {

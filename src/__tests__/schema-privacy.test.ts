@@ -36,8 +36,11 @@ describe("social tables stay private", () => {
   });
 
   it("social_profiles defaults to private", () => {
-    expect(schema).toMatch(/is_public boolean not null default false/);
-    expect(schema).not.toMatch(/is_public boolean not null default true/);
+    // (read from the table's own definition: the lists table has an is_public of its own, which is true by default because
+    // every list that existed when it was added was already a public link; see migrations/20261025_02_user_lists.sql)
+    const social = schema.match(/create table if not exists public\.social_profiles \(([\s\S]*?)\n\);/)?.[1] ?? "";
+    expect(social).toMatch(/is_public boolean not null default false/);
+    expect(social).not.toMatch(/is_public boolean not null default true/);
   });
 
   it("the logged-out role is denied on all three social tables", () => {

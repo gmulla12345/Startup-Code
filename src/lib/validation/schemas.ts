@@ -40,6 +40,15 @@ export const shareRequestSchema = z.discriminatedUnion("kind", [
 export const SUBSCRIPTION_ACTIONS = ["student", "pause", "cancel", "keep", "unpause"] as const;
 export const subscriptionActionSchema = z.object({ action: z.enum(SUBSCRIPTION_ACTIONS) });
 
+/** A list a person makes: the words are cleaned after this (lib/lists/own-input.ts); this only bounds the shape. */
+export const ownListSchema = z.object({
+  title: z.string().max(400),
+  blurb: z.string().max(800).nullish(),
+  experienceIds: z.array(z.string().max(400)).max(10),
+  isPublic: z.boolean().default(false),
+  showName: z.boolean().default(false),
+});
+
 export const contactMessageSchema = z.object({
   name: z.string().min(1).max(100),
   email: z.string().email(),

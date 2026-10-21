@@ -54,6 +54,18 @@ export const HOUSE_LISTS_ON_HOME = 2;
  */
 export const LIST_TIMEZONE = "America/New_York";
 
+/**
+ * Lists a person makes themselves. A title and a line of copy they write, and three to ten places from the ones they have
+ * saved. Private unless they choose; a link anyone who has it can open (not listed, not indexed) if they do.
+ */
+export const OWN_LISTS_PATH = "/lists";
+export const OWN_LIST_TITLE_MAX = 80;
+export const OWN_LIST_BLURB_MAX = 160;
+/** The most lists of their own one account may keep. A starting value. */
+export const MAX_OWN_LISTS = 30;
+/** The most saved places offered when choosing for a list (the newest). Each is a real-place lookup, so it is bounded. */
+export const OWN_LIST_CHOICES = 60;
+
 export function listPath(token: string): string {
   return `${LIST_PATH}/${token}`;
 }

@@ -2,6 +2,7 @@ import { unstable_cache } from "next/cache";
 import { ApiError } from "@/lib/api/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { LIST_CACHE_SECONDS, MAX_SHARED_LISTS } from "@/lib/config/lists";
+import { cleanFirstName } from "@/lib/share/input";
 import { generateShareToken, isShareToken } from "@/lib/share/token";
 import type { ListTemplate } from "./templates";
 
@@ -24,6 +25,11 @@ export interface PublicList {
   endsOn: string | null;
   /** A list we wrote ourselves, with no owner. */
   house: boolean;
+  /**
+   * The first name of the person who made it, only when they made it public AND chose to show it (read from their profile when
+   * the page is built, never stored with the list). Null otherwise: no surname, no account, no id, ever.
+   */
+  author: string | null;
 }
 
 /** The cache tag for everything a list page is built from; turning a list off expires it. */
@@ -89,9 +95,18 @@ class ListNotFound extends Error {}
 
 async function loadPublicList(token: string): Promise<PublicList> {
   const admin = createAdminClient();
-  const { data: list, error } = await admin.from("lists").select("id, title, blurb, starts_on, ends_on, user_id").eq("token", token).maybeSingle();
+  const { data: list, error } = await admin.from("lists").select("*").eq("token", token).maybeSingle();
   if (error) throw new Error(`[lists] could not read the list: ${error.message}`);
   if (!list) throw new ListNotFound();
+  // A list a person keeps to themselves answers exactly like one that never existed. (A list made before lists could be private
+  // has no such flag and is public: it was made by sharing it.)
+  if (list.is_public === false) throw new ListNotFound();
+
+  let author: string | null = null;
+  if (list.show_name === true && list.user_id) {
+    const { data: profile } = await admin.from("profiles").select("first_name").eq("user_id", list.user_id).maybeSingle();
+    author = cleanFirstName(profile?.first_name);
+  }
 
   const { data: places, error: placesError } = await admin.from("list_places").select("place_id, position, why").eq("list_id", list.id).order("position", { ascending: true });
   if (placesError) throw new Error(`[lists] could not read the places: ${placesError.message}`);
@@ -104,6 +119,7 @@ async function loadPublicList(token: string): Promise<PublicList> {
     startsOn: (list.starts_on as string | null) ?? null,
     endsOn: (list.ends_on as string | null) ?? null,
     house: list.user_id == null,
+    author,
   };
 }
 

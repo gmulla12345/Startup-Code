@@ -10,6 +10,8 @@ export interface ListPlace extends PoolItem {
   why: string | null;
   /** The owner has marked this place as a local pick (see lib/local-picks). Set after the list is built; never computed. */
   localPick?: boolean;
+  /** How many verified students nearby saved this place this week, when enough did (the owner's minimum). Never estimated. */
+  savedBy?: number;
 }
 
 export interface HomeList {

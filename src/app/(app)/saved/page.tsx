@@ -19,8 +19,16 @@ export default async function SavedPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
-      <h1 className="font-display text-3xl font-semibold text-foreground mb-2">Saved</h1>
-      <p className="text-foreground-muted mb-8">Your collections of experiences, places, and trips.</p>
+      <div className="flex items-start justify-between gap-4 mb-8">
+        <div>
+          <h1 className="font-display text-3xl font-semibold text-foreground mb-2">Saved</h1>
+          <p className="text-foreground-muted">Your collections of experiences, places, and trips.</p>
+        </div>
+        {/* COPY: the way to your own lists, from Saved */}
+        <Button asChild variant="outline" size="sm" className="shrink-0">
+          <Link href="/lists">Your lists</Link>
+        </Button>
+      </div>
 
       {/*
        * Each saved item needs its own real-place lookup (a Google Places
